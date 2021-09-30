@@ -47,7 +47,7 @@ router.post('/webhook', async (req, res) => {
     )
   );
   const limit = 4096 / 12;
-  let preview = removeMd(proposal.body.slice(0, limit));
+  let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
 
   const embed = new MessageEmbed()
