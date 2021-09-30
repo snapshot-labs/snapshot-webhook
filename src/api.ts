@@ -7,11 +7,11 @@ import { shortenAddress } from './utils';
 
 const router = express.Router();
 
-router.post('/webhook', async (req, res) => {
+router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
+  const proposalId = req.body?.id?.replace('proposal/', '') || 'QmbHUUX1GZQRS7eQ9v7cZQ7J9kpEC96KLhUtkrDrufBGCc';
+  const event = req.body?.event || 'proposal/start';
 
-  const proposalId = req.body.id.replace('proposal/', '');
-  const event = req.body.event;
   let color = '#6B7380';
   let status = 'Pending';
   if (event === 'proposal/created') color = '#6B7380';
@@ -35,7 +35,8 @@ router.post('/webhook', async (req, res) => {
       },
       space: {
         id: true,
-        name: true
+        name: true,
+        avatar: true
       },
       id: true,
       author: true,
@@ -58,7 +59,7 @@ router.post('/webhook', async (req, res) => {
         .setStyle('LINK')
     )
   );
-  const limit = 4096 / 12;
+  const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
 
@@ -68,7 +69,7 @@ router.post('/webhook', async (req, res) => {
     .setTitle(proposal.title)
     .setURL(url)
     .setTimestamp(proposal.created * 1e3)
-    .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`)
+    .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`, proposal.space.avatar)
     .addFields(
       { name: 'Status', value: status, inline: true },
       { name: 'Snapshot', value: proposal.snapshot, inline: true }
@@ -81,7 +82,7 @@ router.post('/webhook', async (req, res) => {
     components: event === 'proposal/start' ? components : []
   });
 
-  return res.json({});
+  return res.json({ success: true });
 });
 
 export default router;
