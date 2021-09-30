@@ -8,6 +8,8 @@ import { shortenAddress } from './utils';
 const router = express.Router();
 
 router.post('/webhook', async (req, res) => {
+  console.log('Received', req.body);
+
   const proposalId = req.body.id.replace('proposal/', '');
   const event = req.body.event;
   let color = '#6B7380';
@@ -34,7 +36,6 @@ router.post('/webhook', async (req, res) => {
     }
   };
   const { proposal } = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
-  console.log(proposal);
 
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
   const components = proposal.choices.map((choice, i) =>
