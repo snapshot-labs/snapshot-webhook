@@ -13,9 +13,20 @@ router.post('/webhook', async (req, res) => {
   const proposalId = req.body.id.replace('proposal/', '');
   const event = req.body.event;
   let color = '#6B7380';
-  if (event === 'proposal/start') color = '#21B66F';
-  if (event === 'proposal/end') color = '#7C3AED';
-  if (event === 'proposal/deleted') color = '#EE4145';
+  let status = 'Pending';
+  if (event === 'proposal/created') color = '#6B7380';
+  if (event === 'proposal/start') {
+    status = 'Active';
+    color = '#21B66F';
+  }
+  if (event === 'proposal/end') {
+    color = '#7C3AED';
+    status = 'Closed';
+  }
+  if (event === 'proposal/deleted') {
+    color = '#EE4145';
+    status = 'Deleted';
+  }
 
   const query = {
     proposal: {
@@ -32,7 +43,8 @@ router.post('/webhook', async (req, res) => {
       body: true,
       choices: true,
       start: true,
-      end: true
+      end: true,
+      snapshot: true
     }
   };
   const { proposal } = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
@@ -57,6 +69,10 @@ router.post('/webhook', async (req, res) => {
     .setURL(url)
     .setTimestamp(proposal.created * 1e3)
     .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`)
+    .addFields(
+      { name: 'Status', value: status, inline: true },
+      { name: 'Snapshot', value: proposal.snapshot, inline: true }
+    )
     .setDescription(preview);
 
   sendMessage({
