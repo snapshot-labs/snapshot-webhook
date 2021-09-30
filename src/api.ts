@@ -7,11 +7,18 @@ import { shortenAddress } from './utils';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.post('/webhook', async (req, res) => {
+  const proposalId = req.body.id.replace('proposal/', '');
+  const event = req.body.event;
+  let color = '#6B7380';
+  if (event === 'proposal/start') color = '#21B66F';
+  if (event === 'proposal/end') color = '#7C3AED';
+  if (event === 'proposal/deleted') color = '#EE4145';
+
   const query = {
     proposal: {
       __args: {
-        id: 'QmbHUUX1GZQRS7eQ9v7cZQ7J9kpEC96KLhUtkrDrufBGCc'
+        id: proposalId
       },
       space: {
         id: true,
@@ -43,9 +50,8 @@ router.get('/', async (req, res) => {
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
 
   const embed = new MessageEmbed()
-    .setColor('#3BA55D')
-    // .setColor('#F9A81A')
-    // .setColor('#EE4145')
+    // @ts-ignore
+    .setColor(color)
     .setTitle(proposal.title)
     .setURL(url)
     .setTimestamp(proposal.created * 1e3)
@@ -59,11 +65,6 @@ router.get('/', async (req, res) => {
   });
 
   return res.json({});
-});
-
-router.post('/webhook', async (req, res) => {
-  console.log(req.body);
-  res.json({});
 });
 
 export default router;
