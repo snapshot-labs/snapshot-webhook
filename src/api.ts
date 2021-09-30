@@ -61,7 +61,7 @@ router.post('/webhook', async (req, res) => {
   sendMessage({
     // content: 'Pong!',
     embeds: [embed],
-    components
+    components: event === 'proposal/start' ? components : []
   });
 
   return res.json({});
