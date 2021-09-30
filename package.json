@@ -2,6 +2,9 @@
   "name": "snapshot-discord",
   "version": "0.1.0",
   "license": "MIT",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "lint": "eslint . --ext .ts --fix",
     "build": "tsc",

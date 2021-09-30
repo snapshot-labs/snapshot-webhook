@@ -24,7 +24,7 @@ export const sendMessage = message => {
   if (!token) return;
   try {
     if (speaker) return speaker.send(message);
-    console.log(`Missing bot message: ${message}`);
+    console.log('Missing bot message');
     return false;
   } catch (e) {
     console.log(e);

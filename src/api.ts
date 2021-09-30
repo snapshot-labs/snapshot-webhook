@@ -61,4 +61,9 @@ router.get('/', async (req, res) => {
   return res.json({});
 });
 
+router.post('/webhook', async (req, res) => {
+  console.log(req.body);
+  res.json({});
+});
+
 export default router;
