@@ -6,6 +6,7 @@ import { sendMessage } from './discord';
 import { shortenAddress } from './utils';
 
 const router = express.Router();
+const channel = '814466963047841792';
 
 router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
@@ -62,6 +63,7 @@ router.all('/webhook', async (req, res) => {
   const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
+  const avatar = (proposal.space.avatar || '').replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
 
   const embed = new MessageEmbed()
     // @ts-ignore
@@ -69,14 +71,14 @@ router.all('/webhook', async (req, res) => {
     .setTitle(proposal.title)
     .setURL(url)
     .setTimestamp(proposal.created * 1e3)
-    .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`, proposal.space.avatar)
+    .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`, avatar)
     .addFields(
       { name: 'Status', value: status, inline: true },
       { name: 'Snapshot', value: proposal.snapshot, inline: true }
     )
     .setDescription(preview);
 
-  sendMessage({
+  sendMessage(channel, {
     // content: 'Pong!',
     embeds: [embed],
     components: event === 'proposal/start' ? components : []

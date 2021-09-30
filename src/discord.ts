@@ -2,38 +2,37 @@
 import { Client, Intents } from 'discord.js';
 
 const token = process.env.DISCORD_TOKEN;
-const channel = '814466963047841792';
 const client: any = new Client({ intents: [Intents.FLAGS.GUILDS] });
-let speaker;
+let ready = false;
+
+client.login(token);
 
 client.on('ready', async () => {
-  // @ts-ignore
+  ready = true;
   console.log(`Discord bot logged as "${client.user.tag}"`);
-  speaker = client.channels.cache.get(channel);
 });
 
 client.on('message', msg => {
-  if (msg.content === 'ping') {
-    msg.reply('pong');
-  }
+  if (msg.content === '!ping') msg.reply('Pong?');
 });
 
-if (token) client.login(token);
-
-export const sendMessage = message => {
-  if (!token) return;
+export const sendMessage = (channel, message) => {
   try {
-    if (speaker) return speaker.send(message);
-    console.log('Missing bot message');
-    return false;
+    const speaker = client.channels.cache.get(channel);
+    speaker.send(message);
+    return true;
   } catch (e) {
-    console.log(e);
+    console.log('Missing', e);
   }
 };
 
 export const setActivity = message => {
   try {
-    client.user.setActivity(message, { type: 'WATCHING' });
+    if (ready) {
+      client.user.setActivity(message, { type: 'WATCHING' });
+    } else {
+      console.log('Missing', message);
+    }
   } catch (e) {
     console.log(e);
   }
