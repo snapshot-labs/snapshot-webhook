@@ -15,7 +15,10 @@ router.all('/webhook', async (req, res) => {
 
   let color = '#6B7380';
   let status = 'Pending';
-  if (event === 'proposal/created') color = '#6B7380';
+  if (event === 'proposal/created') {
+    color = '#6B7380';
+    return res.json({ success: true });
+  }
   if (event === 'proposal/start') {
     status = 'Active';
     color = '#21B66F';
@@ -27,6 +30,7 @@ router.all('/webhook', async (req, res) => {
   if (event === 'proposal/deleted') {
     color = '#EE4145';
     status = 'Deleted';
+    return res.json({ success: true });
   }
 
   const query = {
