@@ -6,7 +6,8 @@ import { sendMessage } from './discord';
 import { shortenAddress } from './utils';
 
 const router = express.Router();
-const channel = '814466963047841792';
+const channel = '893829830745940028';
+// const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=0&scope=bot';
 
 router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
