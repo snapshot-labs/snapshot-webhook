@@ -4,10 +4,22 @@ import removeMd from 'remove-markdown';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { sendMessage } from './discord';
 import { shortenAddress } from './utils';
+import db from './mysql';
 
 const router = express.Router();
-const channel = '893829830745940028';
-// const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=0&scope=bot';
+let subs = { '*': [] };
+
+async function loadSubscriptions() {
+  db.queryAsync('SELECT * FROM subscriptions').then(results => {
+    subs = { '*': [] };
+    results.forEach(sub => {
+      if (!subs[sub.space]) subs[sub.space] = [];
+      subs[sub.space].push(sub);
+    });
+  });
+}
+
+loadSubscriptions();
 
 router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
@@ -45,6 +57,7 @@ router.all('/webhook', async (req, res) => {
         avatar: true
       },
       id: true,
+      type: true,
       author: true,
       title: true,
       body: true,
@@ -57,7 +70,7 @@ router.all('/webhook', async (req, res) => {
   const { proposal } = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
 
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
-  const components = proposal.choices.map((choice, i) =>
+  let components = proposal.choices.map((choice, i) =>
     new MessageActionRow().addComponents(
       new MessageButton()
         .setLabel(choice)
@@ -65,6 +78,7 @@ router.all('/webhook', async (req, res) => {
         .setStyle('LINK')
     )
   );
+  components = event === 'proposal/start' && proposal.type === 'single-choice' ? components : [];
   const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
@@ -83,11 +97,18 @@ router.all('/webhook', async (req, res) => {
     )
     .setDescription(preview);
 
-  sendMessage(channel, {
-    // content: 'Pong!',
-    embeds: [embed],
-    components: event === 'proposal/start' ? components : []
-  });
+  if (subs[proposal.space.id] || subs['*']) {
+    [...subs['*'], ...(subs[proposal.space.id] || [])].forEach(sub => {
+      let content: string | undefined = undefined;
+      if (sub.mention === 'everyone') content = '@everyone';
+      if (sub.mention === 'here') content = '@here';
+      sendMessage(sub.channel, {
+        content,
+        embeds: [embed],
+        components
+      });
+    });
+  }
 
   return res.json({ success: true });
 });
