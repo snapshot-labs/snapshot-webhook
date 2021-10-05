@@ -30,7 +30,7 @@ client.on('ready', async () => {
 client.on('messageCreate', async msg => {
   const guild = msg.guild.id;
   const ts = parseInt((Date.now() / 1e3).toFixed());
-  console.log('Received', msg);
+  console.log('Received', msg.content, guild);
 
   if (msg.author.bot) return;
 
