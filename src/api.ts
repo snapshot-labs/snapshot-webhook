@@ -26,6 +26,7 @@ router.all('/webhook', async (req, res) => {
   if (event === 'proposal/end') {
     color = '#7C3AED';
     status = 'Closed';
+    return res.json({ success: true });
   }
   if (event === 'proposal/deleted') {
     color = '#EE4145';
