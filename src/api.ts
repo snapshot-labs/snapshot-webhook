@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
-  const proposalId = req.body?.id?.replace('proposal/', '') || 'QmbHUUX1GZQRS7eQ9v7cZQ7J9kpEC96KLhUtkrDrufBGCc';
+  const proposalId = req.body?.id?.replace('proposal/', '') || 'Qmemba2wh7dUiWq62447X7mpXmQ34di1Eym3N7vE7V7WsN';
   const event = req.body?.event || 'proposal/start';
 
   let color = '#6B7380';
