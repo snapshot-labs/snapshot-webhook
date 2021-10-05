@@ -30,12 +30,15 @@ client.on('ready', async () => {
 client.on('messageCreate', async msg => {
   const guild = msg.guild.id;
   const ts = parseInt((Date.now() / 1e3).toFixed());
+  console.log('Received', msg);
 
   if (msg.author.bot) return;
 
   if (msg.content === '!ping') msg.reply('Pong?');
 
   if (msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
+    console.log('Admin command', msg.content);
+
     const [id, command, channel, space, mention] = msg.content.split(' ');
 
     if (id === '!snapshot') {
