@@ -29,15 +29,17 @@ client.on('ready', async () => {
 
 client.on('messageCreate', async msg => {
   const guild = msg.guild.id;
+  console.log('Received', guild, msg.author.username, ':', msg.content)
+
   const ts = parseInt((Date.now() / 1e3).toFixed());
-  const isAdmin = msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR);
-  console.log('Received', isAdmin, guild, '\n@', msg.author.username, '\n:', msg.content);
+  const isAdmin = msg.member.permissions?.has(Permissions.FLAGS.ADMINISTRATOR);
 
   if (msg.author.bot) return;
 
   if (msg.content === '!ping') msg.reply('Pong?');
 
   if (isAdmin) {
+    console.log('isAdmin', isAdmin);
     const [id, command, channel, space, mention] = msg.content.split(' ');
     if (id === '!snapshot') {
       const channelId = (channel || '').replace('<#', '').replace('>', '');
