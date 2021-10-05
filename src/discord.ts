@@ -72,20 +72,25 @@ client.on('messageCreate', async msg => {
           .setDescription('You have successfully unsubscribed to space events.');
         msg.reply({ embeds: [embed] });
       } else {
-        const embed = new MessageEmbed().addFields(
-          { name: 'Add', value: '!snapshot add <channel> <space> <mention?>' },
-          { name: 'Remove', value: '!snapshot remove <channel> <space> <mention?>' }
-        );
+        let description = '**Commands**\n\n';
+        description += `**Add**\n`;
+        description += `!snapshot add <channel> <space> <mention?>\n`;
+        description += `*e.g !snapshot add #announcements yam.eth @everyone*\n\n`;
+        description += `**Remove**\n`;
+        description += `!snapshot remove <channel> <space> <mention?>\n`;
+        description += `*e.g !snapshot remove #announcements yam.eth*\n`;
 
         const subscriptions = await db.queryAsync('SELECT * FROM subscriptions WHERE guild = ?', guild);
 
         if (subscriptions.length > 0) {
-          let description = `**Subscriptions (${subscriptions.length})**\n`;
+          description += `\n**Subscriptions (${subscriptions.length})**\n\n`;
           subscriptions.forEach(subscription => {
-            description += `- <#${subscription.channel}> ${subscription.space}\n`;
+            description += `<#${subscription.channel}> ${subscription.space}\n`;
           });
-          embed.setDescription(description);
         }
+
+        const embed = new MessageEmbed();
+        embed.setDescription(description);
         msg.reply({ embeds: [embed] });
       }
     }
