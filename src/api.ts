@@ -4,22 +4,9 @@ import removeMd from 'remove-markdown';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { sendMessage } from './discord';
 import { shortenAddress } from './utils';
-import db from './mysql';
+import { subs } from './subscriptions';
 
 const router = express.Router();
-let subs = { '*': [] };
-
-async function loadSubscriptions() {
-  db.queryAsync('SELECT * FROM subscriptions').then(results => {
-    subs = { '*': [] };
-    results.forEach(sub => {
-      if (!subs[sub.space]) subs[sub.space] = [];
-      subs[sub.space].push(sub);
-    });
-  });
-}
-
-loadSubscriptions();
 
 router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
@@ -98,12 +85,9 @@ router.all('/webhook', async (req, res) => {
     .setDescription(preview);
 
   if (subs[proposal.space.id] || subs['*']) {
-    [...subs['*'], ...(subs[proposal.space.id] || [])].forEach(sub => {
-      let content: string | undefined = undefined;
-      if (sub.mention === 'everyone') content = '@everyone';
-      if (sub.mention === 'here') content = '@here';
+    [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
       sendMessage(sub.channel, {
-        content,
+        content: `${sub.mention} `,
         embeds: [embed],
         components
       });

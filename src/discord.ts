@@ -37,19 +37,18 @@ client.on('messageCreate', async msg => {
   if (msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
     const [id, command, channel, space, mention] = msg.content.split(' ');
 
-    if (id === '$snapshot') {
+    if (id === '!snapshot') {
       const channelId = (channel || '').replace('<#', '').replace('>', '');
 
       if (['add', 'update'].includes(command)) {
         const subscription = [guild, channelId, space, mention || ''];
         await db.queryAsync(
-          `
-          INSERT INTO subscriptions (guild, channel, space, mention) VALUES (?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?
-        `,
+          `INSERT INTO subscriptions (guild, channel, space, mention) VALUES (?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?`,
           [...subscription, ...subscription]
         );
         await loadSubscriptions();
+
         const color = '#21B66F';
         const embed = new MessageEmbed()
           .setColor(color)
@@ -64,6 +63,7 @@ client.on('messageCreate', async msg => {
         const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
         await db.queryAsync(query, [guild, channelId, space]);
         await loadSubscriptions();
+
         const color = '#EE4145';
         const embed = new MessageEmbed()
           .setColor(color)
@@ -72,9 +72,19 @@ client.on('messageCreate', async msg => {
         msg.reply({ embeds: [embed] });
       } else {
         const embed = new MessageEmbed().addFields(
-          { name: 'Subscribe', value: '$snapshot add <channel> <space> <mention?>' },
-          { name: 'Unsubscribe', value: '$snapshot remove <channel> <space> <mention?>' }
+          { name: 'Add', value: '!snapshot add <channel> <space> <mention?>' },
+          { name: 'Remove', value: '!snapshot remove <channel> <space> <mention?>' }
         );
+
+        const subscriptions = await db.queryAsync('SELECT * FROM subscriptions WHERE guild = ?', guild);
+
+        if (subscriptions.length > 0) {
+          let description = `**Subscriptions (${subscriptions.length})**\n`;
+          subscriptions.forEach(subscription => {
+            description += `- <#${subscription.channel}> ${subscription.space}\n`;
+          });
+          embed.setDescription(description);
+        }
         msg.reply({ embeds: [embed] });
       }
     }
