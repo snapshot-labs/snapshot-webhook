@@ -3,5 +3,9 @@ CREATE TABLE subscriptions (
   channel VARCHAR(64) NOT NULL,
   space VARCHAR(64) NOT NULL,
   mention VARCHAR(64) NOT NULL,
-  PRIMARY KEY (guild, channel, space)
+  created VARCHAR(64) NOT NULL,
+  updated VARCHAR(64) NOT NULL,
+  PRIMARY KEY (guild, channel, space),
+  INDEX created (created),
+  INDEX updated (updated)
 );

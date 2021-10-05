@@ -29,6 +29,7 @@ client.on('ready', async () => {
 
 client.on('messageCreate', async msg => {
   const guild = msg.guild.id;
+  const ts = parseInt((Date.now() / 1e3).toFixed());
 
   if (msg.author.bot) return;
 
@@ -41,10 +42,10 @@ client.on('messageCreate', async msg => {
       const channelId = (channel || '').replace('<#', '').replace('>', '');
 
       if (['add', 'update'].includes(command)) {
-        const subscription = [guild, channelId, space, mention || ''];
+        const subscription = [guild, channelId, space, mention || '', ts];
         await db.queryAsync(
-          `INSERT INTO subscriptions (guild, channel, space, mention) VALUES (?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?`,
+          `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
           [...subscription, ...subscription]
         );
         await loadSubscriptions();
