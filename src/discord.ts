@@ -28,13 +28,13 @@ client.on('ready', async () => {
 });
 
 client.on('messageCreate', async msg => {
+  if (msg.author.bot) return;
+
   const guild = msg.guild.id;
   console.log('Received', guild, msg.author.username, ':', msg.content)
 
   const ts = parseInt((Date.now() / 1e3).toFixed());
   const isAdmin = msg.member.permissions?.has(Permissions.FLAGS.ADMINISTRATOR) || false;
-
-  if (msg.author.bot) return;
 
   if (msg.content === '!ping') msg.reply('Pong?');
 
