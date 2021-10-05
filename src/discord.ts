@@ -7,7 +7,7 @@ const client: any = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES]
 });
 export let ready = false;
-// const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=536602999889&scope=bot';
+// const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=83968&scope=bot';
 
 client.login(token);
 
@@ -30,17 +30,15 @@ client.on('ready', async () => {
 client.on('messageCreate', async msg => {
   const guild = msg.guild.id;
   const ts = parseInt((Date.now() / 1e3).toFixed());
-  console.log('Received', msg.content, guild);
+  const isAdmin = msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR);
+  console.log('Received', isAdmin, guild, msg.author.username, msg.content);
 
   if (msg.author.bot) return;
 
   if (msg.content === '!ping') msg.reply('Pong?');
 
-  if (msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-    console.log('Admin command', msg.content);
-
+  if (isAdmin) {
     const [id, command, channel, space, mention] = msg.content.split(' ');
-
     if (id === '!snapshot') {
       const channelId = (channel || '').replace('<#', '').replace('>', '');
 
