@@ -31,7 +31,6 @@ client.on('messageCreate', async msg => {
   if (msg.author.bot) return;
 
   const guild = msg.guild.id;
-  console.log('Received', guild, msg.author.username, ':', msg.content)
 
   const ts = parseInt((Date.now() / 1e3).toFixed());
   const isAdmin = msg.member.permissions?.has(Permissions.FLAGS.ADMINISTRATOR) || false;
@@ -39,12 +38,12 @@ client.on('messageCreate', async msg => {
   if (msg.content === '!ping') msg.reply('Pong?');
 
   if (isAdmin) {
-    console.log('isAdmin', isAdmin);
     const [id, command, channel, space, mention] = msg.content.split(' ');
     if (id === '!snapshot') {
+      console.log('Received', guild, msg.author.username, ':', msg.content);
       const channelId = (channel || '').replace('<#', '').replace('>', '');
 
-      if (['add', 'update'].includes(command)) {
+      if (['add', 'update'].includes(command) && channel && space) {
         const subscription = [guild, channelId, space, mention || '', ts];
         await db.queryAsync(
           `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
@@ -63,7 +62,7 @@ client.on('messageCreate', async msg => {
           )
           .setDescription('You have successfully subscribed to space events.');
         msg.reply({ embeds: [embed] });
-      } else if (command === 'remove') {
+      } else if (command === 'remove' && channel && space) {
         const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
         await db.queryAsync(query, [guild, channelId, space]);
         await loadSubscriptions();
