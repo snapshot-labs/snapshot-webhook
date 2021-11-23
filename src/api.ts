@@ -5,6 +5,13 @@ import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { sendMessage } from './discord';
 import { shortenAddress } from './utils';
 import { subs } from './subscriptions';
+import { createHash } from 'crypto';
+
+function sha256(str) {
+  return createHash('sha256')
+    .update(str)
+    .digest('hex');
+}
 
 const router = express.Router();
 
@@ -12,6 +19,12 @@ router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
   const proposalId = req.body?.id?.replace('proposal/', '') || 'Qmemba2wh7dUiWq62447X7mpXmQ34di1Eym3N7vE7V7WsN';
   const event = req.body?.event || 'proposal/start';
+  const secret = req.body?.secret || '0';
+
+  if (sha256(secret) !== '72a17dc82d2384b0753e3d090c7db89e1d15c1f1c51188a7aafb91382a5e73c0') {
+    console.log('Wrong secret');
+    return res.json({ error: true });
+  }
 
   let color = '#6B7380';
   let status = 'Pending';
