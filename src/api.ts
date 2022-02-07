@@ -94,7 +94,9 @@ router.all('/webhook', async (req, res) => {
     .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`, avatar)
     .addFields(
       { name: 'Status', value: status, inline: true },
-      { name: 'Snapshot', value: proposal.snapshot, inline: true }
+      { name: 'Snapshot', value: proposal.snapshot, inline: true },
+      { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
+      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true }
     )
     .setDescription(preview);
 
