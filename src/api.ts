@@ -2,10 +2,11 @@ import express from 'express';
 import snapshot from '@snapshot-labs/snapshot.js';
 import removeMd from 'remove-markdown';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
+import { createHash } from 'crypto';
 import { sendMessage } from './discord';
 import { shortenAddress } from './utils';
 import { subs } from './subscriptions';
-import { createHash } from 'crypto';
+import pkg from '../package.json';
 
 function sha256(str) {
   return createHash('sha256')
@@ -14,6 +15,13 @@ function sha256(str) {
 }
 
 const router = express.Router();
+
+router.get('/', async (req, res) => {
+  return res.json({
+    name: pkg.name,
+    version: pkg.version
+  });
+});
 
 router.all('/webhook', async (req, res) => {
   console.log('Received', req.body);
