@@ -79,14 +79,17 @@ router.all('/webhook', async (req, res) => {
   const { proposal } = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
 
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
-  let components = proposal.choices.map((choice, i) =>
-    new MessageActionRow().addComponents(
-      new MessageButton()
-        .setLabel(choice)
-        .setURL(`${url}?choice=${i + 1}`)
-        .setStyle('LINK')
-    )
-  );
+  let components =
+    proposal.choices.length > 5
+      ? []
+      : proposal.choices.map((choice, i) =>
+          new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel(choice)
+              .setURL(`${url}?choice=${i + 1}`)
+              .setStyle('LINK')
+          )
+        );
   components = event === 'proposal/start' && proposal.type === 'single-choice' ? components : [];
   const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
