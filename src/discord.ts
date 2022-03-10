@@ -99,13 +99,13 @@ client.on('messageCreate', async msg => {
   }
 });
 
-export const sendMessage = (channel, message) => {
+export const sendMessage = async (channel, message) => {
   try {
     const speaker = client.channels.cache.get(channel);
-    speaker.send(message);
+    await speaker.send(message);
     return true;
   } catch (e) {
-    console.log('Missing', e);
+    console.log('Discord error:', e);
   }
 };
 
