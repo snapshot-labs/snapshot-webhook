@@ -76,8 +76,17 @@ router.all('/webhook', async (req, res) => {
       snapshot: true
     }
   };
-  const { proposal } = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
-
+  let proposal: { [key: string]: any } | null = null;
+  try {
+    const result = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
+    proposal = result.proposal || null;
+  } catch (error) {
+    console.log('Snapshot hub error:', error);
+  }
+  if (!proposal) {
+    console.log('No proposal found');
+    return res.json({ success: false });
+  }
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
   let components =
     proposal.choices.length > 5
