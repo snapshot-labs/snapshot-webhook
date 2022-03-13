@@ -1,13 +1,12 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import 'dotenv/config';
 import api from './api';
 import './discord';
-dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8001;
 
 app.use(bodyParser.json({ limit: '8mb' }));
 app.use(bodyParser.urlencoded({ limit: '8mb', extended: false }));

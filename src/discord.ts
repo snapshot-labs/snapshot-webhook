@@ -1,4 +1,7 @@
-import { Client, Intents, MessageEmbed, Permissions } from 'discord.js';
+import { Client, Intents, MessageEmbed, Permissions, MessageActionRow, MessageButton } from 'discord.js';
+import removeMd from 'remove-markdown';
+import { getProposal, shortenAddress } from './utils';
+import { subs } from './subscriptions';
 import db from './mysql';
 import { loadSubscriptions } from './subscriptions';
 
@@ -99,14 +102,75 @@ client.on('messageCreate', async msg => {
   }
 });
 
-export const sendMessage = async (channel, message) => {
+const sendMessage = async (channel, message) => {
   try {
     const speaker = client.channels.cache.get(channel);
-    await speaker.send(message);
-    return true;
+    if (!speaker) {
+      throw new Error('Channel not found');
+    } else {
+      await speaker.send(message);
+      return true;
+    }
   } catch (e) {
     console.log('Discord error:', e);
   }
+};
+
+export const handleDiscordMessages = async (event, proposalId) => {
+  if (event != 'proposal/start') {
+    return { success: false, message: 'Event not supported' };
+  }
+  const status = 'Active';
+  const color = '#21B66F';
+
+  const proposal: { [key: string]: any } | null = getProposal(proposalId);
+  if (!proposal) {
+    console.log('No proposal found');
+    return { success: false };
+  }
+  const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
+  let components =
+    proposal.choices.length > 5
+      ? []
+      : proposal.choices.map((choice, i) =>
+          new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel(choice)
+              .setURL(`${url}?choice=${i + 1}`)
+              .setStyle('LINK')
+          )
+        );
+  components = event === 'proposal/start' && proposal.type === 'single-choice' ? components : [];
+  const limit = 4096 / 16;
+  let preview = removeMd(proposal.body).slice(0, limit);
+  if (proposal.body.length > limit) preview += `... [Read more](${url})`;
+  const avatar = (proposal.space.avatar || '').replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+
+  const embed = new MessageEmbed()
+    // @ts-ignore
+    .setColor(color)
+    .setTitle(proposal.title)
+    .setURL(url)
+    .setTimestamp(proposal.created * 1e3)
+    .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`, avatar)
+    .addFields(
+      { name: 'Status', value: status, inline: true },
+      { name: 'Snapshot', value: proposal.snapshot, inline: true },
+      // { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
+      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true }
+    )
+    .setDescription(preview);
+
+  if (subs[proposal.space.id] || subs['*']) {
+    [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
+      sendMessage(sub.channel, {
+        content: `${sub.mention} `,
+        embeds: [embed],
+        components
+      });
+    });
+  }
+  return { success: true };
 };
 
 export default client;
