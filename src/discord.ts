@@ -102,10 +102,8 @@ client.on('messageCreate', async msg => {
 export const sendMessage = async (channel, message) => {
   try {
     let speaker = client.channels.cache.get(channel);
-    if(!speaker) {
-      // Obtains a channel from Discord, or the channel cache if it's already available.
-      speaker = await client.channels.fetch(channel)
-    }
+    // Obtains a channel from Discord, or the channel cache if it's already available.
+    if (!speaker) speaker = await client.channels.fetch(channel);
     await speaker.send(message);
     return true;
   } catch (e) {
