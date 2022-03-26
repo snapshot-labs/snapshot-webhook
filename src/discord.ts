@@ -93,7 +93,7 @@ client.on('messageCreate', async msg => {
 
         const embed = new MessageEmbed();
         embed.setDescription(description);
-        msg.reply({ embeds: [embed] });
+        msg.reply({ embeds: [embed] }).catch(console.error);
       }
     }
   }
