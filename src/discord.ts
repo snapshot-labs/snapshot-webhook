@@ -3,8 +3,30 @@ import db from './mysql';
 import { loadSubscriptions } from './subscriptions';
 
 const token = process.env.DISCORD_TOKEN;
+const sweeperOption = {
+  interval: 300, // 5 minutes in seconds
+  filter: () => null
+};
+
 const client: any = new Client({
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES]
+  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES],
+  // Remove cache for every 5 minutes to prevent memory leaks https://discord.js.org/#/docs/discord.js/stable/class/Sweepers?scrollTo=options
+  sweepers: {
+    messages: sweeperOption,
+    reactions: sweeperOption,
+    users: sweeperOption,
+    applicationCommands: sweeperOption,
+    bans: sweeperOption,
+    emojis: sweeperOption,
+    invites: sweeperOption,
+    guildMembers: sweeperOption,
+    presences: sweeperOption,
+    stageInstances: sweeperOption,
+    stickers: sweeperOption,
+    threadMembers: sweeperOption,
+    threads: sweeperOption,
+    voiceStates: sweeperOption
+  }
 });
 export let ready = false;
 // const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
