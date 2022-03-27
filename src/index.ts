@@ -1,10 +1,9 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import api from './api';
 import './discord';
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
