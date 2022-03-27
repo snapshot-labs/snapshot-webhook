@@ -42,6 +42,26 @@ export const setActivity = (message, url?) => {
   }
 };
 
+const checkPermissions = async (channelId, me) => {
+  try {
+    const discordChannel = await client.channels.fetch(channelId);
+    if (!discordChannel.isText()) return 'Channel is not text';
+    if (!discordChannel.permissionsFor(me.user.id).has('VIEW_CHANNEL'))
+      return 'I do not have permission to view this channel, Add me to the channel and try again';
+    if (!discordChannel.permissionsFor(me.user.id).has('SEND_MESSAGES'))
+      return 'I do not have permission to send messages in this channel, Add permission and try again';
+    return true;
+  } catch (error) {
+    console.log('Error checking permissions', error);
+    const channelExistWithName = client.channels.cache.find(c => c.name === channelId);
+    if (channelExistWithName) {
+      return `Make sure the channel is in ${channelExistWithName.toString()} format.`;
+    } else {
+      return `Can't find the channel ${channelId}, please try again.`;
+    }
+  }
+};
+
 client.on('ready', async () => {
   ready = true;
   console.log(`Discord bot logged as "${client.user.tag}"`);
@@ -66,6 +86,8 @@ client.on('messageCreate', async msg => {
       const channelId = (channel || '').replace('<#', '').replace('>', '');
 
       if (['add', 'update'].includes(command) && channel && space) {
+        const permissions = await checkPermissions(channelId, msg.guild.me);
+        if (permissions !== true) return msg.reply(permissions);
         const subscription = [guild, channelId, space, mention || '', ts];
         await db.queryAsync(
           `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
