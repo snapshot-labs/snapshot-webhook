@@ -9,3 +9,13 @@ CREATE TABLE subscriptions (
   INDEX created (created),
   INDEX updated (updated)
 );
+
+CREATE TABLE events (
+  id VARCHAR(128) NOT NULL,
+  event VARCHAR(64) NOT NULL,
+  space VARCHAR(64) NOT NULL,
+  expire INT(11) NOT NULL,
+  PRIMARY KEY (id, event),
+  INDEX space (space),
+  INDEX expire (expire)
+);

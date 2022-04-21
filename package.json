@@ -12,7 +12,8 @@
     "dev": "nodemon src/index.ts"
   },
   "dependencies": {
-    "@snapshot-labs/snapshot.js": "^0.2.2",
+    "@pusher/push-notifications-server": "^1.2.5",
+    "@snapshot-labs/snapshot.js": "^0.3.68",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
     "connection-string": "^1.0.1",
@@ -21,6 +22,7 @@
     "dotenv": "^10.0.0",
     "eslint": "^6.7.2",
     "express": "^4.17.1",
+    "lodash.chunk": "^4.2.0",
     "mysql": "^2.18.1",
     "nodemon": "^2.0.15",
     "remove-markdown": "^0.3.0",
