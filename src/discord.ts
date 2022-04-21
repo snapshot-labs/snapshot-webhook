@@ -79,7 +79,7 @@ client.on('messageCreate', async msg => {
   const guild = msg.guild.id;
 
   const ts = parseInt((Date.now() / 1e3).toFixed());
-  const isAdmin = msg.member.permissions?.has(Permissions.FLAGS.ADMINISTRATOR) || false;
+  const isAdmin = msg.member?.permissions?.has(Permissions.FLAGS.ADMINISTRATOR) || false;
 
   if (msg.content === '!ping') msg.reply('Pong?');
 
