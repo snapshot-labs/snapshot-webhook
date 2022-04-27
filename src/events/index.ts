@@ -4,7 +4,7 @@ import fetch from 'cross-fetch';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { sha256 } from '../utils';
 import db from '../mysql';
-import { getProposalScores } from '../helpers/proposal';
+import { getProposal, getProposalScores } from '../helpers/proposal';
 
 const delay = 5;
 const interval = 30;
@@ -13,8 +13,13 @@ const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
 
-export const handleCreatedEvent = event => {
-  const { proposal, space, id } = event;
+export const handleCreatedEvent = async event => {
+  const { space, id } = event;
+  const proposalId = id.replace('proposal/', '') || '';
+  const proposal = await getProposal(proposalId);
+  if (!proposal) {
+    throw new Error('Proposal not found');
+  }
   const proposalEvent = {
     id,
     space
