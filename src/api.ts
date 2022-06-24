@@ -29,7 +29,7 @@ router.all('/webhook', async (req, res) => {
   const event = req.body?.event || 'proposal/start';
   const secret = req.body?.secret || '0';
 
-  if (sha256(secret) !== 'f8bd01917f4122e277da6748a8170377a8b5561db716c0b0c1ea7981b2bdb0df') {
+  if (sha256(secret) !== 'd17c39268915ec2936c7df70446c66e6b50cfa4f94c706c45827143dca1c3733') {
     console.log('Wrong secret');
     return res.json({ error: true });
   }
