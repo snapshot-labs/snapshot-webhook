@@ -5,7 +5,6 @@ import bluebird from 'bluebird';
 import parse from 'connection-string';
 
 const connectionLimit = parseInt(process.env.CONNECTION_LIMIT || '5');
-console.log('Connection limit', connectionLimit);
 
 // @ts-ignore
 const config = parse(process.env.DATABASE_URL);

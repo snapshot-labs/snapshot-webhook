@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 });
 
 router.all('/webhook', async (req, res) => {
-  console.log('Received', req.body);
+  console.log('Received', JSON.stringify(req.body));
   const proposalId = req.body?.id?.replace('proposal/', '') || 'Qmemba2wh7dUiWq62447X7mpXmQ34di1Eym3N7vE7V7WsN';
   const event = req.body?.event || 'proposal/start';
   const secret = req.body?.secret || '0';
