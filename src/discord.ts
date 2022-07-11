@@ -91,7 +91,7 @@ client.on('messageCreate', async msg => {
 
       if (['add', 'update'].includes(command) && channel && space) {
         const permissions = await checkPermissions(channelId, msg.guild.me);
-        if (permissions !== true) return msg.reply(permissions);
+        if (permissions !== true) return msg.reply(permissions).catch(console.error);
         const subscription = [guild, channelId, space, mention || '', ts];
         await db.queryAsync(
           `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
@@ -109,7 +109,7 @@ client.on('messageCreate', async msg => {
             { name: 'Mention', value: mention || 'None', inline: true }
           )
           .setDescription('You have successfully subscribed to space events.');
-        msg.reply({ embeds: [embed] });
+        msg.reply({ embeds: [embed] }).catch(console.error);
       } else if (command === 'remove' && channel && space) {
         const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
         await db.queryAsync(query, [guild, channelId, space]);
@@ -120,7 +120,7 @@ client.on('messageCreate', async msg => {
           .setColor(color)
           .addFields({ name: 'Space', value: space, inline: true }, { name: 'Channel', value: channel, inline: true })
           .setDescription('You have successfully unsubscribed to space events.');
-        msg.reply({ embeds: [embed] });
+        msg.reply({ embeds: [embed] }).catch(console.error);
       } else {
         let description = '**Commands**\n\n';
         description += `**Add**\n`;

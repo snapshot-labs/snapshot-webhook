@@ -9,5 +9,5 @@ export async function loadSubscriptions() {
     if (!subs[sub.space]) subs[sub.space] = [];
     subs[sub.space].push(sub);
   });
-  console.log('Subscriptions', subs);
+  console.log('Subscriptions', Object.keys(subs).length);
 }

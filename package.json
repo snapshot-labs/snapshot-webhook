@@ -1,5 +1,5 @@
 {
-  "name": "snapshot-discord",
+  "name": "snapshot-webhook",
   "version": "0.1.0",
   "license": "MIT",
   "engines": {

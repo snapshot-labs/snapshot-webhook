@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 
 // TODO: Once hub changes are merged, remove this endpoint
 router.post('/webhook', checkAuth, async (req, res) => {
-  console.log('Received', req.body);
+  console.log('Received', JSON.stringify(req.body));
   const proposalId = req.body?.id?.replace('proposal/', '') || '';
   const event = req.body?.event || 'proposal/start';
 
