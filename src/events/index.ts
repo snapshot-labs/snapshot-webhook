@@ -69,13 +69,13 @@ async function sendEvent(event, to) {
 
   const res = await fetch(to, {
     method: 'POST',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
       Authentication: headerSecret
     },
     body: JSON.stringify(event)
   });
-  return res.json();
+  return res.text();
 }
 
 const sendEventToSubscribers = (event, subscribers) => {
@@ -84,7 +84,7 @@ const sendEventToSubscribers = (event, subscribers) => {
       .filter(subscriber => !subscriber.spaces || subscriber.spaces.includes(event.space))
       .map(subscriber => sendEvent(event, subscriber.url))
   )
-    .then((values) => console.log('[events] Process event done', values))
+    .then(values => console.log('[events] Process event done', JSON.stringify(values)))
     .catch(e => console.log('[events] Process event failed', e));
 };
 
