@@ -79,7 +79,7 @@ async function sendEvent(event, to) {
 }
 
 const sendEventToSubscribers = (event, subscribers) => {
-  Promise.all(
+  Promise.allSettled(
     subscribers
       .filter(subscriber => !subscriber.spaces || subscriber.spaces.includes(event.space))
       .map(subscriber => sendEvent(event, subscriber.url))
