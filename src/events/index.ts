@@ -75,8 +75,7 @@ async function sendEvent(event, to) {
     },
     body: JSON.stringify(event)
   });
-  const response = await res.json();
-  return response;
+  return await res.json();
 }
 
 const sendEventToSubscribers = (event, subscribers) => {
