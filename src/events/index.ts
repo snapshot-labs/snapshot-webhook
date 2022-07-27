@@ -84,7 +84,7 @@ const sendEventToSubscribers = (event, subscribers) => {
       .filter(subscriber => !subscriber.spaces || subscriber.spaces.includes(event.space))
       .map(subscriber => sendEvent(event, subscriber.url))
   )
-    .then(() => console.log('[events] Process event done'))
+    .then((values) => console.log('[events] Process event done', values))
     .catch(e => console.log('[events] Process event failed', e));
 };
 
