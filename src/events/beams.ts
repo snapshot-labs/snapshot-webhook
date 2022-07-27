@@ -16,6 +16,7 @@ export const sendPushNotification = async event => {
     console.log('[events] Proposal not found', event.id);
     return;
   }
+  console.log([deep_link to push notification] `${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`)
   for await (const walletsChunk of walletsChunks) {
     await beams.publishToInterests(walletsChunk, {
       web: {
