@@ -63,6 +63,7 @@ export const handleDeletedEvent = event => {
 };
 
 async function sendEvent(event, to) {
+  console.log(JSON.stringify(event));
   event.token = sha256(`${to}${serviceEventsSalt}`);
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
