@@ -25,7 +25,7 @@ export async function getProposal(id) {
     }
   };
   try {
-    const result = await snapshot.utils.subgraphRequest(hubURL + '/graphql', query);
+    const result = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
     proposal = result.proposal || null;
   } catch (error) {
     console.log('[events] Snapshot hub error:', error);
