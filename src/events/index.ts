@@ -66,26 +66,29 @@ async function sendEvent(event, to) {
   event.token = sha256(`${to}${serviceEventsSalt}`);
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
-
-  const res = await fetch(to, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authentication: headerSecret
-    },
-    body: JSON.stringify(event)
-  });
-  return res.text();
+  try {
+    const res = await fetch(to, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authentication: headerSecret
+      },
+      body: JSON.stringify(event)
+    });
+    return res.text();
+  } catch (error) {
+    console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
+    return;
+  }
 }
 
-const sendEventToSubscribers = (event, subscribers) => {
-  console.log(`[events] Event Data ${JSON.stringify(event)}`);
+const sendEventToWebhookSubscribers = (event, subscribers) => {
   Promise.allSettled(
     subscribers
       .filter(subscriber => !subscriber.spaces || subscriber.spaces.includes(event.space))
       .map(subscriber => sendEvent(event, subscriber.url))
   )
-    .then(values => console.log('[events] Process event done', JSON.stringify(values)))
+    .then(() => console.log('[events] Process event done'))
     .catch(e => console.log('[events] Process event failed', e));
 };
 
@@ -110,7 +113,7 @@ async function processEvents(subscribers) {
     // TODO: handle errors and retry
     if (servicePushNotifications && event.event === 'proposal/start') sendPushNotification(event);
     sendEventToDiscordSubscribers(event.event, proposalId);
-    sendEventToSubscribers(event, subscribers);
+    sendEventToWebhookSubscribers(event, subscribers);
 
     try {
       await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [event.id, event.event]);

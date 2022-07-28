@@ -17,15 +17,19 @@ export const sendPushNotification = async event => {
     return;
   }
   console.log(`[deep_link to push notification] ${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`);
-  for await (const walletsChunk of walletsChunks) {
-    await beams.publishToInterests(walletsChunk, {
-      web: {
-        notification: {
-          title: event.space,
-          body: proposal.title,
-          deep_link: `${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`
+  try {
+    for await (const walletsChunk of walletsChunks) {
+      await beams.publishToInterests(walletsChunk, {
+        web: {
+          notification: {
+            title: event.space,
+            body: proposal.title,
+            deep_link: `${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`
+          }
         }
-      }
-    });
+      });
+    }
+  } catch (error) {
+    console.log('[events] Error sending push notification', error);
   }
 };
