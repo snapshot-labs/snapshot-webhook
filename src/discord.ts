@@ -1,14 +1,14 @@
 import {
   Client,
   Intents,
-  MessageEmbed,
-  Permissions,
   MessageActionRow,
-  MessageButton
+  MessageButton,
+  MessageEmbed,
+  Permissions
 } from 'discord.js';
-import db from './mysql';
+import db from './helpers/mysql';
 import removeMd from 'remove-markdown';
-import { shortenAddress } from './utils';
+import { shortenAddress } from './helpers/utils';
 import { subs } from './subscriptions';
 import { loadSubscriptions } from './subscriptions';
 import { getProposal } from './helpers/proposal';

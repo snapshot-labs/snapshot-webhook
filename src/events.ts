@@ -1,12 +1,12 @@
 import fetch from 'cross-fetch';
-import { sendPushNotification } from './beams';
-import { sendEventToDiscordSubscribers } from '../discord';
-import { sha256 } from '../utils';
-import db from '../mysql';
-import { getProposal, getProposalScores } from '../helpers/proposal';
+import { sendEventToDiscordSubscribers } from './discord';
+import { sendPushNotification } from './helpers/beams';
+import db from './helpers/mysql';
+import { sha256 } from './helpers/utils';
+import { getProposal, getProposalScores } from './helpers/proposal';
 
 const delay = 5;
-const interval = 10;
+const interval = 30;
 const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
