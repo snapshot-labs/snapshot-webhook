@@ -10,13 +10,17 @@ const beams = new PushNotifications({
 
 export const sendPushNotification = async event => {
   const subscribedWallets = await getSubscribedWallets(event.space);
+  console.log('[events push notification]', JSON.stringify(subscribedWallets));
+  console.log(
+    `[events push notification] ${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`,
+    JSON.stringify(event)
+  );
   const walletsChunks = chunk(subscribedWallets, 100);
   const proposal = await getProposal(event.id.replace('proposal/', ''));
   if (!proposal) {
     console.log('[events] Proposal not found', event.id);
     return;
   }
-  console.log(`[deep_link to push notification] ${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`);
   try {
     for await (const walletsChunk of walletsChunks) {
       await beams.publishToInterests(walletsChunk, {
