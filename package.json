@@ -2,14 +2,11 @@
   "name": "snapshot-webhook",
   "version": "0.1.0",
   "license": "MIT",
-  "engines": {
-    "node": "16.6.x"
-  },
   "scripts": {
     "lint": "eslint . --ext .ts --fix",
     "build": "tsc",
-    "start": "nodemon src/index.ts",
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "start": "node dist/src/index.js"
   },
   "dependencies": {
     "@pusher/push-notifications-server": "^1.2.5",
