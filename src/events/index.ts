@@ -116,7 +116,10 @@ async function processEvents(subscribers) {
     sendEventToWebhookSubscribers(event, subscribers);
 
     try {
-      await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [event.id, event.event]);
+      await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [
+        event.id,
+        event.event
+      ]);
       console.log(`[events] Event sent ${event.id} ${event.event}`);
     } catch (e) {
       console.log('[events]', e);

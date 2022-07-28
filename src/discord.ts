@@ -1,4 +1,11 @@
-import { Client, Intents, MessageEmbed, Permissions, MessageActionRow, MessageButton } from 'discord.js';
+import {
+  Client,
+  Intents,
+  MessageEmbed,
+  Permissions,
+  MessageActionRow,
+  MessageButton
+} from 'discord.js';
 import db from './mysql';
 import removeMd from 'remove-markdown';
 import { shortenAddress } from './utils';
@@ -118,7 +125,10 @@ client.on('messageCreate', async msg => {
         const color = '#EE4145';
         const embed = new MessageEmbed()
           .setColor(color)
-          .addFields({ name: 'Space', value: space, inline: true }, { name: 'Channel', value: channel, inline: true })
+          .addFields(
+            { name: 'Space', value: space, inline: true },
+            { name: 'Channel', value: channel, inline: true }
+          )
           .setDescription('You have successfully unsubscribed to space events.');
         msg.reply({ embeds: [embed] }).catch(console.error);
       } else {
@@ -130,7 +140,10 @@ client.on('messageCreate', async msg => {
         description += `!snapshot remove <channel> <space> <mention?>\n`;
         description += `*e.g !snapshot remove #announcements yam.eth*\n`;
 
-        const subscriptions = await db.queryAsync('SELECT * FROM subscriptions WHERE guild = ?', guild);
+        const subscriptions = await db.queryAsync(
+          'SELECT * FROM subscriptions WHERE guild = ?',
+          guild
+        );
 
         if (subscriptions.length > 0) {
           description += `\n**Subscriptions (${subscriptions.length})**\n\n`;
@@ -191,7 +204,10 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
-  const avatar = (proposal.space.avatar || '').replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+  const avatar = (proposal.space.avatar || '').replace(
+    'ipfs://',
+    'https://cloudflare-ipfs.com/ipfs/'
+  );
 
   const embed = new MessageEmbed()
     // @ts-ignore
