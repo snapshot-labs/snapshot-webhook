@@ -19,3 +19,18 @@ CREATE TABLE events (
   INDEX space (space),
   INDEX expire (expire)
 );
+
+CREATE TABLE subscribers (
+  id INT NOT NULL AUTO_INCREMENT,
+  owner VARCHAR(256) NOT NULL,
+  url TEXT NOT NULL,
+  space VARCHAR(256) NOT NULL,
+  active INT(11) NOT NULL,
+  created INT(11) NOT NULL,
+  PRIMARY KEY (id),
+  INDEX owner (owner),
+  INDEX space (space),
+  INDEX active (active),
+  INDEX created (created)
+);
+

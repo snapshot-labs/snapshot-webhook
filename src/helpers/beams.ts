@@ -1,6 +1,6 @@
 import chunk from 'lodash.chunk';
 import PushNotifications from '@pusher/push-notifications-server';
-import { getSubscribedWallets } from '../helpers/notificationSubscriptions';
+import { getSubscribedWallets } from '../helpers/subscriptions';
 import { getProposal } from '../helpers/proposal';
 
 const beams = new PushNotifications({

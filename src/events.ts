@@ -1,14 +1,12 @@
-import { sendPushNotification } from './beams';
-import { sendEventToDiscordSubscribers } from './../discord';
 import fetch from 'cross-fetch';
-import snapshot from '@snapshot-labs/snapshot.js';
-import { sha256 } from '../utils';
-import db from '../mysql';
-import { getProposal, getProposalScores } from '../helpers/proposal';
+import { sendEventToDiscordSubscribers } from './discord';
+import { sendPushNotification } from './helpers/beams';
+import db from './helpers/mysql';
+import { sha256 } from './helpers/utils';
+import { getProposal, getProposalScores } from './helpers/proposal';
 
 const delay = 5;
 const interval = 30;
-const serviceEventsSubscribers = process.env.SERVICE_EVENTS_SUBSCRIBERS || 0;
 const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
@@ -85,7 +83,7 @@ async function sendEvent(event, to) {
 const sendEventToWebhookSubscribers = (event, subscribers) => {
   Promise.allSettled(
     subscribers
-      .filter(subscriber => !subscriber.spaces || subscriber.spaces.includes(event.space))
+      .filter(subscriber => [event.space, '*'].includes(subscriber.space))
       .map(subscriber => sendEvent(event, subscriber.url))
   )
     .then(() => console.log('[events] Process event done'))
@@ -127,10 +125,10 @@ async function processEvents(subscribers) {
   }
 }
 
-if (serviceEvents && serviceEventsSubscribers) {
+if (serviceEvents) {
   setInterval(async () => {
     try {
-      const subscribers = await snapshot.utils.getJSON(serviceEventsSubscribers);
+      const subscribers = await db.queryAsync('SELECT * FROM subscribers');
       console.log('[events] Subscribers', subscribers.length);
       await processEvents(subscribers);
     } catch (e) {

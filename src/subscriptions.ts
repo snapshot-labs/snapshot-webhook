@@ -1,4 +1,4 @@
-import db from './mysql';
+import db from './helpers/mysql';
 
 export let subs = {};
 
