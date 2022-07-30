@@ -9,9 +9,8 @@ import {
 import db from './helpers/mysql';
 import removeMd from 'remove-markdown';
 import { shortenAddress } from './helpers/utils';
-import { subs } from './subscriptions';
-import { loadSubscriptions } from './subscriptions';
-import { getProposal } from './helpers/proposal';
+import { subs, loadSubscriptions } from './subscriptions';
+import { checkSpace, getProposal } from './helpers/proposal';
 
 const token = process.env.DISCORD_TOKEN;
 const sweeperOption = {
@@ -99,6 +98,9 @@ client.on('messageCreate', async msg => {
       if (['add', 'update'].includes(command) && channel && space) {
         const permissions = await checkPermissions(channelId, msg.guild.me);
         if (permissions !== true) return msg.reply(permissions).catch(console.error);
+        const spaceExist = await checkSpace(space);
+        if (!spaceExist) return msg.reply('Space not found');
+
         const subscription = [guild, channelId, space, mention || '', ts];
         await db.queryAsync(
           `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)

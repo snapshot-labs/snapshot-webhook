@@ -19,10 +19,8 @@ export function sha256(str) {
 }
 
 export const checkAuth = (req, res, next) => {
-  // TODO: Remove this body secret once events are working on this server
-  const secret = req.body?.secret || '0';
   const token = req.headers?.authentication || '0';
-  if (sha256(secret) === hubPublicKey || sha256(token) === hubPublicKey) {
+  if (sha256(token) === hubPublicKey) {
     next();
     return;
   }
