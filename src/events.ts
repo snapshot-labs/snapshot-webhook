@@ -1,4 +1,5 @@
 import fetch from 'cross-fetch';
+import snapshot from '@snapshot-labs/snapshot.js';
 import { sendEventToDiscordSubscribers } from './discord';
 import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
@@ -6,7 +7,7 @@ import { sha256 } from './helpers/utils';
 import { getProposal, getProposalScores } from './helpers/proposal';
 
 const delay = 5;
-const interval = 30;
+const interval = 15;
 const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
@@ -125,14 +126,18 @@ async function processEvents(subscribers) {
   }
 }
 
+async function run() {
+  try {
+    const subscribers = await db.queryAsync('SELECT * FROM subscribers');
+    console.log('[events] Subscribers', subscribers.length);
+    await processEvents(subscribers);
+  } catch (e) {
+    console.log('[events] Failed to process', e);
+  }
+  await snapshot.utils.sleep(interval * 1e3);
+  await run();
+}
+
 if (serviceEvents) {
-  setInterval(async () => {
-    try {
-      const subscribers = await db.queryAsync('SELECT * FROM subscribers');
-      console.log('[events] Subscribers', subscribers.length);
-      await processEvents(subscribers);
-    } catch (e) {
-      console.log('[events] Failed to process');
-    }
-  }, interval * 1e3);
+  setTimeout(() => run(), interval * 1e3);
 }
