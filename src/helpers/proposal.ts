@@ -40,7 +40,7 @@ export async function getProposalScores(proposalId) {
 export async function checkSpace(space) {
   try {
     const spaceData = await snapshot.utils.getJSON(`${hubURL}/api/spaces/${space}`);
-    return spaceData.id === space;
+    return spaceData?.name;
   } catch (error) {
     return false;
   }
