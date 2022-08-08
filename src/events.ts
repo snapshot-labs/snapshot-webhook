@@ -5,6 +5,11 @@ import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal, getProposalScores } from './helpers/proposal';
+import {
+  getActiveSubscribers,
+  updateActiveSubscribers,
+  updateSubscribers
+} from './helpers/subscribers';
 
 const delay = 5;
 const interval = 15;
@@ -66,7 +71,10 @@ async function sendEvent(event, to) {
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
   try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 10000); // Abort request after 10 seconds if there is no response
     const res = await fetch(to, {
+      signal: controller.signal,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,24 +82,31 @@ async function sendEvent(event, to) {
       },
       body: JSON.stringify(event)
     });
-    return res.text();
+    if (res.status !== 200) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    return 'success';
   } catch (error) {
     console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
-    return;
+    return 'failed';
   }
 }
 
-const sendEventToWebhookSubscribers = (event, subscribers) => {
-  Promise.allSettled(
-    subscribers
-      .filter(subscriber => [event.space, '*'].includes(subscriber.space))
-      .map(subscriber => sendEvent(event, subscriber.url))
-  )
-    .then(() => console.log('[events] Process event done'))
-    .catch(e => console.log('[events] Process event failed', e));
+const sendEventToWebhookSubscribers = async event => {
+  const subscribers = await getActiveSubscribers(event.space);
+  console.log('[events] Subscribers for this event: ', subscribers.length);
+  if (!subscribers.length) return;
+  try {
+    const allSubscribersStatus = await Promise.all(
+      subscribers.map(subscriber => sendEvent(event, subscriber.url))
+    );
+    updateSubscribers(subscribers, allSubscribersStatus);
+  } catch (e) {
+    console.log('[events] sendEventToWebhookSubscribers failed', e);
+  }
 };
 
-async function processEvents(subscribers) {
+async function processEvents() {
   const ts = parseInt((Date.now() / 1e3).toFixed()) - delay;
   const events = await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts]);
 
@@ -112,7 +127,7 @@ async function processEvents(subscribers) {
     // TODO: handle errors and retry
     if (servicePushNotifications && event.event === 'proposal/start') sendPushNotification(event);
     sendEventToDiscordSubscribers(event.event, proposalId);
-    sendEventToWebhookSubscribers(event, subscribers);
+    sendEventToWebhookSubscribers(event);
 
     try {
       await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [
@@ -127,17 +142,16 @@ async function processEvents(subscribers) {
 }
 
 async function run() {
+  await snapshot.utils.sleep(interval * 1e3);
   try {
-    const subscribers = await db.queryAsync('SELECT * FROM subscribers');
-    console.log('[events] Subscribers', subscribers.length);
-    await processEvents(subscribers);
+    await processEvents();
   } catch (e) {
     console.log('[events] Failed to process', e);
   }
-  await snapshot.utils.sleep(interval * 1e3);
-  await run();
+  updateActiveSubscribers();
+  run();
 }
 
 if (serviceEvents) {
-  setTimeout(() => run(), interval * 1e3);
+  run();
 }

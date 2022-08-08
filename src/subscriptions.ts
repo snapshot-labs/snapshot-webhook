@@ -9,5 +9,5 @@ export async function loadSubscriptions() {
     if (!subs[sub.space]) subs[sub.space] = [];
     subs[sub.space].push(sub);
   });
-  console.log('Subscriptions', Object.keys(subs).length);
+  console.log('Discord Subscriptions', Object.keys(subs).length);
 }
