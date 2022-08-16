@@ -1,15 +1,34 @@
-import chunk from 'lodash.chunk';
 import PushNotifications from '@pusher/push-notifications-server';
-import { getSubscribedWallets } from '../helpers/subscriptions';
-import { getProposal } from '../helpers/proposal';
+import snapshot from '@snapshot-labs/snapshot.js';
+import chunk from 'lodash.chunk';
+import { getProposal } from './proposal';
 
 const beams = new PushNotifications({
   instanceId: process.env.SERVICE_PUSHER_BEAMS_INSTANCE_ID ?? '',
   secretKey: process.env.SERVICE_PUSHER_BEAMS_SECRET_KEY ?? ''
 });
 
+async function getSubscribers(space) {
+  let subscriptions: { [key: string]: any } = [];
+  const query = {
+    subscriptions: {
+      __args: {
+        where: { space }
+      },
+      address: true
+    }
+  };
+  try {
+    const result = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
+    subscriptions = result.subscriptions || [];
+  } catch (error) {
+    console.log('[events] Snapshot hub error:', error);
+  }
+  return subscriptions.map(subscription => subscription.address);
+}
+
 export const sendPushNotification = async event => {
-  const subscribedWallets = await getSubscribedWallets(event.space);
+  const subscribedWallets = await getSubscribers(event.space);
   const walletsChunks = chunk(subscribedWallets, 100);
   const proposal = await getProposal(event.id.replace('proposal/', ''));
   if (!proposal) {
@@ -28,7 +47,7 @@ export const sendPushNotification = async event => {
         }
       });
     }
-  } catch (error) {
-    console.log('[events] Error sending push notification', error);
+  } catch (e) {
+    console.log('[events] Error sending push notification', e);
   }
 };

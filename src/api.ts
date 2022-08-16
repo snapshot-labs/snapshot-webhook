@@ -1,7 +1,6 @@
 import express from 'express';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
 import { checkAuth, sendError } from './helpers/utils';
-import { sendEventToDiscordSubscribers } from './discord';
 import pkg from '../package.json';
 
 const router = express.Router();
