@@ -75,6 +75,8 @@ const checkPermissions = async (channelId, me) => {
 client.on('ready', async () => {
   ready = true;
   console.log(`Discord bot logged as "${client.user.tag}"`);
+  console.log(`Server count: ${client.guilds?.cache?.size}`);
+
   setActivity('!');
   await loadSubscriptions();
 });
