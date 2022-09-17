@@ -249,7 +249,10 @@ client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'ping') {
-    await interaction.reply({ content: 'Pong!', ephemeral: true });
+    await interaction.reply({
+      content: `Pong! Websocket heartbeat: ${client.ws.ping}ms.`,
+      ephemeral: true
+    });
   } else if (interaction.commandName === 'snapshot-help') {
     snapshotHelpCommandHandler(interaction);
   } else if (interaction.commandName === 'snapshot') {
