@@ -297,7 +297,11 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
               .setStyle(ButtonStyle.Link)
           )
         );
-  components = event === 'proposal/start' && proposal.type === 'single-choice' ? components : [];
+  components =
+    event === 'proposal/start' && (proposal.type === 'single-choice' || proposal.type === 'basic')
+      ? components
+      : [];
+
   const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
