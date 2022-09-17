@@ -1,10 +1,17 @@
 import {
   Client,
-  Intents,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
-  Permissions
+  GatewayIntentBits,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  PermissionsBitField,
+  EmbedBuilder,
+  codeBlock,
+  underscore,
+  inlineCode
 } from 'discord.js';
 import db from './helpers/mysql';
 import removeMd from 'remove-markdown';
@@ -12,14 +19,21 @@ import { shortenAddress } from './helpers/utils';
 import { subs, loadSubscriptions } from './subscriptions';
 import { checkSpace, getProposal } from './helpers/proposal';
 
-const token = process.env.DISCORD_TOKEN;
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
+const token = process.env.DISCORD_TOKEN || '';
+
 const sweeperOption = {
   interval: 300, // 5 minutes in seconds
   filter: () => null
 };
 
 const client: any = new Client({
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.DirectMessages
+  ],
   // Remove cache for every 5 minutes to prevent memory leaks https://discord.js.org/#/docs/discord.js/stable/class/Sweepers?scrollTo=options
   sweepers: {
     messages: sweeperOption,
@@ -41,6 +55,56 @@ const client: any = new Client({
 export let ready = false;
 // const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
 
+const commands = [
+  new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Replies with Pong!')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(0), // only administrator role
+  new SlashCommandBuilder()
+    .setName('snapshot-help')
+    .setDescription('Information about snapshot bot!')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(0),
+  new SlashCommandBuilder()
+    .setName('snapshot')
+    .setDescription('Add or Remove subscriptions!')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(0)
+    .addStringOption(option =>
+      option
+        .setName('type')
+        .setDescription('add or remove')
+        .setRequired(true)
+        .addChoices({ name: 'Add', value: 'add' }, { name: 'Remove', value: 'remove' })
+    )
+    .addChannelOption(option =>
+      option
+        .setName('channel')
+        .setDescription('Channel to post the events')
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option
+        .setName('space')
+        .setDescription('space to subscribe to')
+        .setRequired(true)
+    )
+    .addStringOption(option => option.setName('mention').setDescription('Mention role'))
+];
+
+const rest = new REST({ version: '10' }).setToken(token);
+
+(async () => {
+  try {
+    console.log('Started refreshing application (/) commands.');
+    await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
+  }
+})();
+
 client.login(token);
 
 export const setActivity = (message, url?) => {
@@ -52,14 +116,14 @@ export const setActivity = (message, url?) => {
   }
 };
 
-const checkPermissions = async (channelId, me) => {
+const checkPermissions = async (channelId, botId) => {
   try {
     const discordChannel = await client.channels.fetch(channelId);
-    if (!discordChannel.isText()) return 'Channel is not text';
-    if (!discordChannel.permissionsFor(me.user.id).has('VIEW_CHANNEL'))
-      return 'I do not have permission to view this channel, Add me to the channel and try again';
-    if (!discordChannel.permissionsFor(me.user.id).has('SEND_MESSAGES'))
-      return 'I do not have permission to send messages in this channel, Add permission and try again';
+    if (!discordChannel.isTextBased()) return 'Channel is not text';
+    if (!discordChannel.permissionsFor(botId).has(PermissionsBitField.Flags.ViewChannel))
+      return `I do not have permission to view this channel ${discordChannel.toString()}, Add me to the channel and try again`;
+    if (!discordChannel.permissionsFor(botId).has(PermissionsBitField.Flags.SendMessages))
+      return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
     return true;
   } catch (error) {
     console.log('Error checking permissions', error);
@@ -79,86 +143,117 @@ client.on('ready', async () => {
   await loadSubscriptions();
 });
 
-client.on('messageCreate', async msg => {
-  if (msg.author.bot) return;
+async function snapshotHelpCommandHandler(interaction) {
+  const subscriptions = await db.queryAsync(
+    'SELECT * FROM subscriptions WHERE guild = ?',
+    interaction.guildId
+  );
+  let subscriptionsDescription = '';
+  if (subscriptions.length > 0) {
+    subscriptionsDescription += `\n\n**Subscriptions (${subscriptions.length})**\n\n`;
+    subscriptions.forEach(subscription => {
+      subscriptionsDescription += `<#${subscription.channel}> ${subscription.space}\n`;
+    });
+    subscriptionsDescription += `\n**Commands**`;
+  }
+  const exampleBlock = codeBlock(
+    `# ADD:\n/snapshot type:Add channel:#snapshot space:yam.eth mention:@everyone\n\n# Remove:\n/snapshot type:Remove channel:#snapshot space:yam.eth`
+  );
 
-  const guild = msg.guild.id;
+  const embed = new EmbedBuilder()
+    .setColor(0x0099ff)
+    .setTitle(underscore('Snapshot Bot'))
+    .setDescription(subscriptionsDescription)
+    .setThumbnail('https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true')
+    .addFields(
+      { name: '`/ping`', value: 'Description: Replies with Pong!' },
+      {
+        name: '`/snapshot-help`',
+        value: 'Description: Information about snapshot bot!'
+      },
+      {
+        name: '`/snapshot`',
+        value: `Description: Add or Remove subscriptions!
+        Options: 
+        *type*: Add or Remove
+        *channel*: Channel to post the events
+        *space*: space to subscribe to
+        *mention*: Mention role (optional)
+        
+        Examples:
+        ${exampleBlock}
 
-  const ts = parseInt((Date.now() / 1e3).toFixed());
-  const isAdmin = msg.member?.permissions?.has(Permissions.FLAGS.ADMINISTRATOR) || false;
-
-  if (msg.content === '!ping') msg.reply('Pong?');
-
-  if (isAdmin) {
-    const [id, command, channel, space, mention] = msg.content.split(' ');
-    if (id === '!snapshot') {
-      console.log('Received', guild, msg.author.username, ':', msg.content);
-      const channelId = (channel || '').replace('<#', '').replace('>', '');
-
-      if (['add', 'update'].includes(command) && channel && space) {
-        const permissions = await checkPermissions(channelId, msg.guild.me);
-        if (permissions !== true) return msg.reply(permissions).catch(console.error);
-        const spaceExist = await checkSpace(space);
-        if (!spaceExist) return msg.reply('Space not found');
-
-        const subscription = [guild, channelId, space, mention || '', ts];
-        await db.queryAsync(
-          `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
-          [...subscription, ...subscription]
-        );
-        await loadSubscriptions();
-
-        const color = '#21B66F';
-        const embed = new MessageEmbed()
-          .setColor(color)
-          .addFields(
-            { name: 'Space', value: space, inline: true },
-            { name: 'Channel', value: channel, inline: true },
-            { name: 'Mention', value: mention || 'None', inline: true }
-          )
-          .setDescription('You have successfully subscribed to space events.');
-        msg.reply({ embeds: [embed] }).catch(console.error);
-      } else if (command === 'remove' && channel && space) {
-        const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
-        await db.queryAsync(query, [guild, channelId, space]);
-        await loadSubscriptions();
-
-        const color = '#EE4145';
-        const embed = new MessageEmbed()
-          .setColor(color)
-          .addFields(
-            { name: 'Space', value: space, inline: true },
-            { name: 'Channel', value: channel, inline: true }
-          )
-          .setDescription('You have successfully unsubscribed to space events.');
-        msg.reply({ embeds: [embed] }).catch(console.error);
-      } else {
-        let description = '**Commands**\n\n';
-        description += `**Add**\n`;
-        description += `!snapshot add <channel> <space> <mention?>\n`;
-        description += `*e.g !snapshot add #announcements yam.eth @everyone*\n\n`;
-        description += `**Remove**\n`;
-        description += `!snapshot remove <channel> <space> <mention?>\n`;
-        description += `*e.g !snapshot remove #announcements yam.eth*\n`;
-
-        const subscriptions = await db.queryAsync(
-          'SELECT * FROM subscriptions WHERE guild = ?',
-          guild
-        );
-
-        if (subscriptions.length > 0) {
-          description += `\n**Subscriptions (${subscriptions.length})**\n\n`;
-          subscriptions.forEach(subscription => {
-            description += `<#${subscription.channel}> ${subscription.space}\n`;
-          });
-        }
-
-        const embed = new MessageEmbed();
-        embed.setDescription(description);
-        msg.reply({ embeds: [embed] }).catch(console.error);
+        Have any questions? Join our discord: https://discord.snapshot.org`
       }
-    }
+    );
+  interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+}
+
+async function snapshotCommandHandler(interaction) {
+  const ts = parseInt((Date.now() / 1e3).toFixed());
+  const commandType = interaction.options.getString('type');
+  const { id: channelId } = interaction.options.getChannel('channel');
+  const space = interaction.options.getString('space');
+  const mention = interaction.options.getString('mention');
+  console.log(
+    'Received',
+    interaction.guildId,
+    interaction.user.username,
+    ':',
+    commandType,
+    channelId,
+    space,
+    mention
+  );
+  if (commandType === 'add') {
+    const permissions = await checkPermissions(channelId, CLIENT_ID);
+    if (permissions !== true) return interaction.reply(permissions).catch(console.error);
+
+    const spaceExist = await checkSpace(space);
+    if (!spaceExist) return interaction.reply(`Space not found: ${inlineCode(space)}`);
+
+    const subscription = [interaction.guildId, channelId, space, mention || '', ts];
+    await db.queryAsync(
+      `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
+      [...subscription, ...subscription]
+    );
+    await loadSubscriptions();
+    const color = '#21B66F';
+    const embed = new EmbedBuilder()
+      .setColor(color)
+      .addFields(
+        { name: 'Space', value: space, inline: true },
+        { name: 'Channel', value: `<#${channelId}>`, inline: true },
+        { name: 'Mention', value: mention || 'None', inline: true }
+      )
+      .setDescription('You have successfully subscribed to space events.');
+    interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+  } else if (commandType === 'remove') {
+    const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
+    await db.queryAsync(query, [interaction.guildId, channelId, space]);
+    await loadSubscriptions();
+    const color = '#EE4145';
+    const embed = new EmbedBuilder()
+      .setColor(color)
+      .addFields(
+        { name: 'Space', value: space, inline: true },
+        { name: 'Channel', value: `<#${channelId}>`, inline: true }
+      )
+      .setDescription('You have successfully unsubscribed to space events.');
+    interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+  }
+}
+
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === 'ping') {
+    await interaction.reply({ content: 'Pong!', ephemeral: true });
+  } else if (interaction.commandName === 'snapshot-help') {
+    snapshotHelpCommandHandler(interaction);
+  } else if (interaction.commandName === 'snapshot') {
+    snapshotCommandHandler(interaction);
   }
 });
 
@@ -195,11 +290,11 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
     proposal.choices.length > 5
       ? []
       : proposal.choices.map((choice, i) =>
-          new MessageActionRow().addComponents(
-            new MessageButton()
+          new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
               .setLabel(choice)
               .setURL(`${url}?choice=${i + 1}`)
-              .setStyle('LINK')
+              .setStyle(ButtonStyle.Link)
           )
         );
   components = event === 'proposal/start' && proposal.type === 'single-choice' ? components : [];
@@ -211,18 +306,22 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
     'https://cloudflare-ipfs.com/ipfs/'
   );
 
-  const embed = new MessageEmbed()
-    // @ts-ignore
+  const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(proposal.title)
     .setURL(url)
     .setTimestamp(proposal.created * 1e3)
-    .setAuthor(`${proposal.space.name} by ${shortenAddress(proposal.author)}`, avatar)
+    .setAuthor({
+      name: `${proposal.space.name} by ${shortenAddress(proposal.author)}`,
+      iconURL: avatar
+    })
     .addFields(
       { name: 'Status', value: status, inline: true },
       { name: 'Snapshot', value: proposal.snapshot, inline: true },
-      // { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
-      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true }
+      { name: '\u200B', value: '\u200B', inline: true },
+      { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
+      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true },
+      { name: '\u200B', value: '\u200B', inline: true }
     )
     .setDescription(preview);
 
