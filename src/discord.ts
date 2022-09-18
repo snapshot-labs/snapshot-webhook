@@ -1,3 +1,4 @@
+import chunk from 'lodash.chunk';
 import {
   Client,
   GatewayIntentBits,
@@ -289,15 +290,19 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   const color = '#21B66F';
 
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
+
+  let i = 0;
   let components =
-    proposal.choices.length > 5
+    !proposal.choices.length || proposal.choices.length > 25
       ? []
-      : proposal.choices.map((choice, i) =>
+      : chunk(proposal.choices, 5).map(rowChoice =>
           new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setLabel(choice)
-              .setURL(`${url}?choice=${i + 1}`)
-              .setStyle(ButtonStyle.Link)
+            ...rowChoice.map(choice =>
+              new ButtonBuilder()
+                .setLabel(choice)
+                .setURL(`${url}?choice=${++i}`)
+                .setStyle(ButtonStyle.Link)
+            )
           )
         );
   components =
