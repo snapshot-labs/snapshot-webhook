@@ -63,22 +63,15 @@ const commands = [
     .setDMPermission(false)
     .setDefaultMemberPermissions(0), // only administrator role
   new SlashCommandBuilder()
-    .setName('snapshot-help')
+    .setName('help')
     .setDescription('Information about snapshot bot!')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0),
   new SlashCommandBuilder()
-    .setName('snapshot')
-    .setDescription('Add or Remove subscriptions!')
+    .setName('add')
+    .setDescription('Add a subscription!')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
-    .addStringOption(option =>
-      option
-        .setName('type')
-        .setDescription('add or remove')
-        .setRequired(true)
-        .addChoices({ name: 'Add', value: 'add' }, { name: 'Remove', value: 'remove' })
-    )
     .addChannelOption(option =>
       option
         .setName('channel')
@@ -91,7 +84,24 @@ const commands = [
         .setDescription('space to subscribe to')
         .setRequired(true)
     )
-    .addStringOption(option => option.setName('mention').setDescription('Mention role'))
+    .addStringOption(option => option.setName('mention').setDescription('Mention role')),
+  new SlashCommandBuilder()
+    .setName('remove')
+    .setDescription('Remove a subscription!')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(0)
+    .addChannelOption(option =>
+      option
+        .setName('channel')
+        .setDescription('Channel to post the events')
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option
+        .setName('space')
+        .setDescription('space to subscribe to')
+        .setRequired(true)
+    )
 ];
 
 const rest = new REST({ version: '10' }).setToken(token);
@@ -157,9 +167,11 @@ async function snapshotHelpCommandHandler(interaction) {
     });
     subscriptionsDescription += `\n**Commands**`;
   }
-  const exampleBlock = codeBlock(
-    `# ADD:\n/snapshot type:Add channel:#snapshot space:yam.eth mention:@everyone\n\n# Remove:\n/snapshot type:Remove channel:#snapshot space:yam.eth`
+  const addSubscriptionExample = codeBlock(
+    `/add channel:#snapshot space:yam.eth mention:@everyone`
   );
+
+  const removeSubscriptionExample = codeBlock(`/remove channel:#snapshot space:yam.eth`);
 
   const embed = new EmbedBuilder()
     .setColor(0x0099ff)
@@ -169,20 +181,28 @@ async function snapshotHelpCommandHandler(interaction) {
     .addFields(
       { name: '`/ping`', value: 'Description: Replies with Pong!' },
       {
-        name: '`/snapshot-help`',
+        name: '`/help`',
         value: 'Description: Information about snapshot bot!'
       },
       {
-        name: '`/snapshot`',
-        value: `Description: Add or Remove subscriptions!
+        name: '`/add`',
+        value: `Description: Add a subscription
         Options: 
-        *type*: Add or Remove
         *channel*: Channel to post the events
-        *space*: space to subscribe to
+        *space*: Space id to subscribe to
         *mention*: Mention role (optional)
-        
-        Examples:
-        ${exampleBlock}
+        Example:
+        ${addSubscriptionExample}`
+      },
+      {
+        name: '`/remove`',
+        value: `Description: Remove a subscription
+        Options: 
+        *channel*: Channel to post the events
+        *space*: Space id to subscribe to
+        Example:
+        ${removeSubscriptionExample}
+
 
         Have any questions? Join our discord: https://discord.snapshot.org`
       }
@@ -190,9 +210,8 @@ async function snapshotHelpCommandHandler(interaction) {
   interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
 }
 
-async function snapshotCommandHandler(interaction) {
+async function snapshotCommandHandler(interaction, commandType) {
   const ts = parseInt((Date.now() / 1e3).toFixed());
-  const commandType = interaction.options.getString('type');
   const { id: channelId } = interaction.options.getChannel('channel');
   const space = interaction.options.getString('space');
   const mention = interaction.options.getString('mention');
@@ -254,10 +273,12 @@ client.on('interactionCreate', async interaction => {
       content: `Pong! Websocket heartbeat: ${client.ws.ping}ms.`,
       ephemeral: true
     });
-  } else if (interaction.commandName === 'snapshot-help') {
+  } else if (interaction.commandName === 'help') {
     snapshotHelpCommandHandler(interaction);
-  } else if (interaction.commandName === 'snapshot') {
-    snapshotCommandHandler(interaction);
+  } else if (interaction.commandName === 'add') {
+    snapshotCommandHandler(interaction, 'add');
+  } else if (interaction.commandName === 'remove') {
+    snapshotCommandHandler(interaction, 'remove');
   }
 });
 
@@ -290,21 +311,21 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   const color = '#21B66F';
 
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
-
-  let i = 0;
+  proposal.choices.push('Abstain 1');
+  proposal.choices.push('Abstain 2');
   let components =
-    !proposal.choices.length || proposal.choices.length > 25
+    !proposal.choices.length || proposal.choices.length > 5
       ? []
-      : chunk(proposal.choices, 5).map(rowChoice =>
+      : [
           new ActionRowBuilder().addComponents(
-            ...rowChoice.map(choice =>
+            ...proposal.choices.map((choice, i) =>
               new ButtonBuilder()
                 .setLabel(choice)
-                .setURL(`${url}?choice=${++i}`)
+                .setURL(`${url}?choice=${i + 1}`)
                 .setStyle(ButtonStyle.Link)
             )
           )
-        );
+        ];
   components =
     event === 'proposal/start' && (proposal.type === 'single-choice' || proposal.type === 'basic')
       ? components
