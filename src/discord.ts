@@ -163,7 +163,7 @@ async function snapshotHelpCommandHandler(interaction) {
 
   const embed = new EmbedBuilder()
     .setColor(0x0099ff)
-    .setTitle(underscore('Snapshot Bot'))
+    .setTitle(underscore('Snapshot bot'))
     .setDescription(subscriptionsDescription)
     .setThumbnail('https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true')
     .addFields(
