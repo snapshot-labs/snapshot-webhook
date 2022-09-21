@@ -59,17 +59,17 @@ export let ready = false;
 const commands = [
   new SlashCommandBuilder()
     .setName('ping')
-    .setDescription('Replies with Pong!')
+    .setDescription('Make sure the bot is online.')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0), // only administrator role
   new SlashCommandBuilder()
     .setName('help')
-    .setDescription('Information about snapshot bot!')
+    .setDescription('List all commands and current notifications.')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0),
   new SlashCommandBuilder()
     .setName('add')
-    .setDescription('Add a subscription!')
+    .setDescription('Add notifications on a channel when a proposal start.')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
@@ -87,7 +87,7 @@ const commands = [
     .addStringOption(option => option.setName('mention').setDescription('Mention role')),
   new SlashCommandBuilder()
     .setName('remove')
-    .setDescription('Remove a subscription!')
+    .setDescription('Remove notifications on a channel.')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
@@ -179,14 +179,14 @@ async function snapshotHelpCommandHandler(interaction) {
     .setDescription(subscriptionsDescription)
     .setThumbnail('https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true')
     .addFields(
-      { name: '`/ping`', value: 'Description: Replies with Pong!' },
+      { name: '`/ping`', value: 'Description: Make sure the bot is online.' },
       {
         name: '`/help`',
-        value: 'Description: Information about snapshot bot!'
+        value: 'Description: List all commands and current notifications.'
       },
       {
         name: '`/add`',
-        value: `Description: Add a subscription
+        value: `Description: Add notifications on a channel when a proposal start.
         Options: 
         *channel*: Channel to post the events
         *space*: Space id to subscribe to
@@ -196,7 +196,7 @@ async function snapshotHelpCommandHandler(interaction) {
       },
       {
         name: '`/remove`',
-        value: `Description: Remove a subscription
+        value: `Description: Remove notifications on a channel.
         Options: 
         *channel*: Channel to post the events
         *space*: Space id to subscribe to
