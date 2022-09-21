@@ -311,8 +311,6 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   const color = '#21B66F';
 
   const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
-  proposal.choices.push('Abstain 1');
-  proposal.choices.push('Abstain 2');
   let components =
     !proposal.choices.length || proposal.choices.length > 5
       ? []
