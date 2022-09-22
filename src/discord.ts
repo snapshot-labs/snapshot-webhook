@@ -332,10 +332,7 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   const limit = 4096 / 16;
   let preview = removeMd(proposal.body).slice(0, limit);
   if (proposal.body.length > limit) preview += `... [Read more](${url})`;
-  const avatar = (proposal.space.avatar || '').replace(
-    'ipfs://',
-    'https://cloudflare-ipfs.com/ipfs/'
-  );
+  const avatar = `https://cdn.stamp.fyi/space/${proposal.space.id}?s=56`;
 
   const embed = new EmbedBuilder()
     .setColor(color)
@@ -354,7 +351,7 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
       { name: 'End', value: `<t:${proposal.end}:R>`, inline: true },
       { name: '\u200B', value: '\u200B', inline: true }
     )
-    .setDescription(preview);
+    .setDescription(preview || ' ');
 
   if (subs[proposal.space.id] || subs['*']) {
     [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
