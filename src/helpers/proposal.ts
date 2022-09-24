@@ -1,4 +1,5 @@
 import snapshot from '@snapshot-labs/snapshot.js';
+
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 export async function getProposal(id) {

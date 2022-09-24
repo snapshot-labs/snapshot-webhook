@@ -1,4 +1,3 @@
-import chunk from 'lodash.chunk';
 import {
   Client,
   GatewayIntentBits,
@@ -22,11 +21,8 @@ import { checkSpace, getProposal } from './helpers/proposal';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
-
-const sweeperOption = {
-  interval: 300, // 5 minutes in seconds
-  filter: () => null
-};
+const sweeperOption = { interval: 300, filter: () => null };
+// const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
 
 const client: any = new Client({
   intents: [
@@ -53,8 +49,8 @@ const client: any = new Client({
     voiceStates: sweeperOption
   }
 });
+
 export let ready = false;
-// const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
 
 const commands = [
   new SlashCommandBuilder()
@@ -187,7 +183,7 @@ async function snapshotHelpCommandHandler(interaction) {
       {
         name: '`/add`',
         value: `Description: Add notifications on a channel when a proposal start.
-        Options: 
+        Options:
         *channel*: Channel to post the events
         *space*: Space id to subscribe to
         *mention*: Mention role (optional)
@@ -197,7 +193,7 @@ async function snapshotHelpCommandHandler(interaction) {
       {
         name: '`/remove`',
         value: `Description: Remove notifications on a channel.
-        Options: 
+        Options:
         *channel*: Channel to post the events
         *space*: Space id to subscribe to
         Example:

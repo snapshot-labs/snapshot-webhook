@@ -16,13 +16,9 @@ export const handleCreatedEvent = async event => {
   const { space, id } = event;
   const proposalId = id.replace('proposal/', '') || '';
   const proposal = await getProposal(proposalId);
-  if (!proposal) {
-    throw new Error('Proposal not found');
-  }
-  const proposalEvent = {
-    id,
-    space
-  };
+  if (!proposal) throw new Error('Proposal not found');
+
+  const proposalEvent = { id, space };
   const ts = Date.now() / 1e3;
 
   let query = 'INSERT IGNORE INTO events SET ?; ';
@@ -138,6 +134,4 @@ async function run() {
   await run();
 }
 
-if (serviceEvents) {
-  setTimeout(() => run(), interval * 1e3);
-}
+if (serviceEvents) setTimeout(() => run(), interval * 1e3);
