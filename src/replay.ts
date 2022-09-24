@@ -62,21 +62,22 @@ async function updateLastMci(mci: number) {
 async function run() {
   // Check latest indexed MCI from db
   const lastMci = await getLastMci();
-  console.log('Last MCI', lastMci);
+  console.log('[replay] Last MCI', lastMci);
 
   // Load next messages after latest indexed MCI
   const messages = await getNextMessages(lastMci);
-  if (!messages || messages.length === 0) return;
 
-  // Process messages
-  await processMessages(messages);
+  if (messages && messages.length > 0) {
+    // Process messages
+    await processMessages(messages);
 
-  // Store latest message MCI
-  const lastMessageMci = messages.at(-1).mci;
-  await updateLastMci(lastMessageMci);
-  console.log('Updated to MCI', lastMessageMci);
+    // Store latest message MCI
+    const lastMessageMci = messages.at(-1).mci;
+    await updateLastMci(lastMessageMci);
+    console.log('[replay] Updated to MCI', lastMessageMci);
+  }
 
-  // Run again after 5sec
+  // Run again after 10sec
   await snapshot.utils.sleep(10e3);
   return run();
 }
