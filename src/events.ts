@@ -148,4 +148,4 @@ async function run() {
   run();
 }
 
-if (serviceEvents) setTimeout(() => run(), interval * 1e3);
+if (serviceEvents) run();
