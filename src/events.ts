@@ -21,13 +21,9 @@ export const handleCreatedEvent = async event => {
   const { space, id } = event;
   const proposalId = id.replace('proposal/', '') || '';
   const proposal = await getProposal(proposalId);
-  if (!proposal) {
-    throw new Error('Proposal not found');
-  }
-  const proposalEvent = {
-    id,
-    space
-  };
+  if (!proposal) throw new Error('Proposal not found');
+
+  const proposalEvent = { id, space };
   const ts = Date.now() / 1e3;
 
   let query = 'INSERT IGNORE INTO events SET ?; ';
@@ -66,7 +62,7 @@ export const handleDeletedEvent = event => {
   return db.queryAsync(query, [id, event]);
 };
 
-async function sendEvent(event, to) {
+export async function sendEvent(event, to) {
   event.token = sha256(`${to}${serviceEventsSalt}`);
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
@@ -152,6 +148,4 @@ async function run() {
   run();
 }
 
-if (serviceEvents) {
-  run();
-}
+if (serviceEvents) setTimeout(() => run(), interval * 1e3);

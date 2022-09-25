@@ -1,3 +1,9 @@
+CREATE TABLE _metadatas (
+  id VARCHAR(20) NOT NULL,
+  value VARCHAR(128) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE subscriptions (
   guild VARCHAR(64) NOT NULL,
   channel VARCHAR(64) NOT NULL,
@@ -35,4 +41,3 @@ CREATE TABLE subscribers (
   INDEX active (active),
   INDEX created (created)
 );
-
