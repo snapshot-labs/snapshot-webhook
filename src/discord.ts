@@ -341,11 +341,8 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
     })
     .addFields(
       { name: 'Status', value: status, inline: true },
-      { name: 'Snapshot', value: proposal.snapshot, inline: true },
-      { name: '\u200B', value: '\u200B', inline: true },
       { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
-      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true },
-      { name: '\u200B', value: '\u200B', inline: true }
+      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true }
     )
     .setDescription(preview || ' ');
 
