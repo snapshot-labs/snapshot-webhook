@@ -98,7 +98,11 @@ async function processEvents(subscribers) {
     if (event.event === 'proposal/end') {
       try {
         const scores = await getProposalScores(proposalId);
-        console.log('[events] Stored scores on proposal/end', scores.scores_state, proposalId);
+        console.log(
+          '[events] Stored scores on proposal/end',
+          scores?.success?.scores_state,
+          proposalId
+        );
       } catch (e) {
         console.log('[events] getProposalScores failed:', e);
       }
