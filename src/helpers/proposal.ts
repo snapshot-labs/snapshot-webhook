@@ -26,6 +26,9 @@ export async function getProposal(id) {
     }
   };
   const result = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
+  if (result.errors) {
+    throw new Error(`[events] Errors in subgraph request for proposal id: ${id}`);
+  }
   proposal = result.proposal || null;
   return proposal;
 }

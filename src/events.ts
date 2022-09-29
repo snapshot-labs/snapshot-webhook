@@ -18,6 +18,7 @@ export const handleCreatedEvent = async event => {
   const proposal = await getProposal(proposalId);
   if (!proposal) {
     console.log(`[events] Proposal not found ${proposalId}`);
+    return;
   }
 
   const proposalEvent = { id, space };
