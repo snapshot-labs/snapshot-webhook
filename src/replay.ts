@@ -68,13 +68,17 @@ async function run() {
   const messages = await getNextMessages(lastMci);
 
   if (messages && messages.length > 0) {
-    // Process messages
-    await processMessages(messages);
+    try {
+      // Process messages
+      await processMessages(messages);
 
-    // Store latest message MCI
-    const lastMessageMci = messages.at(-1).mci;
-    await updateLastMci(lastMessageMci);
-    console.log('[replay] Updated to MCI', lastMessageMci);
+      // Store latest message MCI
+      const lastMessageMci = messages.at(-1).mci;
+      await updateLastMci(lastMessageMci);
+      console.log('[replay] Updated to MCI', lastMessageMci);
+    } catch (error) {
+      console.log('[replay] Failed to process messages', error);
+    }
   }
 
   // Run again after 10sec
