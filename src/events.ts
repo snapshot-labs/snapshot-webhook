@@ -16,7 +16,10 @@ export const handleCreatedEvent = async event => {
   const { space, id } = event;
   const proposalId = id.replace('proposal/', '') || '';
   const proposal = await getProposal(proposalId);
-  if (!proposal) throw new Error('Proposal not found');
+  if (!proposal) {
+    console.log(`[events] Proposal not found ${proposalId}`);
+    return;
+  }
 
   const proposalEvent = { id, space };
   const ts = Date.now() / 1e3;
