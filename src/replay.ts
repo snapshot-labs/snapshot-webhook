@@ -40,23 +40,39 @@ async function getNextMessages(mci: number) {
   }
 }
 
-async function processMessages(messages: any[]) {
-  for (const message of messages) {
-    if (message.type === 'proposal') {
-      console.log('New event: "proposal"', message.space, message.id);
-      await handleCreatedEvent({ id: `proposal/${message.id}`, space: message.space });
-    }
-
-    if (message.type === 'delete-proposal') {
-      console.log('New event: "delete-proposal"', message.space, message.id);
-      await handleDeletedEvent({ id: `proposal/${message.id}` });
-    }
-  }
-}
-
 async function updateLastMci(mci: number) {
   const query = 'UPDATE _metadatas SET value = ? WHERE id = ? LIMIT 1';
   await db.queryAsync(query, [mci.toString(), 'last_mci']);
+}
+
+async function processMessages(messages: any[]) {
+  let lastMessageMci = null;
+  for (const message of messages) {
+    try {
+      if (message.type === 'proposal') {
+        console.log('New event: "proposal"', message.space, message.id);
+        await handleCreatedEvent({
+          id: `proposal/${message.id}`,
+          space: message.space,
+          timestamp: message.timestamp
+        });
+      }
+
+      if (message.type === 'delete-proposal') {
+        console.log('New event: "delete-proposal"', message.space, message.id);
+        await handleDeletedEvent({ id: `proposal/${message.id}` });
+      }
+      lastMessageMci = message.mci;
+    } catch (error) {
+      console.log('[replay] Failed to process message', message.id, error);
+      break;
+    }
+  }
+  if (lastMessageMci !== null) {
+    // Store latest message MCI
+    await updateLastMci(lastMessageMci);
+    console.log('[replay] Updated to MCI', lastMessageMci);
+  }
 }
 
 async function run() {
@@ -66,19 +82,8 @@ async function run() {
 
   // Load next messages after latest indexed MCI
   const messages = await getNextMessages(lastMci);
-
   if (messages && messages.length > 0) {
-    try {
-      // Process messages
-      await processMessages(messages);
-
-      // Store latest message MCI
-      const lastMessageMci = messages.at(-1).mci;
-      await updateLastMci(lastMessageMci);
-      console.log('[replay] Updated to MCI', lastMessageMci);
-    } catch (error) {
-      console.log('[replay] Failed to process messages', error);
-    }
+    await processMessages(messages);
   }
 
   // Run again after 10sec
