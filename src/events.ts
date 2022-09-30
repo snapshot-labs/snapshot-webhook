@@ -31,7 +31,7 @@ export const handleCreatedEvent = async event => {
   const proposal = await getProposal(proposalId);
   if (!proposal) {
     console.log(`[events] Proposal not found ${proposalId}`);
-    return;
+    return db.queryAsync(query, params);
   }
 
   query += 'INSERT IGNORE INTO events SET ?; ';
