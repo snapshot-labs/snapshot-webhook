@@ -13,8 +13,13 @@ const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
 
 export const handleCreatedEvent = async event => {
-  const { space, id, timestamp } = event;
+  const { space, id } = event;
   const proposalId = id.replace('proposal/', '') || '';
+  const proposal = await getProposal(proposalId);
+  if (!proposal) {
+    console.log(`[events] Proposal not found ${proposalId}`);
+    return;
+  }
 
   const proposalEvent = { id, space };
   const ts = Date.now() / 1e3;
@@ -23,16 +28,10 @@ export const handleCreatedEvent = async event => {
   const params = [
     {
       event: 'proposal/created',
-      expire: timestamp,
+      expire: proposal.created,
       ...proposalEvent
     }
   ];
-
-  const proposal = await getProposal(proposalId);
-  if (!proposal) {
-    console.log(`[events] Proposal not found ${proposalId}`);
-    return db.queryAsync(query, params);
-  }
 
   query += 'INSERT IGNORE INTO events SET ?; ';
   params.push({

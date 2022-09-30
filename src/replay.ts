@@ -51,11 +51,7 @@ async function processMessages(messages: any[]) {
     try {
       if (message.type === 'proposal') {
         console.log('New event: "proposal"', message.space, message.id);
-        await handleCreatedEvent({
-          id: `proposal/${message.id}`,
-          space: message.space,
-          timestamp: message.timestamp
-        });
+        await handleCreatedEvent({ id: `proposal/${message.id}`, space: message.space });
       }
 
       if (message.type === 'delete-proposal') {
