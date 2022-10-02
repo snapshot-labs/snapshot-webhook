@@ -19,6 +19,7 @@
     "dotenv": "^10.0.0",
     "eslint": "^6.7.2",
     "express": "^4.17.1",
+    "firebase-admin": "^11.0.1",
     "lodash.chunk": "^4.2.0",
     "mysql": "^2.18.1",
     "nodemon": "^2.0.15",

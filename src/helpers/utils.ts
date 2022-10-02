@@ -5,7 +5,12 @@ export function shortenAddress(str = '') {
 }
 
 export function sha256(str) {
-  return createHash('sha256')
-    .update(str)
-    .digest('hex');
+  return createHash('sha256').update(str).digest('hex');
+}
+
+export function sendError(res, description, status = 400) {
+  return res.status(status).json({
+    error: 'Bad request',
+    error_description: description
+  });
 }

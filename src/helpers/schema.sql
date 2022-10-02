@@ -39,3 +39,14 @@ CREATE TABLE subscribers (
   INDEX active (active),
   INDEX created (created)
 );
+
+CREATE TABLE device_tokens (
+  token VARCHAR(256) NOT NULL,
+  owner VARCHAR(256) NOT NULL,
+  created VARCHAR(64) NOT NULL,
+  updated VARCHAR(64) NOT NULL,
+  PRIMARY KEY (token),
+  INDEX owner (owner),
+  INDEX created (created),
+  INDEX updated (updated)
+);
