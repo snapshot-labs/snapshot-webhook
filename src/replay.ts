@@ -8,7 +8,7 @@ const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 async function getLastMci() {
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
-  return parseInt(results[0].value);
+  return results.length > 0 ? parseInt(results[0].value) : 0;
 }
 
 async function getNextMessages(mci: number) {
