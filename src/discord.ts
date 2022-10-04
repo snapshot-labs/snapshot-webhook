@@ -155,14 +155,15 @@ async function snapshotHelpCommandHandler(interaction) {
     'SELECT * FROM subscriptions WHERE guild = ?',
     interaction.guildId
   );
-  let subscriptionsDescription = '';
+  let subscriptionsDescription = `\n\n**Subscriptions (${subscriptions.length})**\n\n`;
   if (subscriptions.length > 0) {
-    subscriptionsDescription += `\n\n**Subscriptions (${subscriptions.length})**\n\n`;
     subscriptions.forEach(subscription => {
       subscriptionsDescription += `<#${subscription.channel}> ${subscription.space}\n`;
     });
-    subscriptionsDescription += `\n**Commands**`;
+  } else {
+    subscriptionsDescription += 'No subscriptions\n';
   }
+  subscriptionsDescription += `\n**Commands**`;
   const addSubscriptionExample = codeBlock(
     `/add channel:#snapshot space:yam.eth mention:@everyone`
   );
@@ -172,7 +173,7 @@ async function snapshotHelpCommandHandler(interaction) {
   const embed = new EmbedBuilder()
     .setColor(0x0099ff)
     .setTitle(underscore('Snapshot bot'))
-    .setDescription(subscriptionsDescription)
+    .setDescription(subscriptionsDescription || ' ')
     .setThumbnail('https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true')
     .addFields(
       { name: '`/ping`', value: 'Description: Make sure the bot is online.' },
