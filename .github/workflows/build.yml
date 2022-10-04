@@ -21,3 +21,4 @@ jobs:
         yarn install --frozen-lockfile
         yarn build
         yarn lint
+@dependabot rebase 
