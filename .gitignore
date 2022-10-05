@@ -4,9 +4,6 @@ dist
 build
 .env
 
-# Firebase service account
-firebase.json
-
 # Remove some common IDE working directories
 .idea
 .vscode
