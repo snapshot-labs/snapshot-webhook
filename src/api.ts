@@ -76,18 +76,4 @@ router.post('/subscribed', async (req, res) => {
   }
 });
 
-router.post('/subscription', async (req, res) => {
-  const owner = req.body?.owner;
-  const spaceId = req.body?.spaceId;
-  const unsubscribe = req.body?.unsubscribe;
-  try {
-    // Subscribe/unsubscribe user devices when they join/leave space
-    await toggleSpaceNotification(owner, spaceId, unsubscribe);
-    return res.json({ success: true });
-  } catch (error) {
-    console.log('[notifications] Error toggling space subscription', error);
-    return sendError(res, 'Error toggling space subscription');
-  }
-});
-
 export default router;
