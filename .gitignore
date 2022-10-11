@@ -4,7 +4,6 @@ dist
 build
 .env
 
-
 # Remove some common IDE working directories
 .idea
 .vscode

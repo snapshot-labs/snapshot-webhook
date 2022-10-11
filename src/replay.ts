@@ -2,13 +2,14 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
 import db from './helpers/mysql';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
+import { toggleSpaceNotification } from './helpers/firebase';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 async function getLastMci() {
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
-  return parseInt(results[0].value);
+  return results.length > 0 ? parseInt(results[0].value) : 0;
 }
 
 async function getNextMessages(mci: number) {
@@ -17,7 +18,7 @@ async function getNextMessages(mci: number) {
       __args: {
         first: 10,
         where: {
-          type_in: ['proposal', 'delete-proposal'],
+          type_in: ['proposal', 'delete-proposal', 'follow', 'unfollow'],
           mci_gt: mci
         },
         orderBy: 'mci',
@@ -27,7 +28,8 @@ async function getNextMessages(mci: number) {
       id: true,
       type: true,
       timestamp: true,
-      space: true
+      space: true,
+      address: true
     }
   };
 
@@ -58,6 +60,17 @@ async function processMessages(messages: any[]) {
         console.log('New event: "delete-proposal"', message.space, message.id);
         await handleDeletedEvent({ id: `proposal/${message.id}` });
       }
+
+      if (message.type === 'follow') {
+        console.log('New event: "follow"', message.address, message.space);
+        await toggleSpaceNotification(message.address, message.space, false);
+      }
+
+      if (message.type === 'unfollow') {
+        console.log('New event: "unfollow"', message.address, message.space);
+        await toggleSpaceNotification(message.address, message.space, true);
+      }
+
       lastMessageMci = message.mci;
     } catch (error) {
       console.log('[replay] Failed to process message', message.id, error);

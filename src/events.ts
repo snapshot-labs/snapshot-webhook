@@ -1,7 +1,7 @@
 import fetch from 'cross-fetch';
 import snapshot from '@snapshot-labs/snapshot.js';
-import { sendEventToDiscordSubscribers } from './discord';
-import { sendPushNotification } from './helpers/beams';
+// import { sendEventToDiscordSubscribers } from './discord';
+import { sendPushNotification } from './helpers/firebase';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal, getProposalScores } from './helpers/proposal';
@@ -110,7 +110,7 @@ async function processEvents(subscribers) {
     // Send event to discord subscribers and webhook subscribers and then delete event from db
     // TODO: handle errors and retry
     if (servicePushNotifications && event.event === 'proposal/start') sendPushNotification(event);
-    sendEventToDiscordSubscribers(event.event, proposalId);
+    // sendEventToDiscordSubscribers(event.event, proposalId);
     sendEventToWebhookSubscribers(event, subscribers);
 
     try {
