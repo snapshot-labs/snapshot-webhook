@@ -8,7 +8,7 @@ const beams = new PushNotifications({
   secretKey: process.env.SERVICE_PUSHER_BEAMS_SECRET_KEY ?? ''
 });
 
-async function getSubscribers(space) {
+async function getSubscribersFromSnapshot(space) {
   let subscriptions: { [key: string]: any } = [];
   const query = {
     subscriptions: {
@@ -28,7 +28,7 @@ async function getSubscribers(space) {
 }
 
 export const sendPushNotification = async event => {
-  const subscribedWallets = await getSubscribers(event.space);
+  const subscribedWallets = await getSubscribersFromSnapshot(event.space);
   const walletsChunks = chunk(subscribedWallets, 100);
   const proposal = await getProposal(event.id.replace('proposal/', ''));
   if (!proposal) {

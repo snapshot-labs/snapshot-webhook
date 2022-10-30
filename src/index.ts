@@ -3,7 +3,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import api from './api';
-import './replay';
+// import './replay';
 import './discord';
 
 const app = express();

@@ -1,6 +1,8 @@
 import express from 'express';
 import { sendEvent } from './events';
 import pkg from '../package.json';
+import { getSubscribers, addSubscriber, deactivateSubscriber } from './subscribers';
+import { verifySignature } from './helpers/utils';
 
 const router = express.Router();
 
@@ -26,6 +28,27 @@ router.get('/test', async (req, res) => {
   } catch (e) {
     return res.json({ url, error: e });
   }
+});
+
+router.get('/subscriptions/:owner', async (req, res) => {
+  const { owner } = req.params;
+  const subscribers = await getSubscribers(owner);
+
+  return res.json({ subscribers });
+});
+
+router.post('/subscribers', async (req, res) => {
+  const body: any = req.body;
+  await verifySignature(body);
+  const params = body.data.message;
+
+  if (params.active === 1) {
+    await addSubscriber(params.from, params.url, params.space, params.active, params.timestamp);
+  } else {
+    await deactivateSubscriber(params.id);
+  }
+
+  return res.json({ status: true });
 });
 
 export default router;

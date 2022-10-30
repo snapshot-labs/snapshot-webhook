@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@pusher/push-notifications-server": "^1.2.5",
-    "@snapshot-labs/snapshot.js": "^0.3.68",
+    "@snapshot-labs/snapshot.js": "^0.4.43",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
     "connection-string": "^1.0.1",
