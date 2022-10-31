@@ -14,7 +14,7 @@ export function sha256(str) {
 export async function verifySignature(body) {
   try {
     const isValidSig = await snapshot.utils.verify(body.address, body.sig, body.data);
-    if (!isValidSig) return Promise.reject('wrong signature');
+    if (!isValidSig) return Promise.reject('invalid signature');
   } catch (e) {
     console.warn(`signature validation failed for ${body.address}`);
     return Promise.reject('signature validation failed');

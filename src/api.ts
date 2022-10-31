@@ -31,6 +31,7 @@ router.get('/test', async (req, res) => {
 });
 
 router.get('/subscriptions/:owner', async (req, res) => {
+  // TODO: Currently this endpoint is open to anyone. Implement verification to secure the urls in the db, should be accessible only by their owner.
   const { owner } = req.params;
   const subscribers = await getSubscribers(owner);
 
@@ -42,11 +43,9 @@ router.post('/subscribers', async (req, res) => {
   await verifySignature(body);
   const params = body.data.message;
 
-  if (params.active === 1) {
-    await addSubscriber(params.from, params.url, params.space, params.active, params.timestamp);
-  } else {
-    await deactivateSubscriber(params.id);
-  }
+  params.active === 1
+    ? await addSubscriber(params.from, params.url, params.space, params.active, params.timestamp)
+    : await deactivateSubscriber(params.id);
 
   return res.json({ status: true });
 });

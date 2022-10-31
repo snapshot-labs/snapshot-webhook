@@ -28,6 +28,6 @@ export async function addSubscriber(
   return await db.queryAsync('INSERT IGNORE INTO subscribers SET ?', params);
 }
 
-export async function deactivateSubscriber(id) {
+export async function deactivateSubscriber(id: string) {
   return await db.queryAsync('UPDATE subscribers SET active = 0 WHERE id = ?', id);
 }
