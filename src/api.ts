@@ -40,14 +40,19 @@ router.get('/subscriptions/:owner', async (req, res) => {
 
 router.post('/subscribers', async (req, res) => {
   const body: any = req.body;
-  await verifySignature(body);
-  const params = body.data.message;
+  try {
+    await verifySignature(body);
+    const params = body.data.message;
 
-  params.active === 1
-    ? await addSubscriber(params.from, params.url, params.space, params.active, params.timestamp)
-    : await deactivateSubscriber(params.id);
+    params.active === 1
+      ? await addSubscriber(params.from, params.url, params.space, params.active, params.timestamp)
+      : await deactivateSubscriber(params.id);
 
-  return res.json({ status: true });
+    return res.json({ status: true });
+  } catch (error) {
+    console.log(error);
+    return res.json({ error: 'Failed to update subscription', message: error });
+  }
 });
 
 export default router;
