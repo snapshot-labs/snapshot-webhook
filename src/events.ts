@@ -5,6 +5,7 @@ import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal, getProposalScores } from './helpers/proposal';
+import { getSubscribers } from './subscribers';
 
 const delay = 5;
 const interval = 15;
@@ -127,7 +128,7 @@ async function processEvents(subscribers) {
 
 async function run() {
   try {
-    const subscribers = await db.queryAsync('SELECT * FROM subscribers');
+    const subscribers = await getSubscribers();
     console.log('[events] Subscribers', subscribers.length);
     await processEvents(subscribers);
   } catch (e) {
