@@ -15,14 +15,14 @@ export async function addSubscriber(
   url: string,
   space: string,
   active: number,
-  timestamp: string
+  created: string
 ) {
   const params = {
     owner,
     url,
     space,
     active,
-    created: timestamp
+    created
   };
 
   return await db.queryAsync('INSERT IGNORE INTO subscribers SET ?', params);
