@@ -53,6 +53,7 @@ export const handleCreatedEvent = async event => {
 
 export const handleDeletedEvent = event => {
   const { id } = event;
+  event.event = 'proposal/deleted';
   const query = `
     DELETE FROM events WHERE id = ?;
     INSERT IGNORE INTO events SET ?;

@@ -56,7 +56,7 @@ async function processMessages(messages: any[]) {
 
       if (message.type === 'delete-proposal') {
         console.log('New event: "delete-proposal"', message.space, message.id);
-        await handleDeletedEvent({ id: `proposal/${message.id}` });
+        await handleDeletedEvent({ id: `proposal/${message.id}`, space: message.space });
       }
       lastMessageMci = message.mci;
     } catch (error) {
