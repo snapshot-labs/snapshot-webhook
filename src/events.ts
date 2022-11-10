@@ -51,14 +51,20 @@ export const handleCreatedEvent = async event => {
   return db.queryAsync(query, params);
 };
 
-export const handleDeletedEvent = event => {
-  const { id } = event;
+export const handleDeletedEvent = async event => {
+  const { ipfs } = event;
+  const ipfsData = await snapshot.utils.ipfsGet('snapshot.mypinata.cloud', ipfs);
+  const proposalId = ipfsData.data.message.proposal;
+
+  event.id = `proposal/${proposalId}`;
   event.event = 'proposal/deleted';
+  delete event.ipfs;
+
   const query = `
     DELETE FROM events WHERE id = ?;
     INSERT IGNORE INTO events SET ?;
   `;
-  return db.queryAsync(query, [id, event]);
+  return db.queryAsync(query, [event.id, event]);
 };
 
 export async function sendEvent(event, to) {
