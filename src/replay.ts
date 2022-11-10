@@ -25,6 +25,7 @@ async function getNextMessages(mci: number) {
       },
       mci: true,
       id: true,
+      ipfs: true,
       type: true,
       timestamp: true,
       space: true
@@ -56,7 +57,10 @@ async function processMessages(messages: any[]) {
 
       if (message.type === 'delete-proposal') {
         console.log('New event: "delete-proposal"', message.space, message.id);
-        await handleDeletedEvent({ id: `proposal/${message.id}`, space: message.space });
+        await handleDeletedEvent({
+          space: message.space,
+          ipfs: message.ipfs
+        });
       }
       lastMessageMci = message.mci;
     } catch (error) {
