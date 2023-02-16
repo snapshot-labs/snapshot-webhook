@@ -1,13 +1,15 @@
 import express from 'express';
 import { sendEvent } from './events';
 import pkg from '../package.json';
+import { last_mci } from './replay';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   return res.json({
     name: pkg.name,
-    version: pkg.version
+    version: pkg.version,
+    last_mci
   });
 });
 
