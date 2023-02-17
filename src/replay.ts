@@ -5,10 +5,13 @@ import { handleCreatedEvent, handleDeletedEvent } from './events';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
+export let last_mci = 0;
+
 async function getLastMci() {
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
-  return parseInt(results[0].value);
+  last_mci = parseInt(results[0].value);
+  return last_mci;
 }
 
 async function getNextMessages(mci: number) {
