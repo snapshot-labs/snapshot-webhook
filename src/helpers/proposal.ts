@@ -33,10 +33,6 @@ export async function getProposal(id) {
   return proposal;
 }
 
-export async function getProposalScores(proposalId) {
-  return snapshot.utils.getJSON(`${hubURL}/api/scores/${proposalId}`);
-}
-
 export async function checkSpace(space) {
   try {
     const spaceData = await snapshot.utils.getJSON(`${hubURL}/api/spaces/${space}`);
