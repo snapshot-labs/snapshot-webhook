@@ -1,7 +1,7 @@
 import express from 'express';
-import { sendEvent } from './events';
 import pkg from '../package.json';
-import { last_mci } from './replay';
+import { getLastMci } from './replay';
+import { httpChannelQueue } from './queues';
 
 const router = express.Router();
 
@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
   return res.json({
     name: pkg.name,
     version: pkg.version,
-    last_mci
+    last_mci: getLastMci()
   });
 });
 
@@ -23,7 +23,7 @@ router.get('/test', async (req, res) => {
   };
   try {
     new URL(url);
-    await sendEvent(event, url);
+    await httpChannelQueue.add('http', { event, to: url });
     return res.json({ url, success: true });
   } catch (e) {
     return res.json({ url, error: e });

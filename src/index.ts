@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import api from './api';
-import './replay';
 import './discord';
 
 const app = express();

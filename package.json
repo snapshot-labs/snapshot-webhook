@@ -17,6 +17,7 @@
     "@pusher/push-notifications-server": "^1.2.5",
     "@snapshot-labs/snapshot.js": "^0.3.68",
     "bluebird": "^3.7.2",
+    "bullmq": "^3.12.0",
     "connection-string": "^1.0.1",
     "cors": "^2.8.5",
     "discord.js": "^14.3.0",

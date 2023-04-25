@@ -1,18 +1,68 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
 import db from './helpers/mysql';
-import { handleCreatedEvent, handleDeletedEvent } from './events';
-import type { Message } from './types';
+import { getProposal } from './helpers/proposal';
+import type { Message, Event } from './types';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
-export let last_mci = 0;
+const handleCreatedEvent = async (event: Pick<Event, 'space' | 'id'>) => {
+  const { space, id } = event;
+  const proposalId = id.replace('proposal/', '') || '';
+  const proposal = await getProposal(proposalId);
+  if (!proposal) {
+    console.log(`[events] Proposal not found ${proposalId}`);
+    return;
+  }
 
-async function getLastMci() {
+  const proposalEvent = { id, space };
+  const ts = Date.now() / 1e3;
+
+  let query = 'INSERT IGNORE INTO events SET ?; ';
+  const params = [
+    {
+      event: 'proposal/created',
+      expire: proposal.created,
+      ...proposalEvent
+    }
+  ];
+
+  query += 'INSERT IGNORE INTO events SET ?; ';
+  params.push({
+    event: 'proposal/start',
+    expire: proposal.start,
+    ...proposalEvent
+  });
+
+  if (proposal.end > ts) {
+    query += 'INSERT IGNORE INTO events SET ?; ';
+    params.push({
+      event: 'proposal/end',
+      expire: proposal.end,
+      ...proposalEvent
+    });
+  }
+  return db.queryAsync(query, params);
+};
+
+const handleDeletedEvent = async (event: Partial<Event>, ipfs: string) => {
+  const ipfsData = await snapshot.utils.ipfsGet('snapshot.mypinata.cloud', ipfs);
+  const proposalId = ipfsData.data.message.proposal;
+
+  event.id = `proposal/${proposalId}`;
+  event.event = 'proposal/deleted';
+
+  const query = `
+    DELETE FROM events WHERE id = ?;
+    INSERT IGNORE INTO events SET ?;
+  `;
+  return db.queryAsync(query, [event.id, event]);
+};
+
+export async function getLastMci() {
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
-  last_mci = parseInt(results[0].value as string);
-  return last_mci;
+  return parseInt(results[0].value as string);
 }
 
 async function getNextMessages(mci: number) {
@@ -82,7 +132,7 @@ async function processMessages(messages: Message[]) {
   return;
 }
 
-async function run() {
+export async function run() {
   // Check latest indexed MCI from db
   const lastMci = await getLastMci();
   console.log('[replay] Last MCI', lastMci);
@@ -92,10 +142,4 @@ async function run() {
   if (messages && messages.length > 0) {
     await processMessages(messages);
   }
-
-  // Run again after 10sec
-  await snapshot.utils.sleep(10e3);
-  await run();
 }
-
-run();
