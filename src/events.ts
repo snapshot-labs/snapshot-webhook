@@ -67,12 +67,11 @@ async function processEvents() {
     const proposal = await getProposal(proposalId);
     if (!proposal) {
       console.log('[events] - Proposal not found', proposalId);
-      continue;
+    } else {
+      queuePushNotifications(event, proposal);
+      queueHttpNotifications(event);
+      queueDiscordNotifications(event, proposal);
     }
-
-    queuePushNotifications(event, proposal);
-    queueHttpNotifications(event);
-    queueDiscordNotifications(event, proposal);
 
     try {
       await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [
