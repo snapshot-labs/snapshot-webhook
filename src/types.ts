@@ -31,3 +31,23 @@ export type Message = {
   timestamp: number;
   space: string;
 };
+
+type Space = {
+  id: string;
+  name: string;
+  avatar: string;
+};
+
+export type Proposal = {
+  space: Space;
+  id: string;
+  type: string;
+  author: string;
+  title: string;
+  body: string;
+  choices: string[];
+  start: number;
+  end: number;
+  created: number;
+  snapshot: string;
+};

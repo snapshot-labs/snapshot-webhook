@@ -17,7 +17,7 @@ import db from './helpers/mysql';
 import removeMd from 'remove-markdown';
 import { shortenAddress } from './helpers/utils';
 import { subs, loadSubscriptions } from './subscriptions';
-import { checkSpace, getProposal } from './helpers/proposal';
+import { checkSpace, getProposal } from './helpers/snapshot';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';

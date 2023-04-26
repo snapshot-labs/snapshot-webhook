@@ -4,6 +4,7 @@ import Redis from 'ioredis';
 import messagesProcessor from './processors/messages';
 import eventsProcessor from './processors/events';
 import HttpNotificationsProcessor from './processors/notifications/http';
+import PushNotificationsProcessor from './processors/notifications/push';
 
 const connection = new Redis(process.env.REDIS_URL as string);
 
@@ -19,17 +20,33 @@ export const httpNotificationsQueue = new Queue('notifications-http', {
     }
   }
 });
+export const pushNotificationsQueue = new Queue('notifications-push', {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 10000
+    }
+  }
+});
 
 let messagesWorker: Worker;
 let eventsWorker: Worker;
 let httpChannelWorker: Worker;
+let pushChannelWorker: Worker;
 
 export async function start() {
   console.log('[queue] Starting queue');
 
   messagesWorker = new Worker(messagesQueue.name, messagesProcessor, { connection });
   eventsWorker = new Worker(eventsQueue.name, eventsProcessor, { connection });
-  httpChannelWorker = new Worker(eventsQueue.name, HttpNotificationsProcessor, { connection });
+  httpChannelWorker = new Worker(httpNotificationsQueue.name, HttpNotificationsProcessor, {
+    connection
+  });
+  pushChannelWorker = new Worker(pushNotificationsQueue.name, PushNotificationsProcessor, {
+    connection
+  });
 
   await messagesQueue.add(
     'messages-reader',
@@ -54,7 +71,12 @@ export async function start() {
 
 async function shutdown() {
   console.log('[queue] Starting queue shutdown');
-  await Promise.all([messagesWorker.close(), eventsWorker.close(), httpChannelWorker.close()]);
+  await Promise.all([
+    messagesWorker.close(),
+    eventsWorker.close(),
+    httpChannelWorker.close(),
+    pushChannelWorker.close()
+  ]);
   console.log('[queue] Shutdown complete');
   process.exit(0);
 }
