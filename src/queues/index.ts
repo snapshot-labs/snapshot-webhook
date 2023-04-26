@@ -3,13 +3,13 @@ import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
 import messagesProcessor from './processors/messages';
 import eventsProcessor from './processors/events';
-import HttpChannelProcessor from './processors/channels/http';
+import HttpNotificationsProcessor from './processors/notifications/http';
 
 const connection = new Redis(process.env.REDIS_URL as string);
 
 export const messagesQueue = new Queue('messages', { connection });
 export const eventsQueue = new Queue('events', { connection });
-export const httpChannelQueue = new Queue('channel-http', {
+export const httpNotificationsQueue = new Queue('notifications-http', {
   connection,
   defaultJobOptions: {
     attempts: 5,
@@ -29,7 +29,7 @@ export async function start() {
 
   messagesWorker = new Worker(messagesQueue.name, messagesProcessor, { connection });
   eventsWorker = new Worker(eventsQueue.name, eventsProcessor, { connection });
-  httpChannelWorker = new Worker(eventsQueue.name, HttpChannelProcessor, { connection });
+  httpChannelWorker = new Worker(eventsQueue.name, HttpNotificationsProcessor, { connection });
 
   await messagesQueue.add(
     'messages-reader',

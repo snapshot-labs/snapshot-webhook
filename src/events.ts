@@ -2,7 +2,7 @@ import { sendEventToDiscordSubscribers } from './discord';
 import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { getProposalScores } from './helpers/proposal';
-import { httpChannelQueue } from './queues';
+import { httpNotificationsQueue } from './queues';
 import type { Event, Subscriber } from './types';
 
 const delay = 5;
@@ -16,7 +16,7 @@ async function sendEventToWebhookSubscribers(event: Event) {
     .filter(subscriber => [event.space, '*'].includes(subscriber.space))
     .map(subscriber => ({ name: 'http', data: { event, to: subscriber.url } }));
 
-  httpChannelQueue.addBulk(data);
+  httpNotificationsQueue.addBulk(data);
 
   console.log('[events] Process event queued');
 }

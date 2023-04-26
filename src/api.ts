@@ -1,7 +1,7 @@
 import express from 'express';
 import pkg from '../package.json';
 import { getLastMci } from './replay';
-import { httpChannelQueue } from './queues';
+import { httpNotificationsQueue } from './queues';
 
 const router = express.Router();
 
@@ -23,7 +23,7 @@ router.get('/test', async (req, res) => {
   };
   try {
     new URL(url);
-    await httpChannelQueue.add('http', { event, to: url });
+    await httpNotificationsQueue.add('http', { event, to: url });
     return res.json({ url, success: true });
   } catch (e) {
     return res.json({ url, error: e });
