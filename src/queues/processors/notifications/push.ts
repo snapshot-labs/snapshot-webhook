@@ -9,5 +9,15 @@ export default async (job: Job) => {
     proposalTitle
   }: { event: Event; to: string[]; proposalTitle: Proposal['title'] } = job.data;
 
-  sendPushNotification(event, proposalTitle, to);
+  try {
+    await sendPushNotification(event, proposalTitle, to);
+  } catch (error: any) {
+    console.log(
+      '[worker:push] Error sending notification, will retry or fail',
+      to,
+      error.toString(),
+      JSON.stringify(error)
+    );
+    throw error;
+  }
 };
