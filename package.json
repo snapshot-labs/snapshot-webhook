@@ -6,8 +6,8 @@
     "lint": "eslint . --ext .ts --fix",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "dev": "nodemon src/index.ts",
-    "start": "node dist/src/index.js"
+    "dev": "concurrently --n express,runner \"nodemon src/index.ts\" \"nodemon src/runner.ts\"",
+    "start": "concurrently --n express,runner \"node dist/src/index.js\" \"node dist/src/runner.js\""
   },
   "eslintConfig": {
     "extends": "@snapshot-labs"
@@ -18,6 +18,7 @@
     "@snapshot-labs/snapshot.js": "^0.3.68",
     "bluebird": "^3.7.2",
     "bullmq": "^3.12.0",
+    "concurrently": "^8.0.1",
     "connection-string": "^1.0.1",
     "cors": "^2.8.5",
     "discord.js": "^14.3.0",
