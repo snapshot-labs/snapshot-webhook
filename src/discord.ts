@@ -229,9 +229,9 @@ async function snapshotCommandHandler(interaction, commandType) {
     const spaceExist = await checkSpace(space);
     if (!spaceExist) return interaction.reply(`Space not found: ${inlineCode(space)}`);
 
-    const subscription = [interaction.guildId, channelId, space, mention || '', ts];
+    const subscription = [interaction.guildId, channelId, space, mention || '', ts, ts];
     await db.queryAsync(
-      `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO subscriptions (guild, channel, space, mention, created, updated) VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
       [...subscription, ...subscription]
     );
