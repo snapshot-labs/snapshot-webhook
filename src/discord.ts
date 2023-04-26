@@ -88,9 +88,9 @@ const commands = [
     )
 ];
 
-const rest = new REST({ version: '10' }).setToken(token);
+export async function start() {
+  const rest = new REST({ version: '10' }).setToken(token);
 
-(async () => {
   try {
     console.log('Started refreshing application (/) commands.');
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
@@ -98,10 +98,9 @@ const rest = new REST({ version: '10' }).setToken(token);
   } catch (error) {
     console.error(error);
   }
-})();
 
-client.login(token);
-
+  client.login(token);
+}
 export const setActivity = (message, url?) => {
   try {
     client.user.setActivity(message, { type: 'WATCHING', url });
@@ -346,5 +345,3 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   }
   return { success: true };
 };
-
-export default client;
