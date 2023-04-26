@@ -3,11 +3,12 @@ import { getProposal, getNextMessages, getIpfsData } from './helpers/snapshot';
 import type { Message, Event } from './types';
 
 const handleCreatedEvent = async (event: Pick<Event, 'space' | 'id'>) => {
+  console.log(`[relay] -- Inserting new event in DB`);
   const { space, id } = event;
   const proposalId = id.replace('proposal/', '') || '';
   const proposal = await getProposal(proposalId);
   if (!proposal) {
-    console.log(`[events] Proposal not found ${proposalId}`);
+    console.log(`[relay] -- Proposal not found ${proposalId}`);
     return;
   }
 
@@ -42,6 +43,7 @@ const handleCreatedEvent = async (event: Pick<Event, 'space' | 'id'>) => {
 };
 
 const handleDeletedEvent = async (event: Partial<Event>, ipfs: string) => {
+  console.log(`[relay] -- Removing deleted event from DB`);
   const ipfsData = await getIpfsData(ipfs);
   const proposalId = ipfsData.data.message.proposal;
 
@@ -67,16 +69,18 @@ async function updateLastMci(mci: number) {
 }
 
 async function processMessages(messages: Message[]) {
+  console.log(`[replay] - PROCESS: Process ${messages.length} messages`);
   let lastMessageMci: number | null = null;
+
   for (const message of messages) {
     try {
       if (message.type === 'proposal') {
-        console.log('New event: "proposal"', message.space, message.id);
+        console.log('[replay] - New event: "proposal"', message.space, message.id);
         await handleCreatedEvent({ id: `proposal/${message.id}`, space: message.space });
       }
 
       if (message.type === 'delete-proposal') {
-        console.log('New event: "delete-proposal"', message.space, message.id);
+        console.log('[replay] - New event: "delete-proposal"', message.space, message.id);
         await handleDeletedEvent(
           {
             space: message.space
@@ -91,21 +95,21 @@ async function processMessages(messages: Message[]) {
     }
   }
   if (lastMessageMci !== null) {
-    // Store latest message MCI
     await updateLastMci(lastMessageMci);
-    console.log('[replay] Updated to MCI', lastMessageMci);
+    console.log(`[replay] - Updated lastMCI to ${lastMessageMci}`);
   }
-  return;
+  console.log('[replay] - PROCESS: End');
 }
 
 export async function run() {
   // Check latest indexed MCI from db
   const lastMci = await getLastMci();
-  console.log('[replay] Last MCI', lastMci);
+  console.log(`[replay] RUN: Start from MCI ${lastMci}`);
 
-  // Load next messages after latest indexed MCI
   const messages = await getNextMessages(lastMci);
+  console.log(`[replay] Found ${messages.length} new messages`);
   if (messages.length > 0) {
     await processMessages(messages);
   }
+  console.log('[replay] RUN: End');
 }

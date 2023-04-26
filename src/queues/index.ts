@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
-import messagesProcessor from './processors/messages';
+import replayProcessor from './processors/replay';
 import eventsProcessor from './processors/events';
 import HttpNotificationsProcessor from './processors/notifications/http';
 import PushNotificationsProcessor from './processors/notifications/push';
@@ -9,7 +9,7 @@ import DiscordNotificationsProcessor from './processors/notifications/discord';
 
 const connection = new Redis(process.env.REDIS_URL as string);
 
-export const messagesQueue = new Queue('messages', { connection });
+export const replayQueue = new Queue('replay', { connection });
 export const eventsQueue = new Queue('events', { connection });
 export const httpNotificationsQueue = new Queue('notifications-http', {
   connection,
@@ -42,7 +42,7 @@ export const discordNotificationsQueue = new Queue('notifications-discord', {
   }
 });
 
-let messagesWorker: Worker;
+let replayWorker: Worker;
 let eventsWorker: Worker;
 let httpChannelWorker: Worker;
 let pushChannelWorker: Worker;
@@ -51,7 +51,7 @@ let discordChannelWorker: Worker;
 export async function start() {
   console.log('[queue] Starting queue');
 
-  messagesWorker = new Worker(messagesQueue.name, messagesProcessor, { connection });
+  replayWorker = new Worker(replayQueue.name, replayProcessor, { connection });
   eventsWorker = new Worker(eventsQueue.name, eventsProcessor, { connection });
   httpChannelWorker = new Worker(httpNotificationsQueue.name, HttpNotificationsProcessor, {
     connection
@@ -63,8 +63,8 @@ export async function start() {
     connection
   });
 
-  await messagesQueue.add(
-    'messages-reader',
+  await replayQueue.add(
+    'replay',
     {},
     {
       repeat: {
@@ -87,7 +87,7 @@ export async function start() {
 async function shutdown() {
   console.log('[queue] Starting queue shutdown');
   await Promise.all([
-    messagesWorker.close(),
+    replayWorker.close(),
     eventsWorker.close(),
     httpChannelWorker.close(),
     pushChannelWorker.close(),

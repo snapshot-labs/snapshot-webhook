@@ -11,16 +11,15 @@ import type { Event, Subscriber, Proposal } from './types';
 const DELAY = 5;
 
 async function queueHttpNotifications(event: Event) {
+  console.log(`[events] -- [queue][http]: Start`);
   const subscribers = (await db.queryAsync('SELECT * FROM subscribers')) as Subscriber[];
-  console.log('[events] Subscribers', subscribers.length);
 
   const data = subscribers
     .filter(subscriber => [event.space, '*'].includes(subscriber.space))
     .map(subscriber => ({ name: 'http', data: { event, to: subscriber.url } }));
 
   httpNotificationsQueue.addBulk(data);
-
-  console.log('[events] Process event queued');
+  console.log(`[events] -- [queue][http]: End, queued ${subscribers.length} jobs`);
 }
 
 async function queuePushNotifications(event: Event, proposal: Proposal) {
@@ -31,6 +30,7 @@ async function queuePushNotifications(event: Event, proposal: Proposal) {
     return;
   }
 
+  console.log(`[events] -- [queue][push]: Start`);
   const subscribedWallets = await getSubscribers(event.space);
   const walletsChunks = chunk(subscribedWallets, 100);
 
@@ -39,33 +39,35 @@ async function queuePushNotifications(event: Event, proposal: Proposal) {
   });
 
   pushNotificationsQueue.addBulk(data);
+  console.log(`[events] -- [queue][push]: End, queued ${walletsChunks.length} jobs`);
 }
 
 async function queueDiscordNotifications(event: Event, proposal: Proposal) {
+  console.log(`[events] -- [queue][discord]: Start`);
   discordNotificationsQueue.add('discord', { event, proposalId: proposal.id });
+  console.log(`[events] -- [queue][discord]: End, queued 1 job`);
 }
 
 async function processEvents() {
   const ts = parseInt((Date.now() / 1e3).toFixed()) - DELAY;
   const events = (await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts])) as Event[];
-
-  console.log('[events] Process event start', ts, events.length);
+  console.log(`[events] - PROCESS: Process ${events.length} events, at ${ts}`);
 
   for (const event of events) {
     const proposalId = event.id.replace('proposal/', '');
     if (event.event === 'proposal/end') {
       try {
         const scores = await getProposalScores(proposalId);
-        console.log('[events] Stored scores on proposal/end', proposalId, scores);
+        console.log('[events] - Stored scores on proposal/end', proposalId, scores);
       } catch (e) {
-        console.log('[events] getProposalScores failed:', e);
+        console.log('[events] - getProposalScores failed:', e);
       }
     }
 
-    const proposal = await getProposal(event.id.replace('proposal/', ''));
+    const proposal = await getProposal(proposalId);
     if (!proposal) {
-      console.log('[events] Proposal not found', event.id);
-      return;
+      console.log('[events] - Proposal not found', proposalId);
+      continue;
     }
 
     queuePushNotifications(event, proposal);
@@ -77,17 +79,19 @@ async function processEvents() {
         event.id,
         event.event
       ]);
-      console.log(`[events] Events jobs queued ${event.id} ${event.event}`);
+      console.log(`[events] - Popping events ${event.id} ${event.event} from the DB`);
     } catch (e) {
-      console.log('[events]', e);
+      console.log(
+        `[events] - Error while popping events ${event.id} ${event.event} from the DB`,
+        e
+      );
     }
   }
+  console.log('[events] - PROCESS: End');
 }
 
 export async function run() {
-  try {
-    await processEvents();
-  } catch (e) {
-    console.log('[events] Failed to process', e);
-  }
+  console.log('[events] RUN: Start');
+  await processEvents();
+  console.log('[events] RUN: End');
 }

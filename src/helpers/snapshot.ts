@@ -29,7 +29,7 @@ export async function getProposal(id: string) {
   };
   const result = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
   if (result.errors) {
-    throw new Error(`[events] Errors in subgraph request for proposal id: ${id}`);
+    throw new Error(`Errors in subgraph request for proposal id: ${id}`);
   }
   return result.proposal as Proposal;
 }
@@ -91,7 +91,7 @@ export async function getSubscribers(space: string) {
     const result = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
     subscriptions = result.subscriptions || [];
   } catch (error) {
-    console.log('[events] Snapshot hub error:', error);
+    console.log('Snapshot hub error:', error);
   }
   return subscriptions.map(subscription => subscription.address as string);
 }

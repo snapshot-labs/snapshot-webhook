@@ -24,7 +24,7 @@ export default async (job: Job) => {
     return true;
   } catch (error: any) {
     console.log(
-      '[events] Error sending event data to webhook, will retry or fail',
+      '[worker:http] Error sending notification, will retry or fail',
       to,
       error.toString(),
       JSON.stringify(error)
