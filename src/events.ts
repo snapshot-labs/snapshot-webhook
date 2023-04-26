@@ -1,147 +1,96 @@
-import fetch from 'cross-fetch';
-import snapshot from '@snapshot-labs/snapshot.js';
-import { sendEventToDiscordSubscribers } from './discord';
-import { sendPushNotification } from './helpers/beams';
+import chunk from 'lodash.chunk';
 import db from './helpers/mysql';
-import { sha256 } from './helpers/utils';
-import { getProposal, getProposalScores } from './helpers/proposal';
+import { getProposalScores, getProposal, getSubscribers } from './helpers/snapshot';
+import {
+  httpNotificationsQueue,
+  pushNotificationsQueue,
+  discordNotificationsQueue
+} from './queues';
+import type { Event, Subscriber, Proposal } from './types';
 
-const delay = 5;
-const interval = 15;
-const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
-const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
-const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
+const DELAY = 5;
 
-export const handleCreatedEvent = async event => {
-  const { space, id } = event;
-  const proposalId = id.replace('proposal/', '') || '';
-  const proposal = await getProposal(proposalId);
-  if (!proposal) {
-    console.log(`[events] Proposal not found ${proposalId}`);
-    return;
-  }
+async function queueHttpNotifications(event: Event) {
+  console.log(`[events] -- [queue][http]: Start`);
+  const subscribers = (await db.queryAsync('SELECT * FROM subscribers')) as Subscriber[];
 
-  const proposalEvent = { id, space };
-  const ts = Date.now() / 1e3;
+  const data = subscribers
+    .filter(subscriber => [event.space, '*'].includes(subscriber.space))
+    .map(subscriber => ({ name: 'http', data: { event, to: subscriber.url } }));
 
-  let query = 'INSERT IGNORE INTO events SET ?; ';
-  const params = [
-    {
-      event: 'proposal/created',
-      expire: proposal.created,
-      ...proposalEvent
-    }
-  ];
-
-  query += 'INSERT IGNORE INTO events SET ?; ';
-  params.push({
-    event: 'proposal/start',
-    expire: proposal.start,
-    ...proposalEvent
-  });
-
-  if (proposal.end > ts) {
-    query += 'INSERT IGNORE INTO events SET ?; ';
-    params.push({
-      event: 'proposal/end',
-      expire: proposal.end,
-      ...proposalEvent
-    });
-  }
-  return db.queryAsync(query, params);
-};
-
-export const handleDeletedEvent = async event => {
-  const { ipfs } = event;
-  const ipfsData = await snapshot.utils.ipfsGet('snapshot.mypinata.cloud', ipfs);
-  const proposalId = ipfsData.data.message.proposal;
-
-  event.id = `proposal/${proposalId}`;
-  event.event = 'proposal/deleted';
-  delete event.ipfs;
-
-  const query = `
-    DELETE FROM events WHERE id = ?;
-    INSERT IGNORE INTO events SET ?;
-  `;
-  return db.queryAsync(query, [event.id, event]);
-};
-
-export async function sendEvent(event, to) {
-  event.token = sha256(`${to}${serviceEventsSalt}`);
-  event.secret = sha256(`${to}${serviceEventsSalt}`);
-  const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
-  try {
-    const res = await fetch(to, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authentication: headerSecret
-      },
-      body: JSON.stringify(event)
-    });
-    return res.text();
-  } catch (error) {
-    console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
-    return;
-  }
+  httpNotificationsQueue.addBulk(data);
+  console.log(`[events] -- [queue][http]: End, queued ${subscribers.length} jobs`);
 }
 
-const sendEventToWebhookSubscribers = (event, subscribers) => {
-  Promise.allSettled(
-    subscribers
-      .filter(subscriber => [event.space, '*'].includes(subscriber.space))
-      .map(subscriber => sendEvent(event, subscriber.url))
-  )
-    .then(() => console.log('[events] Process event done'))
-    .catch(e => console.log('[events] Process event failed', e));
-};
+async function queuePushNotifications(event: Event, proposal: Proposal) {
+  if (
+    parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0') !== 0 ||
+    event.event !== 'proposal/start'
+  ) {
+    return;
+  }
 
-async function processEvents(subscribers) {
-  const ts = parseInt((Date.now() / 1e3).toFixed()) - delay;
-  const events = await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts]);
+  console.log(`[events] -- [queue][push]: Start`);
+  const subscribedWallets = await getSubscribers(event.space);
+  const walletsChunks = chunk(subscribedWallets, 100);
 
-  console.log('[events] Process event start', ts, events.length);
+  const data = walletsChunks.map(chunk => {
+    return { name: 'push', data: { event, proposalTitle: proposal.title, to: chunk } };
+  });
+
+  pushNotificationsQueue.addBulk(data);
+  console.log(`[events] -- [queue][push]: End, queued ${walletsChunks.length} jobs`);
+}
+
+async function queueDiscordNotifications(event: Event, proposal: Proposal) {
+  console.log(`[events] -- [queue][discord]: Start`);
+  discordNotificationsQueue.add('discord', { event, proposalId: proposal.id });
+  console.log(`[events] -- [queue][discord]: End, queued 1 job`);
+}
+
+async function processEvents() {
+  const ts = parseInt((Date.now() / 1e3).toFixed()) - DELAY;
+  const events = (await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts])) as Event[];
+  console.log(`[events] - PROCESS: Process ${events.length} events, at ${ts}`);
 
   for (const event of events) {
     const proposalId = event.id.replace('proposal/', '');
     if (event.event === 'proposal/end') {
       try {
         const scores = await getProposalScores(proposalId);
-        console.log('[events] Stored scores on proposal/end', proposalId, scores);
+        console.log('[events] - Stored scores on proposal/end', proposalId, scores);
       } catch (e) {
-        console.log('[events] getProposalScores failed:', e);
+        console.log('[events] - getProposalScores failed:', e);
       }
     }
 
-    // Send event to discord subscribers and webhook subscribers and then delete event from db
-    // TODO: handle errors and retry
-    if (servicePushNotifications && event.event === 'proposal/start') sendPushNotification(event);
-    sendEventToDiscordSubscribers(event.event, proposalId);
-    sendEventToWebhookSubscribers(event, subscribers);
+    const proposal = await getProposal(proposalId);
+    if (!proposal) {
+      console.log('[events] - Proposal not found', proposalId);
+    } else {
+      queuePushNotifications(event, proposal);
+      queueHttpNotifications(event);
+      queueDiscordNotifications(event, proposal);
+    }
 
     try {
       await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [
         event.id,
         event.event
       ]);
-      console.log(`[events] Event sent ${event.id} ${event.event}`);
+      console.log(`[events] - Popping events ${event.id} ${event.event} from the DB`);
     } catch (e) {
-      console.log('[events]', e);
+      console.log(
+        `[events] - Error while popping events ${event.id} ${event.event} from the DB`,
+        e
+      );
     }
   }
+  console.log('[events] - PROCESS: End');
 }
 
-async function run() {
-  try {
-    const subscribers = await db.queryAsync('SELECT * FROM subscribers');
-    console.log('[events] Subscribers', subscribers.length);
-    await processEvents(subscribers);
-  } catch (e) {
-    console.log('[events] Failed to process', e);
-  }
-  await snapshot.utils.sleep(interval * 1e3);
-  await run();
+export async function run() {
+  console.log('[events] RUN: Start');
+  await processEvents();
+  console.log('[events] RUN: End');
 }
-
-if (serviceEvents) setTimeout(() => run(), interval * 1e3);

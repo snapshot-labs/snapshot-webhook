@@ -17,7 +17,7 @@ import db from './helpers/mysql';
 import removeMd from 'remove-markdown';
 import { shortenAddress } from './helpers/utils';
 import { subs, loadSubscriptions } from './subscriptions';
-import { checkSpace, getProposal } from './helpers/proposal';
+import { checkSpace, getProposal } from './helpers/snapshot';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -69,16 +69,10 @@ const commands = [
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
-      option
-        .setName('channel')
-        .setDescription('Channel to post the events')
-        .setRequired(true)
+      option.setName('channel').setDescription('Channel to post the events').setRequired(true)
     )
     .addStringOption(option =>
-      option
-        .setName('space')
-        .setDescription('space to subscribe to')
-        .setRequired(true)
+      option.setName('space').setDescription('space to subscribe to').setRequired(true)
     )
     .addStringOption(option => option.setName('mention').setDescription('Mention role')),
   new SlashCommandBuilder()
@@ -87,33 +81,26 @@ const commands = [
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
-      option
-        .setName('channel')
-        .setDescription('Channel to post the events')
-        .setRequired(true)
+      option.setName('channel').setDescription('Channel to post the events').setRequired(true)
     )
     .addStringOption(option =>
-      option
-        .setName('space')
-        .setDescription('space to subscribe to')
-        .setRequired(true)
+      option.setName('space').setDescription('space to subscribe to').setRequired(true)
     )
 ];
 
-const rest = new REST({ version: '10' }).setToken(token);
-
-(async () => {
+export async function start() {
   try {
+    const rest = new REST({ version: '10' }).setToken(token);
+
     console.log('Started refreshing application (/) commands.');
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
     console.log('Successfully reloaded application (/) commands.');
-  } catch (error) {
-    console.error(error);
+
+    client.login(token);
+  } catch (e) {
+    console.log('Unable to start discord bot', e);
   }
-})();
-
-client.login(token);
-
+}
 export const setActivity = (message, url?) => {
   try {
     client.user.setActivity(message, { type: 'WATCHING', url });
@@ -229,9 +216,9 @@ async function snapshotCommandHandler(interaction, commandType) {
     const spaceExist = await checkSpace(space);
     if (!spaceExist) return interaction.reply(`Space not found: ${inlineCode(space)}`);
 
-    const subscription = [interaction.guildId, channelId, space, mention || '', ts];
+    const subscription = [interaction.guildId, channelId, space, mention || '', ts, ts];
     await db.queryAsync(
-      `INSERT INTO subscriptions (guild, channel, space, mention, created) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO subscriptions (guild, channel, space, mention, created, updated) VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
       [...subscription, ...subscription]
     );
@@ -358,5 +345,3 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
   }
   return { success: true };
 };
-
-export default client;
