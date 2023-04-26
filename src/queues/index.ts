@@ -6,7 +6,7 @@ import HttpNotificationsProcessor from './processors/notifications/http';
 import PushNotificationsProcessor from './processors/notifications/push';
 import DiscordNotificationsProcessor from './processors/notifications/discord';
 
-const connection = new Redis(process.env.REDIS_URL as string);
+const connection = new Redis(process.env.REDIS_URL as string, { maxRetriesPerRequest: null });
 
 export const replayQueue = new Queue('replay', { connection });
 export const eventsQueue = new Queue('events', { connection });
