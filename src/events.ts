@@ -1,9 +1,11 @@
 import chunk from 'lodash.chunk';
-import { sendEventToDiscordSubscribers } from './discord';
 import db from './helpers/mysql';
 import { getProposalScores, getProposal, getSubscribers } from './helpers/snapshot';
-import { httpNotificationsQueue } from './queues';
-import { pushNotificationsQueue } from './queues';
+import {
+  httpNotificationsQueue,
+  pushNotificationsQueue,
+  discordNotificationsQueue
+} from './queues';
 import type { Event, Subscriber, Proposal } from './types';
 
 const DELAY = 5;
@@ -39,6 +41,10 @@ async function queuePushNotifications(event: Event, proposal: Proposal) {
   pushNotificationsQueue.addBulk(data);
 }
 
+async function queueDiscordNotifications(event: Event, proposal: Proposal) {
+  discordNotificationsQueue.add('discord', { event, proposalId: proposal.id });
+}
+
 async function processEvents() {
   const ts = parseInt((Date.now() / 1e3).toFixed()) - DELAY;
   const events = (await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts])) as Event[];
@@ -62,12 +68,9 @@ async function processEvents() {
       return;
     }
 
-    // Send event to discord subscribers and webhook subscribers and then delete event from db
-    // TODO: handle errors and retry
     queuePushNotifications(event, proposal);
     queueHttpNotifications(event);
-
-    sendEventToDiscordSubscribers(event.event, proposalId);
+    queueDiscordNotifications(event, proposal);
 
     try {
       await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [
