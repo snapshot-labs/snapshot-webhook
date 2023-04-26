@@ -8,7 +8,7 @@ export default async (job: Job) => {
   const { event, to }: { event: Event; to: Subscriber['url'] } = job.data;
 
   try {
-    const res = await fetch(to, {
+    const response = await fetch(to, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -16,9 +16,19 @@ export default async (job: Job) => {
       },
       body: JSON.stringify(event)
     });
-    return res.text();
-  } catch (error) {
-    console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
-    return;
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`Code ${response.status}: ${response.statusText}`);
+    }
+
+    return true;
+  } catch (error: any) {
+    console.log(
+      '[events] Error sending event data to webhook, will retry or fail',
+      to,
+      error.toString(),
+      JSON.stringify(error)
+    );
+    throw error;
   }
 };
