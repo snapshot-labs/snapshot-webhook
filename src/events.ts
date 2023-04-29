@@ -5,6 +5,7 @@ import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal, getProposalScores } from './helpers/proposal';
+import type { Event, Subscriber } from './types';
 
 const delay = 5;
 const interval = 15;
@@ -12,7 +13,7 @@ const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
 
-export const handleCreatedEvent = async event => {
+export const handleCreatedEvent = async (event: Pick<Event, 'space' | 'id'>) => {
   const { space, id } = event;
   const proposalId = id.replace('proposal/', '') || '';
   const proposal = await getProposal(proposalId);
@@ -51,14 +52,12 @@ export const handleCreatedEvent = async event => {
   return db.queryAsync(query, params);
 };
 
-export const handleDeletedEvent = async event => {
-  const { ipfs } = event;
+export const handleDeletedEvent = async (event: Partial<Event>, ipfs: string) => {
   const ipfsData = await snapshot.utils.ipfsGet('snapshot.mypinata.cloud', ipfs);
   const proposalId = ipfsData.data.message.proposal;
 
   event.id = `proposal/${proposalId}`;
   event.event = 'proposal/deleted';
-  delete event.ipfs;
 
   const query = `
     DELETE FROM events WHERE id = ?;
@@ -67,9 +66,9 @@ export const handleDeletedEvent = async event => {
   return db.queryAsync(query, [event.id, event]);
 };
 
-export async function sendEvent(event, to) {
-  event.token = sha256(`${to}${serviceEventsSalt}`);
-  event.secret = sha256(`${to}${serviceEventsSalt}`);
+export async function sendEvent(event: Event, to: string) {
+  const token = sha256(`${to}${serviceEventsSalt}`);
+  const secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
   try {
     const res = await fetch(to, {
@@ -78,7 +77,7 @@ export async function sendEvent(event, to) {
         'Content-Type': 'application/json',
         Authentication: headerSecret
       },
-      body: JSON.stringify(event)
+      body: JSON.stringify({ ...event, token, secret })
     });
     return res.text();
   } catch (error) {
@@ -87,7 +86,7 @@ export async function sendEvent(event, to) {
   }
 }
 
-const sendEventToWebhookSubscribers = (event, subscribers) => {
+const sendEventToWebhookSubscribers = (event: Event, subscribers: Subscriber[]) => {
   Promise.allSettled(
     subscribers
       .filter(subscriber => [event.space, '*'].includes(subscriber.space))
@@ -97,9 +96,9 @@ const sendEventToWebhookSubscribers = (event, subscribers) => {
     .catch(e => console.log('[events] Process event failed', e));
 };
 
-async function processEvents(subscribers) {
+async function processEvents(subscribers: Subscriber[]) {
   const ts = parseInt((Date.now() / 1e3).toFixed()) - delay;
-  const events = await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts]);
+  const events = (await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts])) as Event[];
 
   console.log('[events] Process event start', ts, events.length);
 
@@ -136,7 +135,7 @@ async function run() {
   try {
     const subscribers = await db.queryAsync('SELECT * FROM subscribers');
     console.log('[events] Subscribers', subscribers.length);
-    await processEvents(subscribers);
+    await processEvents(subscribers as Subscriber[]);
   } catch (e) {
     console.log('[events] Failed to process', e);
   }

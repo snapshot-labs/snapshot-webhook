@@ -2,7 +2,7 @@ import snapshot from '@snapshot-labs/snapshot.js';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
-export async function getProposal(id) {
+export async function getProposal(id: string) {
   let proposal: { [key: string]: any } | null = null;
   const query = {
     proposal: {
@@ -33,11 +33,11 @@ export async function getProposal(id) {
   return proposal;
 }
 
-export async function getProposalScores(proposalId) {
+export async function getProposalScores(proposalId: string) {
   return snapshot.utils.getJSON(`${hubURL}/api/scores/${proposalId}`);
 }
 
-export async function checkSpace(space) {
+export async function checkSpace(space: string) {
   try {
     const spaceData = await snapshot.utils.getJSON(`${hubURL}/api/spaces/${space}`);
     return spaceData?.name;

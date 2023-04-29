@@ -2,14 +2,15 @@ import PushNotifications from '@pusher/push-notifications-server';
 import snapshot from '@snapshot-labs/snapshot.js';
 import chunk from 'lodash.chunk';
 import { getProposal } from './proposal';
+import type { Event } from '../types';
 
 const beams = new PushNotifications({
   instanceId: process.env.SERVICE_PUSHER_BEAMS_INSTANCE_ID ?? '',
   secretKey: process.env.SERVICE_PUSHER_BEAMS_SECRET_KEY ?? ''
 });
 
-async function getSubscribers(space) {
-  let subscriptions: { [key: string]: any } = [];
+async function getSubscribers(space: string) {
+  let subscriptions: { [key: string]: any }[] = [];
   const query = {
     subscriptions: {
       __args: {
@@ -27,7 +28,7 @@ async function getSubscribers(space) {
   return subscriptions.map(subscription => subscription.address);
 }
 
-export const sendPushNotification = async event => {
+export const sendPushNotification = async (event: Event) => {
   const subscribedWallets = await getSubscribers(event.space);
   const walletsChunks = chunk(subscribedWallets, 100);
   const proposal = await getProposal(event.id.replace('proposal/', ''));
