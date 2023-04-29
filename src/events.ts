@@ -1,6 +1,5 @@
 import fetch from 'cross-fetch';
 import snapshot from '@snapshot-labs/snapshot.js';
-import { sendEventToDiscordSubscribers } from './discord';
 import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
@@ -11,6 +10,7 @@ const interval = 15;
 const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
+const discordBotUrl = process.env.DISCORD_BOT_URL || 'http://localhost:3000';
 
 export const handleCreatedEvent = async event => {
   const { space, id } = event;
@@ -84,6 +84,25 @@ export async function sendEvent(event, to) {
   } catch (error) {
     console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
     return;
+  }
+}
+
+async function sendEventToDiscordSubscribers(event: string, proposalId: string) {
+  try {
+    const url = `${discordBotUrl}/api/event-to-subscribers`;
+    const params = {
+      event,
+      proposalId
+    };
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ params })
+    });
+
+    return console.log('[events] Notify Discord subscribers success');
+  } catch (error) {
+    console.log("[events] Discord API Failure", error);
   }
 }
 

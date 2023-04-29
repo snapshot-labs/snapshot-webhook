@@ -4,7 +4,6 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import api from './api';
 import './replay';
-import './discord';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
