@@ -69,16 +69,10 @@ const commands = [
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
-      option
-        .setName('channel')
-        .setDescription('Channel to post the events')
-        .setRequired(true)
+      option.setName('channel').setDescription('Channel to post the events').setRequired(true)
     )
     .addStringOption(option =>
-      option
-        .setName('space')
-        .setDescription('space to subscribe to')
-        .setRequired(true)
+      option.setName('space').setDescription('space to subscribe to').setRequired(true)
     )
     .addStringOption(option => option.setName('mention').setDescription('Mention role')),
   new SlashCommandBuilder()
@@ -87,16 +81,10 @@ const commands = [
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
-      option
-        .setName('channel')
-        .setDescription('Channel to post the events')
-        .setRequired(true)
+      option.setName('channel').setDescription('Channel to post the events').setRequired(true)
     )
     .addStringOption(option =>
-      option
-        .setName('space')
-        .setDescription('space to subscribe to')
-        .setRequired(true)
+      option.setName('space').setDescription('space to subscribe to').setRequired(true)
     )
 ];
 
