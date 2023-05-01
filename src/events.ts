@@ -140,7 +140,7 @@ async function run() {
     console.log('[events] Failed to process', e);
   }
   await snapshot.utils.sleep(interval * 1e3);
-  await run();
+  run();
 }
 
 if (serviceEvents) setTimeout(() => run(), interval * 1e3);

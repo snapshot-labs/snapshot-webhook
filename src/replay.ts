@@ -95,7 +95,7 @@ async function run() {
 
   // Run again after 10sec
   await snapshot.utils.sleep(10e3);
-  await run();
+  run();
 }
 
 run();
