@@ -37,11 +37,21 @@ export async function getProposalScores(proposalId) {
   return snapshot.utils.getJSON(`${hubURL}/api/scores/${proposalId}`);
 }
 
-export async function checkSpace(space) {
-  try {
-    const spaceData = await snapshot.utils.getJSON(`${hubURL}/api/spaces/${space}`);
-    return spaceData?.name;
-  } catch (error) {
-    return false;
+export async function getSpace(id) {
+  let space: { [key: string]: any } | null = null;
+  const query = {
+    space: {
+      __args: {
+        id
+      },
+      id: true,
+      name: true
+    }
+  };
+  const result = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
+  if (result.errors) {
+    throw new Error(`[events] Errors in subgraph request for proposal id: ${id}`);
   }
+  space = result.space || null;
+  return space;
 }

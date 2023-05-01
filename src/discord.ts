@@ -17,7 +17,7 @@ import db from './helpers/mysql';
 import removeMd from 'remove-markdown';
 import { shortenAddress } from './helpers/utils';
 import { subs, loadSubscriptions } from './subscriptions';
-import { checkSpace, getProposal } from './helpers/proposal';
+import { getSpace, getProposal } from './helpers/proposal';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -198,7 +198,7 @@ async function snapshotHelpCommandHandler(interaction) {
 async function snapshotCommandHandler(interaction, commandType) {
   const ts = parseInt((Date.now() / 1e3).toFixed());
   const { id: channelId } = interaction.options.getChannel('channel');
-  const space = interaction.options.getString('space');
+  const spaceId = interaction.options.getString('space');
   const mention = interaction.options.getString('mention');
   console.log(
     'Received',
@@ -207,17 +207,17 @@ async function snapshotCommandHandler(interaction, commandType) {
     ':',
     commandType,
     channelId,
-    space,
+    spaceId,
     mention
   );
   if (commandType === 'add') {
     const permissions = await checkPermissions(channelId, CLIENT_ID);
     if (permissions !== true) return interaction.reply(permissions).catch(console.error);
 
-    const spaceExist = await checkSpace(space);
-    if (!spaceExist) return interaction.reply(`Space not found: ${inlineCode(space)}`);
+    const space = await getSpace(spaceId);
+    if (!space) return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
 
-    const subscription = [interaction.guildId, channelId, space, mention || '', ts, ts];
+    const subscription = [interaction.guildId, channelId, spaceId, mention || '', ts, ts];
     await db.queryAsync(
       `INSERT INTO subscriptions (guild, channel, space, mention, created, updated) VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
@@ -228,7 +228,7 @@ async function snapshotCommandHandler(interaction, commandType) {
     const embed = new EmbedBuilder()
       .setColor(color)
       .addFields(
-        { name: 'Space', value: space, inline: true },
+        { name: 'Space', value: spaceId, inline: true },
         { name: 'Channel', value: `<#${channelId}>`, inline: true },
         { name: 'Mention', value: mention || 'None', inline: true }
       )
@@ -236,13 +236,13 @@ async function snapshotCommandHandler(interaction, commandType) {
     interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
   } else if (commandType === 'remove') {
     const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
-    await db.queryAsync(query, [interaction.guildId, channelId, space]);
+    await db.queryAsync(query, [interaction.guildId, channelId, spaceId]);
     await loadSubscriptions();
     const color = '#EE4145';
     const embed = new EmbedBuilder()
       .setColor(color)
       .addFields(
-        { name: 'Space', value: space, inline: true },
+        { name: 'Space', value: spaceId, inline: true },
         { name: 'Channel', value: `<#${channelId}>`, inline: true }
       )
       .setDescription('You have successfully unsubscribed to space events.');
