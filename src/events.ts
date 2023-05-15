@@ -53,7 +53,7 @@ export const handleCreatedEvent = async event => {
 
 export const handleDeletedEvent = async event => {
   const { ipfs } = event;
-  const ipfsData = await snapshot.utils.ipfsGet('snapshot.mypinata.cloud', ipfs);
+  const ipfsData = await snapshot.utils.ipfsGet('pineapple.fyi', ipfs);
   const proposalId = ipfsData.data.message.proposal;
 
   event.id = `proposal/${proposalId}`;
