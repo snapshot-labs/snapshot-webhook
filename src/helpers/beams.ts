@@ -2,6 +2,7 @@ import PushNotifications from '@pusher/push-notifications-server';
 import snapshot from '@snapshot-labs/snapshot.js';
 import chunk from 'lodash.chunk';
 import { getProposal } from './proposal';
+import { capture } from './sentry';
 
 const beams = new PushNotifications({
   instanceId: process.env.SERVICE_PUSHER_BEAMS_INSTANCE_ID ?? '',
@@ -22,7 +23,7 @@ async function getSubscribers(space) {
     const result = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
     subscriptions = result.subscriptions || [];
   } catch (error) {
-    console.log('[events] Snapshot hub error:', error);
+    capture(error);
   }
   return subscriptions.map(subscription => subscription.address);
 }
@@ -48,6 +49,6 @@ export const sendPushNotification = async event => {
       });
     }
   } catch (e) {
-    console.log('[events] Error sending push notification', e);
+    capture(e);
   }
 };

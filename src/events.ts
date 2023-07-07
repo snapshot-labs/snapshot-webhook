@@ -5,6 +5,7 @@ import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal, getProposalScores } from './helpers/proposal';
+import { capture } from './helpers/sentry';
 
 const delay = 5;
 const interval = 15;
@@ -110,6 +111,7 @@ async function processEvents(subscribers) {
         const scores = await getProposalScores(proposalId);
         console.log('[events] Stored scores on proposal/end', proposalId, scores);
       } catch (e) {
+        capture(e);
         console.log('[events] getProposalScores failed:', e);
       }
     }
@@ -127,6 +129,7 @@ async function processEvents(subscribers) {
       ]);
       console.log(`[events] Event sent ${event.id} ${event.event}`);
     } catch (e) {
+      capture(e);
       console.log('[events]', e);
     }
   }
@@ -138,6 +141,7 @@ async function run() {
     console.log('[events] Subscribers', subscribers.length);
     await processEvents(subscribers);
   } catch (e) {
+    capture(e);
     console.log('[events] Failed to process', e);
   }
   await snapshot.utils.sleep(interval * 1e3);

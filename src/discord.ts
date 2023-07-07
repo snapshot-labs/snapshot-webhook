@@ -18,6 +18,7 @@ import removeMd from 'remove-markdown';
 import { shortenAddress } from './helpers/utils';
 import { subs, loadSubscriptions } from './subscriptions';
 import { getSpace, getProposal } from './helpers/proposal';
+import { capture } from './helpers/sentry';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -96,7 +97,7 @@ const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
     console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
-    console.error(error);
+    capture(error);
   }
 })();
 
@@ -107,7 +108,7 @@ export const setActivity = (message, url?) => {
     client.user.setActivity(message, { type: 'WATCHING', url });
     return true;
   } catch (e) {
-    console.log('Missing activity', e);
+    capture(e);
   }
 };
 
@@ -121,6 +122,7 @@ const checkPermissions = async (channelId, botId) => {
       return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
     return true;
   } catch (error) {
+    capture(error);
     console.log('Error checking permissions', error);
     const channelExistWithName = client.channels.cache.find(c => c.name === channelId);
     if (channelExistWithName) {
@@ -192,7 +194,7 @@ async function snapshotHelpCommandHandler(interaction) {
         Have any questions? Join our discord: https://discord.snapshot.org`
       }
     );
-  interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+  interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
 }
 
 async function snapshotCommandHandler(interaction, commandType) {
@@ -212,7 +214,7 @@ async function snapshotCommandHandler(interaction, commandType) {
   );
   if (commandType === 'add') {
     const permissions = await checkPermissions(channelId, CLIENT_ID);
-    if (permissions !== true) return interaction.reply(permissions).catch(console.error);
+    if (permissions !== true) return interaction.reply(permissions).catch(capture);
 
     const space = await getSpace(spaceId);
     if (!space) return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
@@ -233,7 +235,7 @@ async function snapshotCommandHandler(interaction, commandType) {
         { name: 'Mention', value: mention || 'None', inline: true }
       )
       .setDescription('You have successfully subscribed to space events.');
-    interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+    interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
   } else if (commandType === 'remove') {
     const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
     await db.queryAsync(query, [interaction.guildId, channelId, spaceId]);
@@ -246,7 +248,7 @@ async function snapshotCommandHandler(interaction, commandType) {
         { name: 'Channel', value: `<#${channelId}>`, inline: true }
       )
       .setDescription('You have successfully unsubscribed to space events.');
-    interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+    interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
   }
 }
 
@@ -275,7 +277,7 @@ export const sendMessage = async (channel, message) => {
     await speaker.send(message);
     return true;
   } catch (e) {
-    console.log('Discord error:', e);
+    capture(e);
   }
 };
 

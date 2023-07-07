@@ -1,6 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
 import db from './helpers/mysql';
+import { capture } from './helpers/sentry';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
@@ -39,6 +40,7 @@ async function getNextMessages(mci: number) {
     const results = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
     return results.messages;
   } catch (e) {
+    capture(e);
     console.log('Failed to load messages', e);
     return;
   }
@@ -67,7 +69,7 @@ async function processMessages(messages: any[]) {
       }
       lastMessageMci = message.mci;
     } catch (error) {
-      console.log('[replay] Failed to process message', message.id, error);
+      capture(error);
       break;
     }
   }
@@ -76,7 +78,7 @@ async function processMessages(messages: any[]) {
     await updateLastMci(lastMessageMci);
     console.log('[replay] Updated to MCI', lastMessageMci);
   }
-  return
+  return;
 }
 
 async function run() {
