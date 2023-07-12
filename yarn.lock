@@ -1026,10 +1026,10 @@ configstore@^5.0.1:
     write-file-atomic "^3.0.0"
     xdg-basedir "^4.0.0"
 
-connection-string@^1.0.1:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/connection-string/-/connection-string-1.1.0.tgz#3d37d8933210548f7bee752426e948cdd88663a0"
-  integrity sha512-uWTk8bs+jczX5D0ptKk7hldRMtp4eqty8SyTS1lKZs24VOQRsGGwLAUUvj1+egd+LxYfDfkiPSm4bFp9LTgrbQ==
+connection-string@^4.3.6:
+  version "4.3.6"
+  resolved "https://registry.yarnpkg.com/connection-string/-/connection-string-4.3.6.tgz#4aa23f0b6d31f6a310afffd4e9a481d000c64836"
+  integrity sha512-dwaq4BMeiIIWry/oQxjstPB7Xp0K1nGjaY8p6PHQB+J9ZJuIvNp7ux3Noupq0hMd/dqEHXkfdmmGFOKTbGKWmw==
 
 content-disposition@0.5.3:
   version "0.5.3"
