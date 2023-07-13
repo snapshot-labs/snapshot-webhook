@@ -2,6 +2,7 @@ import express from 'express';
 import { sendEvent } from './events';
 import pkg from '../package.json';
 import { last_mci } from './replay';
+import { capture } from './helpers/sentry';
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ router.get('/test', async (req, res) => {
     await sendEvent(event, url);
     return res.json({ url, success: true });
   } catch (e) {
+    capture(e);
     return res.json({ url, error: e });
   }
 });
