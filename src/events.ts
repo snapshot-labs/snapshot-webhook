@@ -4,7 +4,7 @@ import { sendEventToDiscordSubscribers } from './discord';
 import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
-import { getProposal, getProposalScores } from './helpers/proposal';
+import { getProposal } from './helpers/proposal';
 import { capture } from './helpers/sentry';
 
 const delay = 5;
@@ -106,15 +106,6 @@ async function processEvents(subscribers) {
 
   for (const event of events) {
     const proposalId = event.id.replace('proposal/', '');
-    if (event.event === 'proposal/end') {
-      try {
-        const scores = await getProposalScores(proposalId);
-        console.log('[events] Stored scores on proposal/end', proposalId, scores);
-      } catch (e) {
-        capture(e);
-        console.log('[events] getProposalScores failed:', e);
-      }
-    }
 
     // Send event to discord subscribers and webhook subscribers and then delete event from db
     // TODO: handle errors and retry
