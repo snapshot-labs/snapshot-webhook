@@ -72,8 +72,9 @@ export async function sendEvent(event, to, method = 'POST') {
   event.token = sha256(`${to}${serviceEventsSalt}`);
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
+  const url = to.replace('[PROPOSAL-ID]', event.id.split('/')[1]);
   try {
-    const res = await fetch(to, {
+    const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -83,7 +84,7 @@ export async function sendEvent(event, to, method = 'POST') {
     });
     return res.text();
   } catch (error) {
-    console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
+    console.log('[events] Error sending event data to webhook', url, JSON.stringify(error));
     return;
   }
 }
