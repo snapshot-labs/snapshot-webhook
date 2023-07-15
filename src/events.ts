@@ -68,13 +68,13 @@ export const handleDeletedEvent = async event => {
   return db.queryAsync(query, [event.id, event]);
 };
 
-export async function sendEvent(event, to) {
+export async function sendEvent(event, to, method = 'POST') {
   event.token = sha256(`${to}${serviceEventsSalt}`);
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
   try {
     const res = await fetch(to, {
-      method: 'POST',
+      method,
       headers: {
         'Content-Type': 'application/json',
         Authentication: headerSecret
@@ -92,7 +92,7 @@ const sendEventToWebhookSubscribers = (event, subscribers) => {
   Promise.allSettled(
     subscribers
       .filter(subscriber => [event.space, '*'].includes(subscriber.space))
-      .map(subscriber => sendEvent(event, subscriber.url))
+      .map(subscriber => sendEvent(event, subscriber.url, subscriber.method))
   )
     .then(() => console.log('[events] Process event done'))
     .catch(e => console.log('[events] Process event failed', e));
