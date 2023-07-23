@@ -1,4 +1,4 @@
-import fetch from 'cross-fetch';
+import fetch from 'node-fetch';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { sendEventToDiscordSubscribers } from './discord';
 import { sendPushNotification } from './helpers/beams';
@@ -9,6 +9,7 @@ import { capture } from './helpers/sentry';
 
 const delay = 5;
 const interval = 15;
+const HTTP_WEBHOOK_TIMEOUT = 15000;
 const serviceEvents = parseInt(process.env.SERVICE_EVENTS || '0');
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
 const servicePushNotifications = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
@@ -72,19 +73,26 @@ export async function sendEvent(event, to, method = 'POST') {
   event.token = sha256(`${to}${serviceEventsSalt}`);
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
+  const url = to.replace('[PROPOSAL-ID]', event.id.split('/')[1]);
   try {
-    const res = await fetch(to, {
+    const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
         Authentication: headerSecret
       },
-      body: JSON.stringify(event)
+      body: JSON.stringify(event),
+      timeout: HTTP_WEBHOOK_TIMEOUT
     });
     return res.text();
-  } catch (error) {
-    console.log('[events] Error sending event data to webhook', to, JSON.stringify(error));
-    return;
+  } catch (error: any) {
+    if (error.message.includes('network timeout')) {
+      console.error('[events] Timed out while sending the webhook', to);
+    } else {
+      console.error('[events] Error sending event data to webhook', to, JSON.stringify(error));
+    }
+
+    throw error;
   }
 }
 
@@ -95,7 +103,7 @@ const sendEventToWebhookSubscribers = (event, subscribers) => {
       .map(subscriber => sendEvent(event, subscriber.url, subscriber.method))
   )
     .then(() => console.log('[events] Process event done'))
-    .catch(e => console.log('[events] Process event failed', e));
+    .catch(e => capture(e));
 };
 
 async function processEvents(subscribers) {

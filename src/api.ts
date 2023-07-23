@@ -26,8 +26,10 @@ router.get('/test', async (req, res) => {
     new URL(url);
     await sendEvent(event, url);
     return res.json({ url, success: true });
-  } catch (e) {
-    capture(e);
+  } catch (e: any) {
+    if (e.code !== 'ERR_INVALID_URL') {
+      capture(e);
+    }
     return res.json({ url, error: e });
   }
 });

@@ -305,7 +305,7 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
           new ActionRowBuilder().addComponents(
             ...proposal.choices.map((choice, i) =>
               new ButtonBuilder()
-                .setLabel(choice)
+                .setLabel(choice.slice(0, 79))
                 .setURL(`${url}?choice=${i + 1}`)
                 .setStyle(ButtonStyle.Link)
             )
