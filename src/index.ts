@@ -3,6 +3,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { initLogger, fallbackLogger } from './helpers/sentry';
+import initMetrics from './helpers/metrics';
 import api from './api';
 import './replay';
 import './discord';
@@ -11,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 initLogger(app);
+initMetrics(app);
 
 app.use(bodyParser.json({ limit: '8mb' }));
 app.use(bodyParser.urlencoded({ limit: '8mb', extended: false }));
