@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
 import db from './helpers/mysql';
-import { capture } from './helpers/sentry';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
