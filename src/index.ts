@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { initLogger, fallbackLogger } from './helpers/sentry';
+import { initLogger, fallbackLogger } from '@snapshot-labs/snapshot-sentry';
 import initMetrics from './helpers/metrics';
 import api from './api';
 import './replay';

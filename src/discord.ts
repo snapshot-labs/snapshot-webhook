@@ -18,7 +18,7 @@ import removeMd from 'remove-markdown';
 import { shortenAddress } from './helpers/utils';
 import { subs, loadSubscriptions } from './subscriptions';
 import { getSpace, getProposal } from './helpers/proposal';
-import { capture } from './helpers/sentry';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';

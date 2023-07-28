@@ -5,7 +5,7 @@ import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal } from './helpers/proposal';
-import { capture } from './helpers/sentry';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest } from './helpers/metrics';
 
 const delay = 5;

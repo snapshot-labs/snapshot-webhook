@@ -2,7 +2,7 @@ import express from 'express';
 import { sendEvent } from './events';
 import pkg from '../package.json';
 import { last_mci } from './replay';
-import { capture } from './helpers/sentry';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const router = express.Router();
 
