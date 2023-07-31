@@ -5,7 +5,8 @@ import { sendPushNotification } from './helpers/beams';
 import db from './helpers/mysql';
 import { sha256 } from './helpers/utils';
 import { getProposal } from './helpers/proposal';
-import { capture } from './helpers/sentry';
+import { capture } from '@snapshot-labs/snapshot-sentry';
+import { timeOutgoingRequest } from './helpers/metrics';
 
 const delay = 5;
 const interval = 15;
@@ -74,8 +75,11 @@ export async function sendEvent(event, to, method = 'POST') {
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
   const url = to.replace('[PROPOSAL-ID]', event.id.split('/')[1]);
+  const end = timeOutgoingRequest.startTimer({ method });
+  let res;
+
   try {
-    const res = await fetch(url, {
+    res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -87,12 +91,13 @@ export async function sendEvent(event, to, method = 'POST') {
     return res.text();
   } catch (error: any) {
     if (error.message.includes('network timeout')) {
-      console.error('[events] Timed out while sending the webhook', to);
+      console.error('[events] Timed out while sending the webhook', url);
     } else {
-      console.error('[events] Error sending event data to webhook', to, JSON.stringify(error));
+      console.error('[events] Error sending event data to webhook', url, JSON.stringify(error));
     }
-
     throw error;
+  } finally {
+    end({ status: res?.statusCode || 0 });
   }
 }
 

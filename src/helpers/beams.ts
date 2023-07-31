@@ -2,7 +2,7 @@ import PushNotifications from '@pusher/push-notifications-server';
 import snapshot from '@snapshot-labs/snapshot.js';
 import chunk from 'lodash.chunk';
 import { getProposal } from './proposal';
-import { capture } from './sentry';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const beams = new PushNotifications({
   instanceId: process.env.SERVICE_PUSHER_BEAMS_INSTANCE_ID ?? '',
