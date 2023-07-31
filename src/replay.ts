@@ -81,7 +81,7 @@ async function processMessages(messages: any[]) {
   return;
 }
 
-async function run() {
+export async function run() {
   // Check latest indexed MCI from db
   const lastMci = await getLastMci();
   console.log('[replay] Last MCI', lastMci);
@@ -96,5 +96,3 @@ async function run() {
   await snapshot.utils.sleep(10e3);
   return run();
 }
-
-run();

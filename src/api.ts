@@ -1,18 +1,8 @@
 import express from 'express';
 import { sendEvent } from './events';
-import pkg from '../package.json';
-import { last_mci } from './replay';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const router = express.Router();
-
-router.get('/', async (req, res) => {
-  return res.json({
-    name: pkg.name,
-    version: pkg.version,
-    last_mci
-  });
-});
 
 router.get('/test', async (req, res) => {
   const url: any = req.query.url || '';
