@@ -1,23 +1,12 @@
-import client from 'prom-client';
-import promBundle from 'express-prom-bundle';
-import type { Express } from 'express';
+import init, { client } from '@snapshot-labs/snapshot-metrics';
 import db from './mysql';
+import type { Express } from 'express';
 
 export default function initMetrics(app: Express) {
-  initCustomMetrics();
-
-  app.use(
-    promBundle({
-      includeMethod: true,
-      includePath: true,
-      promClient: {
-        collectDefaultMetrics: {}
-      }
-    })
-  );
+  init(app);
 }
 
-async function initCustomMetrics() {
+
   new client.Gauge({
     name: 'events_per_type_count',
     help: 'Number of events per type',
@@ -47,7 +36,7 @@ async function initCustomMetrics() {
       );
     }
   });
-}
+
 
 export const timeOutgoingRequest = new client.Histogram({
   name: 'http_webhook_duration_seconds',
