@@ -23,7 +23,7 @@ export async function getSubscribers(space) {
     }
   };
   try {
-    const result = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
+    const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
     subscriptions = result.subscriptions || [];
   } catch (error) {
     capture(error);
