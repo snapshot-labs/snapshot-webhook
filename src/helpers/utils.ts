@@ -22,12 +22,15 @@ export async function getSubscribers(space) {
       address: true
     }
   };
+
   try {
     const result = await snapshot.utils.subgraphRequest('https://hub.snapshot.org/graphql', query);
+
     subscriptions = result.subscriptions || [];
   } catch (error) {
     capture(error);
   }
+
   return subscriptions.map(subscription => subscription.address);
 }
 
@@ -51,14 +54,18 @@ export async function getProposal(id) {
       choices: true,
       start: true,
       end: true,
-      snapshot: true
+      snapshot: true,
+      link: true
     }
   };
+
   const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
+
   if (result.errors) {
     throw new Error(`[events] Errors in subgraph request for proposal id: ${id}`);
   }
   proposal = result.proposal || null;
+
   return proposal;
 }
 
@@ -74,9 +81,11 @@ export async function getSpace(id) {
     }
   };
   const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
+
   if (result.errors) {
     throw new Error(`[events] Errors in subgraph request for proposal id: ${id}`);
   }
   space = result.space || null;
+
   return space;
 }
