@@ -1,5 +1,5 @@
 import express from 'express';
-import { sendEvent } from './events';
+import { sendEvent } from './providers/webhook';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const router = express.Router();
@@ -12,14 +12,17 @@ router.get('/test', async (req, res) => {
     event: 'proposal/created',
     expire: 1647343155
   };
+
   try {
     new URL(url);
     await sendEvent(event, url);
+
     return res.json({ url, success: true });
   } catch (e: any) {
     if (e.code !== 'ERR_INVALID_URL') {
       capture(e);
     }
+
     return res.json({ url, error: e });
   }
 });
