@@ -29,7 +29,7 @@
     "express-prom-bundle": "^6.6.0",
     "lodash.chunk": "^4.2.0",
     "mysql": "^2.18.1",
-    "nodemon": "^2.0.15",
+    "nodemon": "^3.0.1",
     "prom-client": "^14.2.0",
     "remove-markdown": "^0.3.0",
     "ts-node": "^10.9.1",
