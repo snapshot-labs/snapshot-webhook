@@ -5,7 +5,6 @@ import cors from 'cors';
 import { initLogger, fallbackLogger } from '@snapshot-labs/snapshot-sentry';
 import initMetrics from './helpers/metrics';
 import api from './api';
-import './discord';
 import pkg from '../package.json';
 import { last_mci, run } from './replay';
 
