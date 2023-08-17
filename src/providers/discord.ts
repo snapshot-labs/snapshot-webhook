@@ -13,17 +13,18 @@ import {
   underscore,
   inlineCode
 } from 'discord.js';
-import db from './helpers/mysql';
+import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
-import { shortenAddress } from './helpers/utils';
-import { subs, loadSubscriptions } from './subscriptions';
-import { getSpace, getProposal } from './helpers/proposal';
+import { shortenAddress } from '../helpers/utils';
+import { getSpace } from '../helpers/utils';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
 const sweeperOption = { interval: 300, filter: () => null };
 // const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
+
+let subs = {};
 
 const client: any = new Client({
   intents: [
@@ -137,6 +138,7 @@ client.on('ready', async () => {
   ready = true;
   console.log(`Discord bot logged as "${client.user.tag}"`);
   setActivity('!');
+
   await loadSubscriptions();
 });
 
@@ -281,16 +283,13 @@ export const sendMessage = async (channel, message) => {
   }
 };
 
-export const sendEventToDiscordSubscribers = async (event, proposalId) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function send(eventObj, proposal, _subscribers) {
+  const event = eventObj.event;
+
   // Only supports proposal/start event
   if (event !== 'proposal/start') {
     console.log('[sendEventToDiscordSubscribers] Event not supported: ', event);
-    return;
-  }
-
-  const proposal = await getProposal(proposalId);
-  if (!proposal) {
-    console.log('[sendEventToDiscordSubscribers] Proposal not found: ', proposalId);
     return;
   }
 
@@ -346,7 +345,18 @@ export const sendEventToDiscordSubscribers = async (event, proposalId) => {
       });
     });
   }
+
   return { success: true };
-};
+}
+
+async function loadSubscriptions() {
+  const results = await db.queryAsync('SELECT * FROM subscriptions');
+  subs = {};
+  results.forEach(sub => {
+    if (!subs[sub.space]) subs[sub.space] = [];
+    subs[sub.space].push(sub);
+  });
+  console.log('Subscriptions', Object.keys(subs).length);
+}
 
 export default client;
