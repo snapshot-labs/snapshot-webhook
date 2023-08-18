@@ -28,9 +28,9 @@ export async function sendEvent(event, to, method = 'POST') {
     return res.text();
   } catch (error: any) {
     if (error.message.includes('network timeout')) {
-      console.error('[events] Timed out while sending the webhook', url);
+      console.error('[webhook] request timed out', url);
     } else {
-      console.error('[events] Error sending event data to webhook', url, JSON.stringify(error));
+      console.error('[webhook] request error', url, JSON.stringify(error));
     }
     throw error;
   } finally {
@@ -40,14 +40,14 @@ export async function sendEvent(event, to, method = 'POST') {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, _proposal, _subscribersAddresses) {
-  const subscribers = await db.queryAsync('SELECT * FROM subscribers');
-  console.log('[events] Subscribers', subscribers.length);
+  const subscribers = await db.queryAsync('SELECT * FROM subscribers WHERE active = 1');
+  console.log('[webhook] subscribers', subscribers.length);
 
   Promise.allSettled(
     subscribers
       .filter(subscriber => [event.space, '*'].includes(subscriber.space))
       .map(subscriber => sendEvent(event, subscriber.url, subscriber.method))
   )
-    .then(() => console.log('[events] Process event done'))
+    .then(() => console.log('[webhook] process event done'))
     .catch(e => capture(e));
 }

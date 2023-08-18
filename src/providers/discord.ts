@@ -94,9 +94,9 @@ const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
   try {
-    console.log('Started refreshing application (/) commands.');
+    console.log('[discord] started refreshing application (/) commands.');
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
-    console.log('Successfully reloaded application (/) commands.');
+    console.log('[discord] successfully reloaded application (/) commands.');
   } catch (error) {
     capture(error);
   }
@@ -124,7 +124,7 @@ const checkPermissions = async (channelId, botId) => {
     return true;
   } catch (error) {
     capture(error);
-    console.log('Error checking permissions', error);
+    console.log('[discord] error checking permissions', error);
     const channelExistWithName = client.channels.cache.find(c => c.name === channelId);
     if (channelExistWithName) {
       return `Make sure the channel is in ${channelExistWithName.toString()} format.`;
@@ -136,7 +136,7 @@ const checkPermissions = async (channelId, botId) => {
 
 client.on('ready', async () => {
   ready = true;
-  console.log(`Discord bot logged as "${client.user.tag}"`);
+  console.log(`[discord] bot logged as "${client.user.tag}"`);
   setActivity('!');
 
   await loadSubscriptions();
@@ -205,7 +205,7 @@ async function snapshotCommandHandler(interaction, commandType) {
   const spaceId = interaction.options.getString('space');
   const mention = interaction.options.getString('mention');
   console.log(
-    'Received',
+    '[discord] received',
     interaction.guildId,
     interaction.user.username,
     ':',
@@ -288,10 +288,7 @@ export async function send(eventObj, proposal, _subscribers) {
   const event = eventObj.event;
 
   // Only supports proposal/start event
-  if (event !== 'proposal/start') {
-    console.log('[sendEventToDiscordSubscribers] Event not supported: ', event);
-    return;
-  }
+  if (event !== 'proposal/start') return;
 
   const status = 'Active';
   const color = '#21B66F';
@@ -356,7 +353,7 @@ async function loadSubscriptions() {
     if (!subs[sub.space]) subs[sub.space] = [];
     subs[sub.space].push(sub);
   });
-  console.log('Subscriptions', Object.keys(subs).length);
+  console.log('[discord] subscriptions', Object.keys(subs).length);
 }
 
 export default client;
