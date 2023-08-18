@@ -51,6 +51,7 @@ export async function getProposal(id) {
       choices: true,
       start: true,
       end: true,
+      link: true,
       snapshot: true
     }
   };
