@@ -26,6 +26,13 @@ CREATE TABLE events (
   INDEX expire (expire)
 );
 
+CREATE TABLE xmtp (
+  address VARCHAR(256) NOT NULL,
+  status INT(1) NOT NULL,
+  PRIMARY KEY (address),
+  INDEX status (status)
+);
+
 CREATE TABLE subscribers (
   id INT NOT NULL AUTO_INCREMENT,
   owner VARCHAR(256) NOT NULL,
