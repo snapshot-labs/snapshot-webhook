@@ -39,8 +39,8 @@ async function getNextMessages(mci: number) {
   try {
     const results = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
     return results.messages;
-  } catch (e) {
-    capture(e);
+  } catch (e: any) {
+    capture(e, { contexts: { input: { query, mci } } });
     console.log('Failed to load messages', e);
     return;
   }
