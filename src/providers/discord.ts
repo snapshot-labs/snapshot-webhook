@@ -18,6 +18,7 @@ import removeMd from 'remove-markdown';
 import { shortenAddress } from '../helpers/utils';
 import { getSpace } from '../helpers/utils';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { timeOutgoingRequest } from '../helpers/metrics';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -272,14 +273,20 @@ client.on('interactionCreate', async interaction => {
 });
 
 export const sendMessage = async (channel, message) => {
+  const end = timeOutgoingRequest.startTimer({ provider: 'discord' });
+  let success = false;
+
   try {
     let speaker = client.channels.cache.get(channel);
     // Obtains a channel from Discord, or the channel cache if it's already available.
     if (!speaker) speaker = await client.channels.fetch(channel);
     await speaker.send(message);
+    success = true;
     return true;
   } catch (e) {
     capture(e);
+  } finally {
+    end({ status: success ? 200 : 500 });
   }
 };
 

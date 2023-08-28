@@ -2,6 +2,8 @@ import { ApiUrls, Client } from '@xmtp/xmtp-js';
 import { Wallet } from '@ethersproject/wallet';
 import { getSpace } from '../helpers/utils';
 import db from '../helpers/mysql';
+import { timeOutgoingRequest } from '../helpers/metrics';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
 const XMTP_ENV = (process.env.XMTP_ENV || 'dev') as keyof typeof ApiUrls;
@@ -100,9 +102,16 @@ async function sendMessages(addresses: string[], msg) {
     const peer = addresses[i];
 
     if (canMessage[i] && !disabled.includes(peer.toLowerCase())) {
-      const conversation = await client.conversations.newConversation(peer);
-      await conversation.send(msg);
-      console.log('[xmtp] sent message to', peer);
+      const end = timeOutgoingRequest.startTimer({ provider: 'xmtp' });
+      try {
+        const conversation = await client.conversations.newConversation(peer);
+        await conversation.send(msg);
+        end({ status: 200 });
+        console.log('[xmtp] sent message to', peer);
+      } catch (e: any) {
+        capture(e);
+        end({ status: 500 });
+      }
     }
   }
 }

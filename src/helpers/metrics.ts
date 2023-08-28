@@ -41,6 +41,6 @@ new client.Gauge({
 export const timeOutgoingRequest = new client.Histogram({
   name: 'http_webhook_duration_seconds',
   help: 'Duration in seconds of outgoing webhook requests',
-  labelNames: ['method', 'status'],
+  labelNames: ['method', 'status', 'provider'],
   buckets: [0.5, 1, 2, 5, 10, 15]
 });

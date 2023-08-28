@@ -12,7 +12,7 @@ export async function sendEvent(event, to, method = 'POST') {
   event.secret = sha256(`${to}${serviceEventsSalt}`);
   const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
   const url = to.replace('[PROPOSAL-ID]', event.id.split('/')[1]);
-  const end = timeOutgoingRequest.startTimer({ method });
+  const end = timeOutgoingRequest.startTimer({ method, provider: 'http' });
   let res;
 
   try {
