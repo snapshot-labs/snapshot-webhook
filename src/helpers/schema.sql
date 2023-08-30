@@ -39,7 +39,7 @@ CREATE TABLE subscribers (
   url TEXT NOT NULL,
   method VARCHAR(5) NOT NULL DEFAULT 'POST',
   space VARCHAR(256) NOT NULL,
-  active INT(11) NOT NULL DEFAULT '1',
+  active INT(11) NOT NULL DEFAULT 1,
   created INT(11) NOT NULL DEFAULT (UNIX_TIMESTAMP()),
   PRIMARY KEY (id),
   INDEX owner (owner),
