@@ -34,7 +34,7 @@ export async function sendEvent(event, to, method = 'POST') {
     }
     throw error;
   } finally {
-    end({ status: res?.statusCode || 0 });
+    end({ status: res?.status || 0 });
   }
 }
 
