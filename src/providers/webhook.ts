@@ -22,10 +22,11 @@ export async function sendEvent(event, to, method = 'POST') {
         'Content-Type': 'application/json',
         Authentication: headerSecret
       },
-      body: JSON.stringify(event),
-      timeout: HTTP_WEBHOOK_TIMEOUT
+      timeout: HTTP_WEBHOOK_TIMEOUT,
+      ...(method === 'POST' ? { body: JSON.stringify(event) } : {})
     });
-    return res.text();
+
+    return true;
   } catch (error: any) {
     if (error.message.includes('network timeout')) {
       console.error('[webhook] request timed out', url);
