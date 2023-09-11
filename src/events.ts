@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import db from './helpers/mysql';
-import { getProposal, getSubscribers } from './helpers/utils';
+import { getProposal, getSubscribers } from './helpers/snapshot';
 import { send as sendDiscord } from './providers/discord';
 import { send as sendBeams } from './providers/beams';
 import { send as sendWebhook } from './providers/webhook';

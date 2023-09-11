@@ -16,7 +16,7 @@ import {
 import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
 import { shortenAddress } from '../helpers/utils';
-import { getSpace } from '../helpers/utils';
+import { getSpace } from '../helpers/snapshot';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest } from '../helpers/metrics';
 

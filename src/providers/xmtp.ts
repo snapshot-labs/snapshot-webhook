@@ -1,9 +1,9 @@
 import { ApiUrls, Client } from '@xmtp/xmtp-js';
 import { Wallet } from '@ethersproject/wallet';
-import { getSpace } from '../helpers/utils';
+import { capture } from '@snapshot-labs/snapshot-sentry';
+import { getSpace } from '../helpers/snapshot';
 import db from '../helpers/mysql';
 import { timeOutgoingRequest } from '../helpers/metrics';
-import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
 const XMTP_ENV = (process.env.XMTP_ENV || 'dev') as keyof typeof ApiUrls;
@@ -94,7 +94,7 @@ export async function send(event, proposal, subscribers) {
 }
 
 async function sendMessages(addresses: string[], msg) {
-  if (!client) return;
+  if (!client || addresses.length === 0) return;
 
   const canMessage = await client.canMessage(addresses);
 
