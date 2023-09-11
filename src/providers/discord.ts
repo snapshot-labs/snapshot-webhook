@@ -292,65 +292,70 @@ export const sendMessage = async (channel, message) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(eventObj, proposal, _subscribers) {
-  const event = eventObj.event;
+  try {
+    const event = eventObj.event;
 
-  // Only supports proposal/start event
-  if (event !== 'proposal/start') return;
+    // Only supports proposal/start event
+    if (event !== 'proposal/start') return;
 
-  const status = 'Active';
-  const color = '#21B66F';
+    const status = 'Active';
+    const color = '#21B66F';
 
-  const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
-  let components =
-    !proposal.choices.length || proposal.choices.length > 5
-      ? []
-      : [
-          new ActionRowBuilder().addComponents(
-            ...proposal.choices.map((choice, i) =>
-              new ButtonBuilder()
-                .setLabel(choice.slice(0, 79))
-                .setURL(`${url}?choice=${i + 1}`)
-                .setStyle(ButtonStyle.Link)
+    const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
+    let components =
+      !proposal.choices.length || proposal.choices.length > 5
+        ? []
+        : [
+            new ActionRowBuilder().addComponents(
+              ...proposal.choices.map((choice, i) =>
+                new ButtonBuilder()
+                  .setLabel(choice.slice(0, 79))
+                  .setURL(`${url}?choice=${i + 1}`)
+                  .setStyle(ButtonStyle.Link)
+              )
             )
-          )
-        ];
-  components =
-    event === 'proposal/start' && (proposal.type === 'single-choice' || proposal.type === 'basic')
-      ? components
-      : [];
+          ];
+    components =
+      event === 'proposal/start' && (proposal.type === 'single-choice' || proposal.type === 'basic')
+        ? components
+        : [];
 
-  const limit = 4096 / 16;
-  let preview = removeMd(proposal.body).slice(0, limit);
-  if (proposal.body.length > limit) preview += `... [Read more](${url})`;
-  const avatar = `https://cdn.stamp.fyi/space/${proposal.space.id}?s=56`;
+    const limit = 4096 / 16;
+    let preview = removeMd(proposal.body).slice(0, limit);
+    if (proposal.body.length > limit) preview += `... [Read more](${url})`;
+    const avatar = `https://cdn.stamp.fyi/space/${proposal.space.id}?s=56`;
 
-  const embed = new EmbedBuilder()
-    .setColor(color)
-    .setTitle(proposal.title)
-    .setURL(url)
-    .setTimestamp(proposal.created * 1e3)
-    .setAuthor({
-      name: `${proposal.space.name} by ${shortenAddress(proposal.author)}`,
-      iconURL: avatar
-    })
-    .addFields(
-      { name: 'Status', value: status, inline: true },
-      { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
-      { name: 'End', value: `<t:${proposal.end}:R>`, inline: true }
-    )
-    .setDescription(preview || ' ');
+    const embed = new EmbedBuilder()
+      .setColor(color)
+      .setTitle(proposal.title)
+      .setURL(url)
+      .setTimestamp(proposal.created * 1e3)
+      .setAuthor({
+        name: `${proposal.space.name} by ${shortenAddress(proposal.author)}`,
+        iconURL: avatar
+      })
+      .addFields(
+        { name: 'Status', value: status, inline: true },
+        { name: 'Start', value: `<t:${proposal.start}:R>`, inline: true },
+        { name: 'End', value: `<t:${proposal.end}:R>`, inline: true }
+      )
+      .setDescription(preview || ' ');
 
-  if (subs[proposal.space.id] || subs['*']) {
-    [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
-      sendMessage(sub.channel, {
-        content: `${sub.mention} `,
-        embeds: [embed],
-        components
+    if (subs[proposal.space.id] || subs['*']) {
+      [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
+        sendMessage(sub.channel, {
+          content: `${sub.mention} `,
+          embeds: [embed],
+          components
+        });
       });
-    });
-  }
+    }
 
-  return { success: true };
+    return { success: true };
+  } catch (e: any) {
+    capture(e, { proposal, event });
+    return { success: false };
+  }
 }
 
 async function loadSubscriptions() {
