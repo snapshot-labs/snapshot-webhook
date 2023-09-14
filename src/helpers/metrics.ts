@@ -1,10 +1,12 @@
 import init, { client } from '@snapshot-labs/snapshot-metrics';
-import db from './mysql';
 import type { Express } from 'express';
+import { capture } from '@snapshot-labs/snapshot-sentry';
+import db from './mysql';
 
 export default function initMetrics(app: Express) {
   init(app, {
-    whitelistedPath: [/^\/$/, /^\/api\/test$/]
+    whitelistedPath: [/^\/$/, /^\/api\/test$/],
+    errorHandler: capture
   });
 }
 
