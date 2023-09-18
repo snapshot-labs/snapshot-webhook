@@ -6,7 +6,8 @@ import db from './mysql';
 export default function initMetrics(app: Express) {
   init(app, {
     whitelistedPath: [/^\/$/, /^\/api\/test$/],
-    errorHandler: capture
+    errorHandler: capture,
+    db
   });
 }
 
