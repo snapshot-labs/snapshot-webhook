@@ -26,7 +26,7 @@ export async function send(event, proposal, subscribers: string[]) {
           notification: {
             title: event.space,
             body: proposal.title,
-            deep_link: `${process.env.SNAPSHOT_URI}/#/${event.space}/${event.id}`
+            deep_link: `${proposal.link}?app=beams`
           }
         }
       });

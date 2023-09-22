@@ -4,18 +4,6 @@ CREATE TABLE _metadatas (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE subscriptions (
-  guild VARCHAR(64) NOT NULL,
-  channel VARCHAR(64) NOT NULL,
-  space VARCHAR(256) NOT NULL,
-  mention VARCHAR(64) NOT NULL,
-  created VARCHAR(64) NOT NULL,
-  updated VARCHAR(64) NOT NULL,
-  PRIMARY KEY (guild, channel, space),
-  INDEX created (created),
-  INDEX updated (updated)
-);
-
 CREATE TABLE events (
   id VARCHAR(256) NOT NULL,
   event VARCHAR(64) NOT NULL,
@@ -26,13 +14,7 @@ CREATE TABLE events (
   INDEX expire (expire)
 );
 
-CREATE TABLE xmtp (
-  address VARCHAR(256) NOT NULL,
-  status INT(1) NOT NULL,
-  PRIMARY KEY (address),
-  INDEX status (status)
-);
-
+# Webhook provider
 CREATE TABLE subscribers (
   id INT NOT NULL AUTO_INCREMENT,
   owner VARCHAR(256) NOT NULL,
@@ -46,4 +28,25 @@ CREATE TABLE subscribers (
   INDEX space (space),
   INDEX active (active),
   INDEX created (created)
+);
+
+# Discord provider
+CREATE TABLE subscriptions (
+  guild VARCHAR(64) NOT NULL,
+  channel VARCHAR(64) NOT NULL,
+  space VARCHAR(256) NOT NULL,
+  mention VARCHAR(64) NOT NULL,
+  created VARCHAR(64) NOT NULL,
+  updated VARCHAR(64) NOT NULL,
+  PRIMARY KEY (guild, channel, space),
+  INDEX created (created),
+  INDEX updated (updated)
+);
+
+# XMTP provider
+CREATE TABLE xmtp (
+  address VARCHAR(256) NOT NULL,
+  status INT(1) NOT NULL,
+  PRIMARY KEY (address),
+  INDEX status (status)
 );

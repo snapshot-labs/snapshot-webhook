@@ -2,10 +2,7 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import db from './helpers/mysql';
 import { getProposal, getSubscribers } from './helpers/snapshot';
-import { send as sendDiscord } from './providers/discord';
-import { send as sendBeams } from './providers/beams';
-import { send as sendWebhook } from './providers/webhook';
-import { send as sendXmtp } from './providers/xmtp';
+import providers from './providers';
 
 const DELAY = 5;
 const INTERVAL = 15;
@@ -78,13 +75,11 @@ async function processEvents() {
     const subscribers = await getSubscribers(event.space);
 
     if (proposal) {
-      // TODO: handle errors and retry
-      sendBeams(event, proposal, subscribers);
-      sendDiscord(event, proposal, subscribers);
-      sendWebhook(event, proposal, subscribers);
-      sendXmtp(event, proposal, subscribers);
+      providers.forEach(provider => {
+        provider(event, proposal, subscribers);
+      });
     } else {
-      console.log(`Proposal ${proposalId} not found`);
+      console.log(`[events] Proposal ${proposalId} not found`);
     }
 
     try {
