@@ -31,7 +31,6 @@
     "express": "^4.17.1",
     "express-prom-bundle": "^6.6.0",
     "graphql": "^16.8.0",
-    "json-to-graphql-query": "^2.2.5",
     "lodash.chunk": "^4.2.0",
     "mysql": "^2.18.1",
     "node-fetch": "^1.7.0",
