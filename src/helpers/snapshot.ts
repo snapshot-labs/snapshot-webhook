@@ -46,7 +46,7 @@ type Proposal = {
   snapshot: string;
 };
 
-type Subscriber = {
+type Subscription = {
   address: string;
 };
 
@@ -175,14 +175,14 @@ export async function getProposal(id: string) {
 export async function getSubscribers(space: string) {
   try {
     const {
-      data: { subscribers }
-    }: { data: { subscribers: Subscriber[] | null } } = await client.query({
+      data: { subscriptions }
+    }: { data: { subscriptions: Subscription[] | null } } = await client.query({
       query: SUBSCRIPTIONS_QUERY,
       variables: {
         space
       }
     });
-    return (subscribers || []).map(subscriber => subscriber.address);
+    return (subscriptions || []).map(subscription => subscription.address);
   } catch (e: any) {
     capture(e);
     return [];
