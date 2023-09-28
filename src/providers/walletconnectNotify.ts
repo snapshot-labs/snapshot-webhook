@@ -9,6 +9,8 @@ const AUTH_HEADER = {
   Authorization: WALLETCONNECT_PROJECT_SECRET ? `Bearer ${WALLETCONNECT_PROJECT_SECRET}` : ''
 };
 
+// Match Snapshot event names to notification types
+// That should be defined in the wc-notify-config.json
 function getNotificationType(event) {
   if (event.includes('proposal/')) {
     return 'proposal_update';
@@ -17,6 +19,7 @@ function getNotificationType(event) {
   }
 }
 
+// Fetch subscribers from WalletConnect Notify server
 export async function queryWalletconnectSubscribers() {
   const fetchSubscribersUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/subscribers`;
 
@@ -34,16 +37,20 @@ export async function queryWalletconnectSubscribers() {
   }
 }
 
+// Cross Reference subscribers from Snapshot to the ones in Notify
 export async function crossReferenceSubscribers(internalSubscribers: string[]) {
   const walletconnectSubscribers = await queryWalletconnectSubscribers();
+  // Optimistically reserve space in the cross referenced array to prevent resizing.
   const crossReferencedSubscribers = new Array(internalSubscribers.length);
-  const invalidAddresses = new Array(Math.floor(internalSubscribers.length / 4));
+  const invalidAddresses = new Array<string>(0);
 
   for (let i = 0; i < internalSubscribers.length; ++i) {
     const sub = internalSubscribers[i];
     if (walletconnectSubscribers.includes(sub)) {
       crossReferencedSubscribers[i] = sub;
     } else {
+      // If a subscriber is registered internally, but not in WalletConnect, it is an invalid
+      // subscription
       invalidAddresses.push(sub);
     }
   }
@@ -84,6 +91,7 @@ export async function sendNotification(notification, accounts) {
   }
 }
 
+// Transform proposal event into notification format.
 async function formatMessage(event, proposal) {
   const space = proposal.space;
   if (!space) return null;
@@ -108,7 +116,6 @@ async function formatMessage(event, proposal) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, proposal, subscribers) {
   const crossReferencedSubscribers = await crossReferenceSubscribers(subscribers);
   const notificationMessage = await formatMessage(event, proposal);
