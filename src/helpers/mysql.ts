@@ -19,19 +19,6 @@ config.timeout = 60e3;
 config.charset = 'utf8mb4';
 bluebird.promisifyAll([Pool, Connection]);
 
-console.log({
-  config: {
-    connectionLimit: config.connectionLimit,
-    multipleStatements: config.multipleStatements,
-    database: config.database,
-    host: config.host,
-    port: config.port,
-    connectTimeout: config.connectTimeout,
-    acquireTimeout: config.acquireTimeout,
-    timeout: config.timeout,
-    charset: config.charset
-  }
-});
 const db = mysql.createPool(config);
 
 export default db;
