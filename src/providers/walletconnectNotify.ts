@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
-const WALLETCONNECT_NOTIFY_SERVER_URL = 'https://notify.walletconnect.com';
+const WALLETCONNECT_NOTIFY_SERVER_URL = process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
 const WALLETCONNECT_PROJECT_SECRET = process.env.WALLETCONNECT_PROJECT_SECRET;
 const WALLETCONNECT_PROJECT_ID = process.env.WALLETCONNECT_PROJECT_ID;
 
