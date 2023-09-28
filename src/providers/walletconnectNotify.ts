@@ -1,15 +1,21 @@
 import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import db from '../helpers/mysql';
-import { getSpace, getProposal } from '../helpers/utils';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL = 'https://notify.walletconnect.com';
 const WALLETCONNECT_PROJECT_SECRET = process.env.WALLETCONNECT_PROJECT_SECRET;
 const WALLETCONNECT_PROJECT_ID = process.env.WALLETCONNECT_PROJECT_ID;
 
 const AUTH_HEADER = {
-  Authorization: WALLETCONNECT_PROJECT_SECRET ?? ''
+  Authorization: WALLETCONNECT_PROJECT_SECRET ? `Bearer ${WALLETCONNECT_PROJECT_SECRET}` : ''
 };
+
+function getNotificationType(event) {
+  if (event.includes('proposal/')) {
+    return 'proposal_update';
+  } else {
+    return null;
+  }
+}
 
 export async function queryWalletconnectSubscribers() {
   const fetchSubscribersUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/subscribers`;
@@ -23,30 +29,33 @@ export async function queryWalletconnectSubscribers() {
 
     return subscribers;
   } catch (e) {
-    console.error('[WalletConnect] Failed to fetch subscribers');
+    capture('[WalletConnect] failed to fetch subscribers');
     return [];
   }
 }
 
-export async function crossReferencesSubscribers(internalSubscribers: string[]) {
+export async function crossReferenceSubscribers(internalSubscribers: string[]) {
   const walletconnectSubscribers = await queryWalletconnectSubscribers();
   const crossReferencedSubscribers = new Array(internalSubscribers.length);
-  const invalidAddresses = new Array(internalSubscribers.length / 4);
+  const invalidAddresses = new Array(Math.floor(internalSubscribers.length / 4));
 
-  for (const internalSubscriber of internalSubscribers) {
-    if (walletconnectSubscribers.includes(internalSubscriber)) {
-      crossReferencedSubscribers.push(walletconnectSubscribers);
+  for (let i = 0; i < internalSubscribers.length; ++i) {
+    const sub = internalSubscribers[i];
+    if (walletconnectSubscribers.includes(sub)) {
+      crossReferencedSubscribers[i] = sub;
     } else {
-      invalidAddresses.push(internalSubscriber);
+      invalidAddresses.push(sub);
     }
   }
 
   if (invalidAddresses.length) {
-    const err = `[WalletConnect] there are ${invalidAddresses.length} addresses that are not subscribed through WalletConnect`;
-    capture(err);
+    capture(
+      `[WalletConnect] there are ${invalidAddresses.length} addresses that are not subscribed through WalletConnect`
+    );
   }
 
-  return crossReferencesSubscribers;
+  // Remove any empty elements
+  return crossReferencedSubscribers.filter(e => e);
 }
 
 export async function sendNotification(notification, accounts) {
@@ -71,13 +80,19 @@ export async function sendNotification(notification, accounts) {
 
     return notifySuccess;
   } catch (e) {
-    capture('[WalletConnect] Failed to notify subscribers', e);
+    capture('[WalletConnect] failed to notify subscribers', e);
   }
 }
 
 async function formatMessage(event, proposal) {
-  const space = await getSpace(event.space);
+  const space = proposal.space;
   if (!space) return null;
+
+  const notificationType = getNotificationType(event.event);
+
+  if (notificationType) {
+    capture(`[WalletConnect] could not get matching notification type for event ${event.event}`);
+  }
 
   switch (event.event) {
     case 'proposal/created':
@@ -85,8 +100,8 @@ async function formatMessage(event, proposal) {
         title: proposal.title,
         body: `A new proposal has been created for ${space.name}`,
         url: `${proposal.link}?app=walletconnect`,
-        icon: ``,
-        type: 'proposal_update'
+        icon: space.avatar,
+        type: notificationType
       };
     default:
       return null;
@@ -95,7 +110,7 @@ async function formatMessage(event, proposal) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, proposal, subscribers) {
-  const crossReferencedSubscribers = await crossReferencesSubscribers(subscribers);
+  const crossReferencedSubscribers = await crossReferenceSubscribers(subscribers);
   const notificationMessage = await formatMessage(event, proposal);
   await sendNotification(notificationMessage, crossReferencedSubscribers);
 }
