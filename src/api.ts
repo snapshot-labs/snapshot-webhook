@@ -1,5 +1,5 @@
 import express from 'express';
-import { sendEvent } from './providers/webhook';
+import { send } from './providers/walletconnectNotify';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const router = express.Router();
@@ -16,7 +16,7 @@ router.get('/test', async (req, res) => {
 
   try {
     new URL(url);
-    await sendEvent(event, url, method);
+    await send(event, url, method);
 
     return res.json({ url, success: true });
   } catch (e: any) {
