@@ -19,6 +19,17 @@ function getNotificationType(event) {
   }
 }
 
+function getNotificationBody(event, space) {
+  switch(event) {
+  case "proposal/create":
+    return `A new proposal has been created for ${space.name}`
+  case "proposal/end":
+    return `A proposal has closed for ${space.name}`
+  default:
+    return null;
+  }
+}
+
 // Fetch subscribers from WalletConnect Notify server
 export async function queryWalletconnectSubscribers() {
   const fetchSubscribersUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/subscribers`;
@@ -97,16 +108,23 @@ async function formatMessage(event, proposal) {
   if (!space) return null;
 
   const notificationType = getNotificationType(event.event);
+  const notificationBody = getNotificationBody(event.event, space);
 
-  if (notificationType) {
+  if (!notificationType) {
     capture(`[WalletConnect] could not get matching notification type for event ${event.event}`);
+    return;
+  }
+
+  if(!notificationBody) {
+    capture(`[WalletConnect] could not get matching notification body for event ${event.event}`);
+    return;
   }
 
   switch (event.event) {
     case 'proposal/created':
       return {
         title: proposal.title,
-        body: `A new proposal has been created for ${space.name}`,
+        body: notificationBody,
         url: `${proposal.link}?app=walletconnect`,
         icon: space.avatar,
         type: notificationType
