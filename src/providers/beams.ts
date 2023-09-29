@@ -10,8 +10,10 @@ const beams = new PushNotifications({
   secretKey: process.env.SERVICE_PUSHER_BEAMS_SECRET_KEY ?? ''
 });
 
-export async function send(event, proposal, subscribers) {
-  if (!SERVICE_PUSH_NOTIFICATIONS || event.event !== 'proposal/start') return;
+export async function send(event, proposal, subscribers: string[]) {
+  if (!SERVICE_PUSH_NOTIFICATIONS || event.event !== 'proposal/start' || subscribers.length === 0) {
+    return;
+  }
 
   const walletsChunks = chunk(subscribers, 100);
   const end = timeOutgoingRequest.startTimer({ provider: 'beams' });

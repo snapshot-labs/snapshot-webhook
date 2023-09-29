@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import db from './helpers/mysql';
-import { getProposal, getSubscribers } from './helpers/utils';
+import { getProposal, getSubscribers } from './helpers/snapshot';
 import providers from './providers';
 
 const DELAY = 5;

@@ -1,10 +1,8 @@
 import snapshot from '@snapshot-labs/snapshot.js';
-import { EnumType } from 'json-to-graphql-query';
-import db from './helpers/mysql';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import db from './helpers/mysql';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
-
-const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
+import { getNextMessages } from './helpers/snapshot';
 
 export let last_mci = 0;
 
@@ -13,37 +11,6 @@ async function getLastMci() {
   const results = await db.queryAsync(query, ['last_mci']);
   last_mci = parseInt(results[0].value);
   return last_mci;
-}
-
-async function getNextMessages(mci: number) {
-  const query = {
-    messages: {
-      __args: {
-        first: 10,
-        where: {
-          type_in: ['proposal', 'delete-proposal'],
-          mci_gt: mci
-        },
-        orderBy: 'mci',
-        orderDirection: new EnumType('asc')
-      },
-      mci: true,
-      id: true,
-      ipfs: true,
-      type: true,
-      timestamp: true,
-      space: true
-    }
-  };
-
-  try {
-    const results = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
-    return results.messages;
-  } catch (e: any) {
-    capture(e, { contexts: { input: { query, mci } } });
-    console.log('Failed to load messages', e);
-    return;
-  }
 }
 
 async function updateLastMci(mci: number) {
