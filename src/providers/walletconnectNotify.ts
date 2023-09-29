@@ -120,18 +120,13 @@ async function formatMessage(event, proposal) {
     return;
   }
 
-  switch (event.event) {
-    case 'proposal/created':
-      return {
-        title: proposal.title,
-        body: notificationBody,
-        url: `${proposal.link}?app=walletconnect`,
-        icon: space.avatar,
-        type: notificationType
-      };
-    default:
-      return null;
-  }
+  return {
+    title: proposal.title,
+    body: notificationBody,
+    url: `${proposal.link}?app=walletconnect`,
+    icon: space.avatar,
+    type: notificationType
+  };
 }
 
 export async function send(event, proposal, subscribers) {
