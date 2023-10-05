@@ -47,3 +47,8 @@ export const timeOutgoingRequest = new client.Histogram({
   labelNames: ['method', 'status', 'provider'],
   buckets: [0.5, 1, 2, 5, 10, 15]
 });
+
+export const incomingXmtpMessages = new client.Gauge({
+  name: 'incoming_xmtp_messages_count',
+  help: 'Number of incoming XMTP messages'
+});
