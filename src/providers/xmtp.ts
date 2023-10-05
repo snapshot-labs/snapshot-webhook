@@ -2,7 +2,7 @@ import { ApiUrls, Client } from '@xmtp/xmtp-js';
 import { Wallet } from '@ethersproject/wallet';
 import { getSpace } from '../helpers/utils';
 import db from '../helpers/mysql';
-import { timeOutgoingRequest } from '../helpers/metrics';
+import { xmtpIncomingMessages, timeOutgoingRequest } from '../helpers/metrics';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
@@ -39,6 +39,7 @@ if (XMTP_PK) {
       try {
         if (message.senderAddress == client.address) continue;
         console.log(`[xmtp] received: ${message.senderAddress}:`, message.content);
+        xmtpIncomingMessages.inc();
         const address = message.senderAddress.toLowerCase();
 
         if (message.content.toLowerCase() === 'stop') {

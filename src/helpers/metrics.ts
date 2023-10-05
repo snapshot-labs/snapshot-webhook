@@ -47,3 +47,19 @@ export const timeOutgoingRequest = new client.Histogram({
   labelNames: ['method', 'status', 'provider'],
   buckets: [0.5, 1, 2, 5, 10, 15]
 });
+
+export const xmtpIncomingMessages = new client.Gauge({
+  name: 'xmtp_incoming_messages_count',
+  help: 'Number of incoming XMTP messages'
+});
+
+new client.Gauge({
+  name: 'xmtp_subscribers_count',
+  help: 'Number of XMTP subscribers',
+  async collect() {
+    this.set(
+      (await db.queryAsync(`SELECT count(address) as count FROM xmtp WHERE status = 1`))[0]
+        .count as any
+    );
+  }
+});
