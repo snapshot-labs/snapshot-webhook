@@ -38,6 +38,10 @@ new client.Gauge({
       { type: 'discord' },
       (await db.queryAsync(`SELECT count(*) as count FROM subscriptions`))[0].count as any
     );
+    this.set(
+      { type: 'xmtp' },
+      (await db.queryAsync(`SELECT count(*) as count FROM xmtp WHERE status = 1`))[0].count as any
+    );
   }
 });
 
@@ -51,15 +55,4 @@ export const timeOutgoingRequest = new client.Histogram({
 export const xmtpIncomingMessages = new client.Gauge({
   name: 'xmtp_incoming_messages_count',
   help: 'Number of incoming XMTP messages'
-});
-
-new client.Gauge({
-  name: 'xmtp_subscribers_count',
-  help: 'Number of XMTP subscribers',
-  async collect() {
-    this.set(
-      (await db.queryAsync(`SELECT count(address) as count FROM xmtp WHERE status = 1`))[0]
-        .count as any
-    );
-  }
 });
