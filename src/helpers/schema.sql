@@ -23,6 +23,7 @@ CREATE TABLE subscribers (
   space VARCHAR(256) NOT NULL,
   active INT(11) NOT NULL DEFAULT 1,
   created INT(11) NOT NULL DEFAULT (UNIX_TIMESTAMP()),
+  UNIQUE KEY unique_url_space (url, space),
   PRIMARY KEY (id),
   INDEX owner (owner),
   INDEX space (space),
