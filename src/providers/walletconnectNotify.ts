@@ -13,7 +13,7 @@ const AUTH_HEADER = {
 // That should be defined in the wc-notify-config.json
 function getNotificationType(event) {
   if (event.includes('proposal/')) {
-    return 'proposal_update';
+    return 'ed2fd071-65e1-440d-95c5-7d58884eae43';
   } else {
     return null;
   }
