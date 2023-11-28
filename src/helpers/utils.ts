@@ -31,7 +31,7 @@ export async function getSubscribers(space) {
   return subscriptions.map(subscription => subscription.address);
 }
 
-export async function getProposal(id) {
+export async function getProposal(id): Promise<Record<string, any> | null> {
   let proposal: { [key: string]: any } | null = null;
   const query = {
     proposal: {
@@ -52,7 +52,8 @@ export async function getProposal(id) {
       start: true,
       end: true,
       link: true,
-      snapshot: true
+      snapshot: true,
+      flagged: true
     }
   };
 
@@ -61,7 +62,7 @@ export async function getProposal(id) {
     if (result.errors) {
       console.error(`[events] Errors in subgraph request for proposal id: ${id}`);
     }
-    proposal = result.proposal || null;
+    proposal = result.proposal?.flagged ? null : result.proposal || null;
     return proposal;
   } catch (e: any) {
     capture(e, { contexts: { input: { query, id } } });
