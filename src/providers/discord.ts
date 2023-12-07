@@ -72,22 +72,36 @@ const commands = [
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
-      option.setName('channel').setDescription('Channel to post the events').setRequired(true)
+      option
+        .setName('channel')
+        .setDescription('Channel to post the events')
+        .setRequired(true)
     )
     .addStringOption(option =>
-      option.setName('space').setDescription('space to subscribe to').setRequired(true)
+      option
+        .setName('space')
+        .setDescription('space to subscribe to')
+        .setRequired(true)
     )
-    .addStringOption(option => option.setName('mention').setDescription('Mention role')),
+    .addStringOption(option =>
+      option.setName('mention').setDescription('Mention role')
+    ),
   new SlashCommandBuilder()
     .setName('remove')
     .setDescription('Remove notifications on a channel.')
     .setDMPermission(false)
     .setDefaultMemberPermissions(0)
     .addChannelOption(option =>
-      option.setName('channel').setDescription('Channel to post the events').setRequired(true)
+      option
+        .setName('channel')
+        .setDescription('Channel to post the events')
+        .setRequired(true)
     )
     .addStringOption(option =>
-      option.setName('space').setDescription('space to subscribe to').setRequired(true)
+      option
+        .setName('space')
+        .setDescription('space to subscribe to')
+        .setRequired(true)
     )
 ];
 
@@ -118,15 +132,25 @@ const checkPermissions = async (channelId, botId) => {
   try {
     const discordChannel = await client.channels.fetch(channelId);
     if (!discordChannel.isTextBased()) return 'Channel is not text';
-    if (!discordChannel.permissionsFor(botId).has(PermissionsBitField.Flags.ViewChannel))
+    if (
+      !discordChannel
+        .permissionsFor(botId)
+        .has(PermissionsBitField.Flags.ViewChannel)
+    )
       return `I do not have permission to view this channel ${discordChannel.toString()}, Add me to the channel and try again`;
-    if (!discordChannel.permissionsFor(botId).has(PermissionsBitField.Flags.SendMessages))
+    if (
+      !discordChannel
+        .permissionsFor(botId)
+        .has(PermissionsBitField.Flags.SendMessages)
+    )
       return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
     return true;
   } catch (error) {
     capture(error);
     console.log('[discord] error checking permissions', error);
-    const channelExistWithName = client.channels.cache.find(c => c.name === channelId);
+    const channelExistWithName = client.channels.cache.find(
+      c => c.name === channelId
+    );
     if (channelExistWithName) {
       return `Make sure the channel is in ${channelExistWithName.toString()} format.`;
     } else {
@@ -161,13 +185,17 @@ async function snapshotHelpCommandHandler(interaction) {
     `/add channel:#snapshot space:yam.eth mention:@everyone`
   );
 
-  const removeSubscriptionExample = codeBlock(`/remove channel:#snapshot space:yam.eth`);
+  const removeSubscriptionExample = codeBlock(
+    `/remove channel:#snapshot space:yam.eth`
+  );
 
   const embed = new EmbedBuilder()
     .setColor(0x0099ff)
     .setTitle(underscore('Snapshot bot'))
     .setDescription(subscriptionsDescription || ' ')
-    .setThumbnail('https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true')
+    .setThumbnail(
+      'https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true'
+    )
     .addFields(
       { name: '`/ping`', value: 'Description: Make sure the bot is online.' },
       {
@@ -217,12 +245,21 @@ async function snapshotCommandHandler(interaction, commandType) {
   );
   if (commandType === 'add') {
     const permissions = await checkPermissions(channelId, CLIENT_ID);
-    if (permissions !== true) return interaction.reply(permissions).catch(capture);
+    if (permissions !== true)
+      return interaction.reply(permissions).catch(capture);
 
     const space = await getSpace(spaceId);
-    if (!space) return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
+    if (!space)
+      return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
 
-    const subscription = [interaction.guildId, channelId, spaceId, mention || '', ts, ts];
+    const subscription = [
+      interaction.guildId,
+      channelId,
+      spaceId,
+      mention || '',
+      ts,
+      ts
+    ];
     await db.queryAsync(
       `INSERT INTO subscriptions (guild, channel, space, mention, created, updated) VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
@@ -316,7 +353,8 @@ export async function send(eventObj, proposal, _subscribers) {
             )
           ];
     components =
-      event === 'proposal/start' && (proposal.type === 'single-choice' || proposal.type === 'basic')
+      event === 'proposal/start' &&
+      (proposal.type === 'single-choice' || proposal.type === 'basic')
         ? components
         : [];
 
@@ -342,13 +380,15 @@ export async function send(eventObj, proposal, _subscribers) {
       .setDescription(preview || ' ');
 
     if (subs[proposal.space.id] || subs['*']) {
-      [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
-        sendMessage(sub.channel, {
-          content: `${sub.mention} `,
-          embeds: [embed],
-          components
-        });
-      });
+      [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(
+        sub => {
+          sendMessage(sub.channel, {
+            content: `${sub.mention} `,
+            embeds: [embed],
+            components
+          });
+        }
+      );
     }
 
     return { success: true };

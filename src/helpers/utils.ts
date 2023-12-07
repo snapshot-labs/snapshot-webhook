@@ -23,7 +23,10 @@ export async function getSubscribers(space) {
     }
   };
   try {
-    const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
+    const result = await snapshot.utils.subgraphRequest(
+      `${HUB_URL}/graphql`,
+      query
+    );
     subscriptions = result.subscriptions || [];
   } catch (e: any) {
     capture(e, { contexts: { input: { query, space } } });
@@ -31,7 +34,9 @@ export async function getSubscribers(space) {
   return subscriptions.map(subscription => subscription.address);
 }
 
-export async function getProposal(id: string): Promise<Record<string, any> | null> {
+export async function getProposal(
+  id: string
+): Promise<Record<string, any> | null> {
   const query = {
     proposal: {
       __args: {
@@ -57,9 +62,14 @@ export async function getProposal(id: string): Promise<Record<string, any> | nul
   };
 
   try {
-    const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
+    const result = await snapshot.utils.subgraphRequest(
+      `${HUB_URL}/graphql`,
+      query
+    );
     if (result.errors) {
-      console.error(`[events] Errors in subgraph request for proposal id: ${id}`);
+      console.error(
+        `[events] Errors in subgraph request for proposal id: ${id}`
+      );
     }
     return result.proposal?.flagged ? null : result.proposal || null;
   } catch (e: any) {
@@ -80,9 +90,14 @@ export async function getSpace(id) {
     }
   };
   try {
-    const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
+    const result = await snapshot.utils.subgraphRequest(
+      `${HUB_URL}/graphql`,
+      query
+    );
     if (result.errors) {
-      console.error(`[events] Errors in subgraph request for proposal id: ${id}`);
+      console.error(
+        `[events] Errors in subgraph request for proposal id: ${id}`
+      );
     }
     space = result.space || null;
     return space;
