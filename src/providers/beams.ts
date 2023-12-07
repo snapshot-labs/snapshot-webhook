@@ -3,7 +3,9 @@ import chunk from 'lodash.chunk';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest } from '../helpers/metrics';
 
-const SERVICE_PUSH_NOTIFICATIONS = parseInt(process.env.SERVICE_PUSH_NOTIFICATIONS || '0');
+const SERVICE_PUSH_NOTIFICATIONS = parseInt(
+  process.env.SERVICE_PUSH_NOTIFICATIONS || '0'
+);
 
 const beams = new PushNotifications({
   instanceId: process.env.SERVICE_PUSHER_BEAMS_INSTANCE_ID ?? '',

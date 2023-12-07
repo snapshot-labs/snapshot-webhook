@@ -37,7 +37,10 @@ async function getNextMessages(mci: number) {
   };
 
   try {
-    const results = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
+    const results = await snapshot.utils.subgraphRequest(
+      `${hubURL}/graphql`,
+      query
+    );
     return results.messages;
   } catch (e: any) {
     capture(e, { contexts: { input: { query, mci } } });
@@ -57,7 +60,10 @@ async function processMessages(messages: any[]) {
     try {
       if (message.type === 'proposal') {
         console.log('New event: "proposal"', message.space, message.id);
-        await handleCreatedEvent({ id: `proposal/${message.id}`, space: message.space });
+        await handleCreatedEvent({
+          id: `proposal/${message.id}`,
+          space: message.space
+        });
       }
 
       if (message.type === 'delete-proposal') {
