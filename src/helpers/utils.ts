@@ -19,9 +19,10 @@ export async function getSubscribers(space) {
       __args: {
         where: { space }
       },
-      address: true
+      address: true,
     }
   };
+
   try {
     const result = await snapshot.utils.subgraphRequest(`${HUB_URL}/graphql`, query);
     subscriptions = result.subscriptions || [];

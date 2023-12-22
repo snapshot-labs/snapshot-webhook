@@ -1,6 +1,7 @@
 import express from 'express';
 import { send } from './providers/walletconnectNotify';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { getSubscribers } from './helpers/utils';
 
 const router = express.Router();
 

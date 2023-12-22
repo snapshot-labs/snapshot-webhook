@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { getSubscribers } from '../helpers/utils';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL = process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
 const WALLETCONNECT_PROJECT_SECRET = process.env.WALLETCONNECT_PROJECT_SECRET;
@@ -31,7 +32,7 @@ function getNotificationBody(event, space) {
 }
 
 // Fetch subscribers from WalletConnect Notify server
-export async function queryWalletconnectSubscribers() {
+export async function getSubscribersFromWalletConnect() {
   const fetchSubscribersUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/subscribers`;
 
   try {
@@ -49,31 +50,38 @@ export async function queryWalletconnectSubscribers() {
 }
 
 // Cross Reference subscribers from Snapshot to the ones in Notify
-export async function crossReferenceSubscribers(internalSubscribers: string[]) {
-  const walletconnectSubscribers = await queryWalletconnectSubscribers();
-  // Optimistically reserve space in the cross referenced array to prevent resizing.
-  const crossReferencedSubscribers = new Array(internalSubscribers.length);
-  const invalidAddresses = new Array<string>(0);
+export async function getSubscriberFromDb(space: string) {
+  const subs: string[] = await getSubscribers(space);
+  return subs;
+}
 
-  for (let i = 0; i < internalSubscribers.length; ++i) {
-    const sub = internalSubscribers[i];
-    if (walletconnectSubscribers.includes(sub)) {
-      crossReferencedSubscribers[i] = sub;
-    } else {
-      // If a subscriber is registered internally, but not in WalletConnect, it is an invalid
-      // subscription
-      invalidAddresses.push(sub);
+// Find the CAIP10 of subscribers, since the Notify API requires CAIP10.
+async function crossReferenceSubscribers(space: { id: string }) {
+  const subscribersFromDb = await getSubscriberFromDb(space.id);
+  const subscribersFromWalletConnect = await getSubscribersFromWalletConnect();
+
+  // optimistically reserve all subscribers from the db
+  const crossReferencedSubscribers = new Array(subscribersFromDb.length);
+
+  // Create a hashmap for faster lookup
+  const addressPrefixMap = new Map<string, string>();
+  for(const subscriber of subscribersFromWalletConnect) {
+    const unprefixedAddress = subscriber.split(':').pop();
+    if(unprefixedAddress) {
+      addressPrefixMap.set(unprefixedAddress, subscriber)
     }
   }
 
-  if (invalidAddresses.length) {
-    capture(
-      `[WalletConnect] there are ${invalidAddresses.length} addresses that are not subscribed through WalletConnect`
-    );
+  for(const subscriber of subscribersFromDb) {
+    // using `includes` since the addresses in notify server are CAIP10 (I.E eip155:1:0x...)
+    const crossReferencedAddress = addressPrefixMap.get(subscriber);
+    if(crossReferencedAddress) {
+      crossReferencedSubscribers.push(crossReferencedAddress)
+    }
   }
 
-  // Remove any empty elements
-  return crossReferencedSubscribers.filter(e => e);
+  // remove empty elements from the array, since some might not have been found in WalletConnect Notify server
+  return crossReferencedSubscribers.filter(addresses => addresses);
 }
 
 export async function sendNotification(notification, accounts) {
@@ -129,8 +137,10 @@ async function formatMessage(event, proposal) {
   };
 }
 
-export async function send(event, proposal, subscribers) {
-  const crossReferencedSubscribers = await crossReferenceSubscribers(subscribers);
+export async function send(event, proposal, _subscribers) {
+  
+  const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space);
   const notificationMessage = await formatMessage(event, proposal);
+
   await sendNotification(notificationMessage, crossReferencedSubscribers);
 }
