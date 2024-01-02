@@ -10,6 +10,18 @@ const AUTH_HEADER = {
   Authorization: WALLETCONNECT_PROJECT_SECRET ? `Bearer ${WALLETCONNECT_PROJECT_SECRET}` : ''
 };
 
+// Rate limiting numbers:
+const MAX_ACCOUNTS_PER_REQUEST = 500;
+const PER_SECOND_RATE_LIMIT = 2;
+const WAIT_ERROR_MARGIN = 0.25;
+
+// Rate limiting logic:
+async function wait(seconds: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, seconds * 1_000);
+  })
+}
+
 // Match Snapshot event names to notification types
 // That should be defined in the wc-notify-config.json
 function getNotificationType(event) {
@@ -20,6 +32,7 @@ function getNotificationType(event) {
   }
 }
 
+// Generate a notification body per the event
 function getNotificationBody(event, space) {
   switch(event) {
   case "proposal/create":
@@ -73,7 +86,6 @@ async function crossReferenceSubscribers(space: { id: string }) {
   }
 
   for(const subscriber of subscribersFromDb) {
-    // using `includes` since the addresses in notify server are CAIP10 (I.E eip155:1:0x...)
     const crossReferencedAddress = addressPrefixMap.get(subscriber);
     if(crossReferencedAddress) {
       crossReferencedSubscribers.push(crossReferencedAddress)
@@ -82,6 +94,14 @@ async function crossReferenceSubscribers(space: { id: string }) {
 
   // remove empty elements from the array, since some might not have been found in WalletConnect Notify server
   return crossReferencedSubscribers.filter(addresses => addresses);
+}
+
+async function queueNotificationsToSend(notification, accounts: string[]) {
+  for(let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
+    await sendNotification(notification, accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST))
+    const waitTime = (1 / PER_SECOND_RATE_LIMIT) + WAIT_ERROR_MARGIN;
+    await wait(waitTime); 
+  }
 }
 
 export async function sendNotification(notification, accounts) {
@@ -128,10 +148,13 @@ async function formatMessage(event, proposal) {
     return;
   }
 
+  const url = new URL(proposal.link);
+  url.searchParams.append('app', 'walletconnect')
+
   return {
     title: proposal.title,
     body: notificationBody,
-    url: `${proposal.link}?app=walletconnect`,
+    url: url.toString(),
     icon: space.avatar,
     type: notificationType
   };
@@ -142,5 +165,5 @@ export async function send(event, proposal, _subscribers) {
   const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space);
   const notificationMessage = await formatMessage(event, proposal);
 
-  await sendNotification(notificationMessage, crossReferencedSubscribers);
+  await queueNotificationsToSend(notificationMessage, crossReferencedSubscribers);
 }
