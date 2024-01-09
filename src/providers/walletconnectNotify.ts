@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import { getSubscribers } from '../helpers/utils';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL = process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
 const WALLETCONNECT_PROJECT_SECRET = process.env.WALLETCONNECT_PROJECT_SECRET;
@@ -17,9 +16,9 @@ const WAIT_ERROR_MARGIN = 0.25;
 
 // Rate limiting logic:
 async function wait(seconds: number) {
-  return new Promise<void>((resolve) => {
+  return new Promise<void>(resolve => {
     setTimeout(resolve, seconds * 1_000);
-  })
+  });
 }
 
 // Match Snapshot event names to notification types
@@ -34,13 +33,13 @@ function getNotificationType(event) {
 
 // Generate a notification body per the event
 function getNotificationBody(event, space) {
-  switch(event) {
-  case "proposal/create":
-    return `A new proposal has been created for ${space.name}`
-  case "proposal/end":
-    return `A proposal has closed for ${space.name}`
-  default:
-    return null;
+  switch (event) {
+    case 'proposal/create':
+      return `A new proposal has been created for ${space.name}`;
+    case 'proposal/end':
+      return `A proposal has closed for ${space.name}`;
+    default:
+      return null;
   }
 }
 
@@ -72,17 +71,17 @@ async function crossReferenceSubscribers(space: { id: string }, spaceSubscribers
 
   // Create a hashmap for faster lookup
   const addressPrefixMap = new Map<string, string>();
-  for(const subscriber of subscribersFromWalletConnect) {
+  for (const subscriber of subscribersFromWalletConnect) {
     const unprefixedAddress = subscriber.split(':').pop();
-    if(unprefixedAddress) {
-      addressPrefixMap.set(unprefixedAddress, subscriber)
+    if (unprefixedAddress) {
+      addressPrefixMap.set(unprefixedAddress, subscriber);
     }
   }
 
-  for(const subscriber of subscribersFromDb) {
+  for (const subscriber of subscribersFromDb) {
     const crossReferencedAddress = addressPrefixMap.get(subscriber);
-    if(crossReferencedAddress) {
-      crossReferencedSubscribers.push(crossReferencedAddress)
+    if (crossReferencedAddress) {
+      crossReferencedSubscribers.push(crossReferencedAddress);
     }
   }
 
@@ -91,10 +90,10 @@ async function crossReferenceSubscribers(space: { id: string }, spaceSubscribers
 }
 
 async function queueNotificationsToSend(notification, accounts: string[]) {
-  for(let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
-    await sendNotification(notification, accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST))
-    const waitTime = (1 / PER_SECOND_RATE_LIMIT) + WAIT_ERROR_MARGIN;
-    await wait(waitTime); 
+  for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
+    await sendNotification(notification, accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST));
+    const waitTime = 1 / PER_SECOND_RATE_LIMIT + WAIT_ERROR_MARGIN;
+    await wait(waitTime);
   }
 }
 
@@ -137,13 +136,13 @@ async function formatMessage(event, proposal) {
     return;
   }
 
-  if(!notificationBody) {
+  if (!notificationBody) {
     capture(`[WalletConnect] could not get matching notification body for event ${event.event}`);
     return;
   }
 
   const url = new URL(proposal.link);
-  url.searchParams.append('app', 'walletconnect')
+  url.searchParams.append('app', 'walletconnect');
 
   return {
     title: proposal.title,
@@ -155,7 +154,6 @@ async function formatMessage(event, proposal) {
 }
 
 export async function send(event, proposal, subscribers) {
-
   const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space, subscribers);
   const notificationMessage = formatMessage(event, proposal);
 
