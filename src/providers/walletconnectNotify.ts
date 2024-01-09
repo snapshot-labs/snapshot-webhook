@@ -62,15 +62,9 @@ export async function getSubscribersFromWalletConnect() {
   }
 }
 
-// Cross Reference subscribers from Snapshot to the ones in Notify
-export async function getSubscriberFromDb(space: string) {
-  const subs: string[] = await getSubscribers(space);
-  return subs;
-}
-
 // Find the CAIP10 of subscribers, since the Notify API requires CAIP10.
-async function crossReferenceSubscribers(space: { id: string }) {
-  const subscribersFromDb = await getSubscriberFromDb(space.id);
+async function crossReferenceSubscribers(space: { id: string }, spaceSubscribers) {
+  const subscribersFromDb = spaceSubscribers;
   const subscribersFromWalletConnect = await getSubscribersFromWalletConnect();
 
   // optimistically reserve all subscribers from the db
@@ -160,8 +154,9 @@ async function formatMessage(event, proposal) {
   };
 }
 
-export async function send(event, proposal, _subscribers) {
-  const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space);
+export async function send(event, proposal, subscribers) {
+
+  const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space, subscribers);
   const notificationMessage = formatMessage(event, proposal);
 
   await queueNotificationsToSend(notificationMessage, crossReferencedSubscribers);
