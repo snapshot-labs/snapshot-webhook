@@ -161,9 +161,8 @@ async function formatMessage(event, proposal) {
 }
 
 export async function send(event, proposal, _subscribers) {
-  
   const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space);
-  const notificationMessage = await formatMessage(event, proposal);
+  const notificationMessage = formatMessage(event, proposal);
 
   await queueNotificationsToSend(notificationMessage, crossReferencedSubscribers);
 }

@@ -19,7 +19,7 @@ export async function getSubscribers(space) {
       __args: {
         where: { space }
       },
-      address: true,
+      address: true
     }
   };
 
