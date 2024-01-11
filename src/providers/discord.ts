@@ -135,13 +135,13 @@ const checkPermissions = async (channelId, botId) => {
     if (
       !discordChannel
         .permissionsFor(botId)
-        .has(PermissionsBitField.Flags.ViewChannel)
+        ?.has(PermissionsBitField.Flags.ViewChannel)
     )
       return `I do not have permission to view this channel ${discordChannel.toString()}, Add me to the channel and try again`;
     if (
       !discordChannel
         .permissionsFor(botId)
-        .has(PermissionsBitField.Flags.SendMessages)
+        ?.has(PermissionsBitField.Flags.SendMessages)
     )
       return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
     return true;
