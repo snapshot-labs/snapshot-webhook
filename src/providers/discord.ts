@@ -329,9 +329,8 @@ export const sendMessage = async (channel, message) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(eventObj, proposal, _subscribers) {
+  const event = eventObj.event;
   try {
-    const event = eventObj.event;
-
     // Only supports proposal/start event
     if (event !== 'proposal/start') return;
 
