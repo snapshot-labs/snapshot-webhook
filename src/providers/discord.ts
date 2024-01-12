@@ -11,7 +11,8 @@ import {
   EmbedBuilder,
   codeBlock,
   underscore,
-  inlineCode
+  inlineCode,
+  DiscordAPIError
 } from 'discord.js';
 import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
@@ -146,8 +147,10 @@ const checkPermissions = async (channelId, botId) => {
       return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
     return true;
   } catch (error) {
-    capture(error);
-    console.log('[discord] error checking permissions', error);
+    if (!(error instanceof DiscordAPIError)) {
+      capture(error);
+    }
+    console.error('[discord] error checking permissions', error);
     const channelExistWithName = client.channels.cache.find(
       c => c.name === channelId
     );
@@ -320,8 +323,11 @@ export const sendMessage = async (channel, message) => {
     await speaker.send(message);
     success = true;
     return true;
-  } catch (e) {
-    capture(e);
+  } catch (error) {
+    if (!(error instanceof DiscordAPIError)) {
+      capture(error);
+    }
+    console.error('[discord] Failed to send message', channel, error);
   } finally {
     end({ status: success ? 200 : 500 });
   }
