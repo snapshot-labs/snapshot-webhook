@@ -18,6 +18,7 @@ const AUTH_HEADER = {
 const MAX_ACCOUNTS_PER_REQUEST = 500;
 const PER_SECOND_RATE_LIMIT = 2;
 const WAIT_ERROR_MARGIN = 0.25;
+const WAIT_TIME = 1 / PER_SECOND_RATE_LIMIT + WAIT_ERROR_MARGIN;
 
 // Rate limiting logic:
 async function wait(seconds: number) {
@@ -81,8 +82,8 @@ async function queueNotificationsToSend(notification, accounts: string[]) {
       notification,
       accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST)
     );
-    const waitTime = 1 / PER_SECOND_RATE_LIMIT + WAIT_ERROR_MARGIN;
-    await wait(waitTime);
+
+    await wait(WAIT_TIME);
   }
 }
 
