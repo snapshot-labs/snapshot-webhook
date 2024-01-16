@@ -22,7 +22,6 @@ export async function getSubscribers(space) {
       address: true
     }
   };
-
   try {
     const result = await snapshot.utils.subgraphRequest(
       `${HUB_URL}/graphql`,

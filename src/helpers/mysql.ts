@@ -18,7 +18,6 @@ config.acquireTimeout = 60e3;
 config.timeout = 60e3;
 config.charset = 'utf8mb4';
 bluebird.promisifyAll([Pool, Connection]);
-
 const db = mysql.createPool(config);
 
 export default db;
