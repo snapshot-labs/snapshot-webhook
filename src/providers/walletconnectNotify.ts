@@ -26,28 +26,6 @@ async function wait(seconds: number) {
   });
 }
 
-// Match Snapshot event names to notification types
-// That should be defined in the wc-notify-config.json
-function getNotificationType(event) {
-  if (event.includes('proposal/')) {
-    return WALLETCONNECT_NOTIFICATION_TYPE;
-  } else {
-    return null;
-  }
-}
-
-// Generate a notification body per the event
-function getNotificationBody(event, space) {
-  switch (event) {
-    case 'proposal/created':
-      return `A new proposal has been created for ${space.name}`;
-    case 'proposal/end':
-      return `A proposal has closed for ${space.name}`;
-    default:
-      return null;
-  }
-}
-
 // Fetch subscribers from WalletConnect Notify server
 export async function getSubscribersFromWalletConnect() {
   const fetchSubscribersUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/subscribers`;
@@ -139,36 +117,21 @@ function formatMessage(event, proposal) {
   const space = proposal.space;
   if (!space) return null;
 
-  const notificationType = getNotificationType(event.event);
-  const notificationBody = getNotificationBody(event.event, space);
+  const notificationType = WALLETCONNECT_NOTIFICATION_TYPE;
+  const notificationBody = `🟢 New proposal on ${space.name} @${space.id}\n\n`;
 
-  if (!notificationType) {
-    capture(
-      `[WalletConnect] could not get matching notification type for event ${event.event}`
-    );
-    return;
-  }
-
-  if (!notificationBody) {
-    capture(
-      `[WalletConnect] could not get matching notification body for event ${event.event}`
-    );
-    return;
-  }
-
-  const url = new URL(proposal.link);
-  url.searchParams.append('app', 'walletconnect');
-
+  const url = `${proposal.link}?app=web3inbox`;
   return {
     title: proposal.title,
     body: notificationBody,
-    url: url.toString(),
+    url,
     icon: space.avatar,
     type: notificationType
   };
 }
 
 export async function send(event, proposal, subscribers) {
+  if (event.event !== 'proposal/start') return;
   const crossReferencedSubscribers = await crossReferenceSubscribers(
     proposal.space,
     subscribers
