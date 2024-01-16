@@ -1,13 +1,17 @@
 import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 
-const WALLETCONNECT_NOTIFY_SERVER_URL = process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
+const WALLETCONNECT_NOTIFY_SERVER_URL =
+  process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
 const WALLETCONNECT_PROJECT_SECRET = process.env.WALLETCONNECT_PROJECT_SECRET;
 const WALLETCONNECT_PROJECT_ID = process.env.WALLETCONNECT_PROJECT_ID;
-const WALLETCONNECT_NOTIFICATION_TYPE = process.env.WALLETCONNECT_NOTIFICATION_TYPE;
+const WALLETCONNECT_NOTIFICATION_TYPE =
+  process.env.WALLETCONNECT_NOTIFICATION_TYPE;
 
 const AUTH_HEADER = {
-  Authorization: WALLETCONNECT_PROJECT_SECRET ? `Bearer ${WALLETCONNECT_PROJECT_SECRET}` : ''
+  Authorization: WALLETCONNECT_PROJECT_SECRET
+    ? `Bearer ${WALLETCONNECT_PROJECT_SECRET}`
+    : ''
 };
 
 // Rate limiting numbers:
@@ -63,7 +67,10 @@ export async function getSubscribersFromWalletConnect() {
 }
 
 // Find the CAIP10 of subscribers, since the Notify API requires CAIP10.
-async function crossReferenceSubscribers(space: { id: string }, spaceSubscribers) {
+async function crossReferenceSubscribers(
+  space: { id: string },
+  spaceSubscribers
+) {
   const subscribersFromDb = spaceSubscribers;
   const subscribersFromWalletConnect = await getSubscribersFromWalletConnect();
 
@@ -92,7 +99,10 @@ async function crossReferenceSubscribers(space: { id: string }, spaceSubscribers
 
 async function queueNotificationsToSend(notification, accounts: string[]) {
   for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
-    await sendNotification(notification, accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST));
+    await sendNotification(
+      notification,
+      accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST)
+    );
     const waitTime = 1 / PER_SECOND_RATE_LIMIT + WAIT_ERROR_MARGIN;
     await wait(waitTime);
   }
@@ -133,12 +143,16 @@ function formatMessage(event, proposal) {
   const notificationBody = getNotificationBody(event.event, space);
 
   if (!notificationType) {
-    capture(`[WalletConnect] could not get matching notification type for event ${event.event}`);
+    capture(
+      `[WalletConnect] could not get matching notification type for event ${event.event}`
+    );
     return;
   }
 
   if (!notificationBody) {
-    capture(`[WalletConnect] could not get matching notification body for event ${event.event}`);
+    capture(
+      `[WalletConnect] could not get matching notification body for event ${event.event}`
+    );
     return;
   }
 
@@ -155,8 +169,14 @@ function formatMessage(event, proposal) {
 }
 
 export async function send(event, proposal, subscribers) {
-  const crossReferencedSubscribers = await crossReferenceSubscribers(proposal.space, subscribers);
+  const crossReferencedSubscribers = await crossReferenceSubscribers(
+    proposal.space,
+    subscribers
+  );
   const notificationMessage = formatMessage(event, proposal);
 
-  await queueNotificationsToSend(notificationMessage, crossReferencedSubscribers);
+  await queueNotificationsToSend(
+    notificationMessage,
+    crossReferencedSubscribers
+  );
 }
