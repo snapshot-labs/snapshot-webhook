@@ -1,5 +1,5 @@
 import { send as webhook } from './webhook';
-import { send as walletconnect } from './walletconnectNotify';
+import { send as walletconnectNotify } from './walletconnectNotify';
 import { send as discord } from './discord';
 // import { send as beams } from './beams';
 import { send as xmtp } from './xmtp';
@@ -10,5 +10,5 @@ export default [
   discord,
   // beams,
   xmtp,
-  walletconnect
+  walletconnectNotify
 ];
