@@ -32,11 +32,21 @@ new client.Gauge({
   async collect() {
     this.set(
       { type: 'http' },
-      (await db.queryAsync(`SELECT count(*) as count FROM subscribers`))[0].count as any
+      (await db.queryAsync(`SELECT count(*) as count FROM subscribers`))[0]
+        .count as any
     );
     this.set(
       { type: 'discord' },
-      (await db.queryAsync(`SELECT count(*) as count FROM subscriptions`))[0].count as any
+      (await db.queryAsync(`SELECT count(*) as count FROM subscriptions`))[0]
+        .count as any
+    );
+    this.set(
+      { type: 'xmtp' },
+      (
+        await db.queryAsync(
+          `SELECT count(*) as count FROM xmtp WHERE status = 1`
+        )
+      )[0].count as any
     );
   }
 });
@@ -46,4 +56,9 @@ export const timeOutgoingRequest = new client.Histogram({
   help: 'Duration in seconds of outgoing webhook requests',
   labelNames: ['method', 'status', 'provider'],
   buckets: [0.5, 1, 2, 5, 10, 15]
+});
+
+export const xmtpIncomingMessages = new client.Gauge({
+  name: 'xmtp_incoming_messages_count',
+  help: 'Number of incoming XMTP messages'
 });

@@ -13,7 +13,7 @@ yarn install
 
 ```dotenv
 DATABASE_URL=mysql://...
-HUB_URL=https://hub.snapshot.org # Use https://testnet.snapshot.org for the demo instance
+HUB_URL=https://hub.snapshot.org # Use https://testnet.hub.snapshot.org for the demo instance
 SERVICE_EVENTS=1
 ```
 

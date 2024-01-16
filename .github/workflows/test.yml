@@ -1,0 +1,13 @@
+name: Test
+
+on: [push]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        target: ['18']
+    uses: snapshot-labs/actions/.github/workflows/test.yml@main
+    secrets: inherit
+    with:
+      target: ${{ matrix.target }}

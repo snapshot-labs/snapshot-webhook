@@ -66,7 +66,9 @@ export async function handleDeletedEvent(event) {
 async function processEvents() {
   const ts = ~~(Date.now() / 1e3) - DELAY;
 
-  const events = await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [ts]);
+  const events = await db.queryAsync('SELECT * FROM events WHERE expire <= ?', [
+    ts
+  ]);
   console.log('[events] Process event start', ts, events.length);
 
   for (const event of events) {
@@ -83,10 +85,10 @@ async function processEvents() {
     }
 
     try {
-      await db.queryAsync('DELETE FROM events WHERE id = ? AND event = ? LIMIT 1', [
-        event.id,
-        event.event
-      ]);
+      await db.queryAsync(
+        'DELETE FROM events WHERE id = ? AND event = ? LIMIT 1',
+        [event.id, event.event]
+      );
       console.log(`[events] Event sent ${event.id} ${event.event}`);
     } catch (e) {
       capture(e);

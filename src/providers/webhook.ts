@@ -41,7 +41,9 @@ export async function sendEvent(event, to, method = 'POST') {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, _proposal, _subscribersAddresses) {
-  const subscribers = await db.queryAsync('SELECT * FROM subscribers WHERE active = 1');
+  const subscribers = await db.queryAsync(
+    'SELECT * FROM subscribers WHERE active = 1'
+  );
   console.log('[webhook] subscribers', subscribers.length);
 
   Promise.allSettled(
