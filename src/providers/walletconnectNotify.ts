@@ -4,6 +4,7 @@ import { capture } from '@snapshot-labs/snapshot-sentry';
 const WALLETCONNECT_NOTIFY_SERVER_URL = process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
 const WALLETCONNECT_PROJECT_SECRET = process.env.WALLETCONNECT_PROJECT_SECRET;
 const WALLETCONNECT_PROJECT_ID = process.env.WALLETCONNECT_PROJECT_ID;
+const WALLETCONNECT_NOTIFICATION_TYPE = process.env.WALLETCONNECT_NOTIFICATION_TYPE;
 
 const AUTH_HEADER = {
   Authorization: WALLETCONNECT_PROJECT_SECRET ? `Bearer ${WALLETCONNECT_PROJECT_SECRET}` : ''
@@ -25,7 +26,7 @@ async function wait(seconds: number) {
 // That should be defined in the wc-notify-config.json
 function getNotificationType(event) {
   if (event.includes('proposal/')) {
-    return 'ed2fd071-65e1-440d-95c5-7d58884eae43';
+    return WALLETCONNECT_NOTIFICATION_TYPE;
   } else {
     return null;
   }
@@ -34,7 +35,7 @@ function getNotificationType(event) {
 // Generate a notification body per the event
 function getNotificationBody(event, space) {
   switch (event) {
-    case 'proposal/create':
+    case 'proposal/created':
       return `A new proposal has been created for ${space.name}`;
     case 'proposal/end':
       return `A proposal has closed for ${space.name}`;
@@ -124,7 +125,7 @@ export async function sendNotification(notification, accounts) {
 }
 
 // Transform proposal event into notification format.
-async function formatMessage(event, proposal) {
+function formatMessage(event, proposal) {
   const space = proposal.space;
   if (!space) return null;
 
