@@ -20,7 +20,7 @@ router.get('/test', async (req, res) => {
 
     return res.json({ url, success: true });
   } catch (e: any) {
-    if (e.code !== 'ERR_INVALID_URL') {
+    if (e.code !== 'ERR_INVALID_URL' && e.name !== 'FetchError') {
       capture(e);
     }
 
