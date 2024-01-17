@@ -1,6 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
 import db from './helpers/mysql';
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
@@ -36,9 +37,13 @@ async function getNextMessages(mci: number) {
   };
 
   try {
-    const results = await snapshot.utils.subgraphRequest(`${hubURL}/graphql`, query);
+    const results = await snapshot.utils.subgraphRequest(
+      `${hubURL}/graphql`,
+      query
+    );
     return results.messages;
-  } catch (e) {
+  } catch (e: any) {
+    capture(e, { contexts: { input: { query, mci } } });
     console.log('Failed to load messages', e);
     return;
   }
@@ -55,7 +60,10 @@ async function processMessages(messages: any[]) {
     try {
       if (message.type === 'proposal') {
         console.log('New event: "proposal"', message.space, message.id);
-        await handleCreatedEvent({ id: `proposal/${message.id}`, space: message.space });
+        await handleCreatedEvent({
+          id: `proposal/${message.id}`,
+          space: message.space
+        });
       }
 
       if (message.type === 'delete-proposal') {
@@ -67,7 +75,7 @@ async function processMessages(messages: any[]) {
       }
       lastMessageMci = message.mci;
     } catch (error) {
-      console.log('[replay] Failed to process message', message.id, error);
+      capture(error);
       break;
     }
   }
@@ -76,10 +84,10 @@ async function processMessages(messages: any[]) {
     await updateLastMci(lastMessageMci);
     console.log('[replay] Updated to MCI', lastMessageMci);
   }
-  return
+  return;
 }
 
-async function run() {
+export async function run() {
   // Check latest indexed MCI from db
   const lastMci = await getLastMci();
   console.log('[replay] Last MCI', lastMci);
@@ -94,5 +102,3 @@ async function run() {
   await snapshot.utils.sleep(10e3);
   return run();
 }
-
-run();
