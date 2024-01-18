@@ -2,6 +2,7 @@ import init, { client } from '@snapshot-labs/snapshot-metrics';
 import type { Express } from 'express';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import db from './mysql';
+import { getSubscribersFromWalletConnect } from '../providers/walletconnectNotify';
 
 export default function initMetrics(app: Express) {
   init(app, {
@@ -47,6 +48,10 @@ new client.Gauge({
           `SELECT count(*) as count FROM xmtp WHERE status = 1`
         )
       )[0].count as any
+    );
+    this.set(
+      { type: 'walletconnect' },
+      (await getSubscribersFromWalletConnect()).length
     );
   }
 });
