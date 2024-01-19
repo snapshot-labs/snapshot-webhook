@@ -19,7 +19,7 @@ import removeMd from 'remove-markdown';
 import { shortenAddress } from '../helpers/utils';
 import { getSpace } from '../helpers/utils';
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import { timeOutgoingRequest } from '../helpers/metrics';
+import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -329,6 +329,7 @@ export const sendMessage = async (channel, message) => {
     }
     console.error('[discord] Failed to send message', channel, error);
   } finally {
+    outgoingMessages.inc({ status: success ? 1 : 0 });
     end({ status: success ? 200 : 500 });
   }
 };

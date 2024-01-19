@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import { timeOutgoingRequest } from '../helpers/metrics';
+import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL =
   process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
@@ -88,7 +88,7 @@ async function queueNotificationsToSend(notification, accounts: string[]) {
   }
 }
 
-export async function sendNotification(notification, accounts) {
+export async function sendNotification(notification, accounts: string[]) {
   const notifyUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/notify`;
 
   const body = {
@@ -115,6 +115,7 @@ export async function sendNotification(notification, accounts) {
   } catch (e) {
     capture('[WalletConnect] failed to notify subscribers', e);
   } finally {
+    outgoingMessages.inc({ status: success ? 1 : 0 }, accounts.length);
     end({ status: success ? 200 : 500 });
   }
 }

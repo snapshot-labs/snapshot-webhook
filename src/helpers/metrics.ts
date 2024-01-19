@@ -67,3 +67,9 @@ export const xmtpIncomingMessages = new client.Gauge({
   name: 'xmtp_incoming_messages_count',
   help: 'Number of incoming XMTP messages'
 });
+
+export const outgoingMessages = new client.Gauge({
+  name: 'http_webhook_outgoing_messages_count',
+  help: 'Number of messages sent to webhooks.',
+  labelNames: ['status', 'provider']
+});

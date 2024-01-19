@@ -1,7 +1,7 @@
 import PushNotifications from '@pusher/push-notifications-server';
 import chunk from 'lodash.chunk';
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import { timeOutgoingRequest } from '../helpers/metrics';
+import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
 const SERVICE_PUSH_NOTIFICATIONS = parseInt(
   process.env.SERVICE_PUSH_NOTIFICATIONS || '0'
@@ -30,6 +30,7 @@ export async function send(event, proposal, subscribers) {
           }
         }
       });
+      outgoingMessages.inc({ status: 1 }, walletsChunk.length);
     }
     success = true;
   } catch (e) {
