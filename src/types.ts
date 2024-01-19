@@ -3,4 +3,3 @@ export type Event = {
   space: string;
   id: string;
 };
-}
