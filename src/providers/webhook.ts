@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import db from '../helpers/mysql';
 import { sha256 } from '../helpers/utils';
-import { timeOutgoingRequest } from '../helpers/metrics';
+import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
 const HTTP_WEBHOOK_TIMEOUT = 15000;
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
@@ -35,6 +35,7 @@ export async function sendEvent(event, to, method = 'POST') {
     }
     throw error;
   } finally {
+    outgoingMessages.inc({ status: res?.status === 200 ? 1 : 0 });
     end({ status: res?.status || 0 });
   }
 }
