@@ -35,7 +35,10 @@ export async function sendEvent(event, to, method = 'POST') {
     }
     throw error;
   } finally {
-    outgoingMessages.inc({ status: res?.status === 200 ? 1 : 0 });
+    outgoingMessages.inc({
+      provider: 'http',
+      status: res?.status === 200 ? 1 : 0
+    });
     end({ status: res?.status || 0 });
   }
 }

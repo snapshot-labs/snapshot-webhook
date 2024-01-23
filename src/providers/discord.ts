@@ -329,7 +329,7 @@ export const sendMessage = async (channel, message) => {
     }
     console.error('[discord] Failed to send message', channel, error);
   } finally {
-    outgoingMessages.inc({ status: success ? 1 : 0 });
+    outgoingMessages.inc({ provider: 'discord', status: success ? 1 : 0 });
     end({ status: success ? 200 : 500 });
   }
 };
