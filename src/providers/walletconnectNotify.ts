@@ -112,7 +112,10 @@ export async function sendNotification(notification, accounts: string[]) {
     capture(e);
     console.log('[WalletConnect] failed to notify subscribers', e);
   } finally {
-    outgoingMessages.inc({ status: success ? 1 : 0 }, accounts.length);
+    outgoingMessages.inc(
+      { provider: 'walletconnect', status: success ? 1 : 0 },
+      accounts.length
+    );
     end({ status: success ? 200 : 500 });
   }
 }

@@ -30,7 +30,10 @@ export async function send(event, proposal, subscribers) {
           }
         }
       });
-      outgoingMessages.inc({ status: 1 }, walletsChunk.length);
+      outgoingMessages.inc(
+        { provider: 'beams', status: 1 },
+        walletsChunk.length
+      );
     }
     success = true;
   } catch (e) {

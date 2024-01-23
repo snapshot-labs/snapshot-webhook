@@ -119,11 +119,11 @@ async function sendMessages(addresses: string[], msg) {
         const conversation = await client.conversations.newConversation(peer);
         await conversation.send(msg);
         end({ status: 200 });
-        outgoingMessages.inc({ status: 1 });
+        outgoingMessages.inc({ provider: 'xmtp', status: 1 });
         console.log('[xmtp] sent message to', peer);
       } catch (e: any) {
         capture(e);
-        outgoingMessages.inc({ status: 0 });
+        outgoingMessages.inc({ provider: 'xmtp', status: 0 });
         end({ status: 500 });
       }
     }
