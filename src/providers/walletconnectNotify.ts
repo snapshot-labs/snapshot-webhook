@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
+import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest } from '../helpers/metrics';
+import type { Event } from '../types';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL =
   process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
@@ -21,13 +23,6 @@ const PER_SECOND_RATE_LIMIT = 2;
 const WAIT_ERROR_MARGIN = 0.25;
 const WAIT_TIME = 1 / PER_SECOND_RATE_LIMIT + WAIT_ERROR_MARGIN;
 
-// Rate limiting logic:
-async function wait(seconds: number) {
-  return new Promise<void>(resolve => {
-    setTimeout(resolve, seconds * 1_000);
-  });
-}
-
 // Fetch subscribers from WalletConnect Notify server
 export async function getSubscribersFromWalletConnect() {
   const fetchSubscribersUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/subscribers`;
@@ -41,7 +36,8 @@ export async function getSubscribersFromWalletConnect() {
 
     return subscribers;
   } catch (e) {
-    capture('[WalletConnect] failed to fetch subscribers');
+    capture(e);
+    console.log('[WalletConnect] failed to fetch subscribers');
     return [];
   }
 }
@@ -84,7 +80,7 @@ async function queueNotificationsToSend(notification, accounts: string[]) {
       accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST)
     );
 
-    await wait(WAIT_TIME);
+    await snapshot.utils.sleep(WAIT_TIME);
   }
 }
 
@@ -113,14 +109,15 @@ export async function sendNotification(notification, accounts) {
     success = true;
     return notifySuccess;
   } catch (e) {
-    capture('[WalletConnect] failed to notify subscribers', e);
+    capture(e);
+    console.log('[WalletConnect] failed to notify subscribers', e);
   } finally {
     end({ status: success ? 200 : 500 });
   }
 }
 
 // Transform proposal event into notification format.
-function formatMessage(event, proposal) {
+function formatMessage(event: Event, proposal) {
   const space = proposal.space;
   if (!space) return null;
 
@@ -137,7 +134,7 @@ function formatMessage(event, proposal) {
   };
 }
 
-export async function send(event, proposal, subscribers) {
+export async function send(event: Event, proposal, subscribers: string[]) {
   if (event.event !== 'proposal/start') return;
   const crossReferencedSubscribers = await crossReferenceSubscribers(
     proposal.space,

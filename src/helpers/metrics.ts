@@ -49,10 +49,11 @@ new client.Gauge({
         )
       )[0].count as any
     );
-    this.set(
-      { type: 'walletconnect' },
-      (await getSubscribersFromWalletConnect()).length
-    );
+
+    try {
+      const subscribers = await getSubscribersFromWalletConnect();
+      this.set({ type: 'walletconnect' }, subscribers.length);
+    } catch (e) {}
   }
 });
 
