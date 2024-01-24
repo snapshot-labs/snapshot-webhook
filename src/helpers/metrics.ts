@@ -2,7 +2,6 @@ import init, { client } from '@snapshot-labs/snapshot-metrics';
 import type { Express } from 'express';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import db from './mysql';
-import { getSubscribersFromWalletConnect } from '../providers/walletconnectNotify';
 
 export default function initMetrics(app: Express) {
   init(app, {
@@ -49,11 +48,6 @@ new client.Gauge({
         )
       )[0].count as any
     );
-
-    try {
-      const subscribers = await getSubscribersFromWalletConnect();
-      this.set({ type: 'walletconnect' }, subscribers.length);
-    } catch (e) {}
   }
 });
 
