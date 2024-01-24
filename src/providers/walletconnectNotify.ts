@@ -94,8 +94,5 @@ export async function send(event: Event, proposal, addresses: string[]) {
 
   const accounts = addresses.map(address => `eip155:1:${address}`);
 
-  await queueNotificationsToSend(
-    notificationMessage,
-    accounts,
-  );
+  await queueNotificationsToSend(notificationMessage, accounts);
 }
