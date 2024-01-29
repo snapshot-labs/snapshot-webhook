@@ -136,7 +136,6 @@ function formatMessage(event: Event, proposal) {
     title: proposal.title,
     body: notificationBody,
     url,
-    icon: `https://cdn.stamp.fyi/space/${space.id}?s=96`,
     type: notificationType
   };
 }
