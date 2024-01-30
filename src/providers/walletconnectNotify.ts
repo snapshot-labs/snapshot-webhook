@@ -56,6 +56,9 @@ export async function sendNotification(notification, accounts: string[]) {
     });
 
     const notifySuccess = await notifyRs.json();
+    if (notifySuccess?.error) {
+      throw new Error(notifySuccess.error);
+    }
     success = true;
     return notifySuccess;
   } catch (e) {
@@ -83,7 +86,6 @@ function formatMessage(event: Event, proposal) {
     title: proposal.title,
     body: notificationBody,
     url,
-    icon: space.avatar,
     type: notificationType
   };
 }
