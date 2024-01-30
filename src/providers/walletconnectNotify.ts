@@ -89,10 +89,22 @@ function formatMessage(event: Event, proposal) {
 }
 
 export async function send(event: Event, proposal, addresses: string[]) {
+  if (!isConfigured()) {
+    console.log('[WalletConnect] Sending skipped: client not setup');
+  }
   if (event.event !== 'proposal/start') return;
   const notificationMessage = formatMessage(event, proposal);
 
   const accounts = addresses.map(address => `eip155:1:${address}`);
 
   await queueNotificationsToSend(notificationMessage, accounts);
+}
+
+function isConfigured() {
+  return (
+    WALLETCONNECT_NOTIFY_SERVER_URL &&
+    WALLETCONNECT_PROJECT_SECRET &&
+    WALLETCONNECT_PROJECT_ID &&
+    WALLETCONNECT_NOTIFICATION_TYPE
+  );
 }
