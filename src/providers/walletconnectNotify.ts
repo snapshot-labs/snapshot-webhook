@@ -95,7 +95,7 @@ function formatMessage(event: Event, proposal) {
 
 export async function send(event: Event, proposal, addresses: string[]) {
   if (!isConfigured) {
-    console.log('[WalletConnect] Sending skipped: client not setup');
+    return console.log('[WalletConnect] Sending skipped: client not setup');
   }
   if (event.event !== 'proposal/start') return;
   const notificationMessage = formatMessage(event, proposal);
