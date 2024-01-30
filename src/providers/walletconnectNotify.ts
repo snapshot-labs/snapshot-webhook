@@ -22,6 +22,11 @@ const MAX_ACCOUNTS_PER_REQUEST = 500;
 const PER_SECOND_RATE_LIMIT = 2;
 const WAIT_ERROR_MARGIN = 0.25;
 const WAIT_TIME = 1 / PER_SECOND_RATE_LIMIT + WAIT_ERROR_MARGIN;
+const isConfigured =
+  WALLETCONNECT_NOTIFY_SERVER_URL &&
+  WALLETCONNECT_PROJECT_SECRET &&
+  WALLETCONNECT_PROJECT_ID &&
+  WALLETCONNECT_NOTIFICATION_TYPE;
 
 async function queueNotificationsToSend(notification, accounts: string[]) {
   for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
@@ -98,13 +103,4 @@ export async function send(event: Event, proposal, addresses: string[]) {
   const accounts = addresses.map(address => `eip155:1:${address}`);
 
   await queueNotificationsToSend(notificationMessage, accounts);
-}
-
-function isConfigured() {
-  return (
-    WALLETCONNECT_NOTIFY_SERVER_URL &&
-    WALLETCONNECT_PROJECT_SECRET &&
-    WALLETCONNECT_PROJECT_ID &&
-    WALLETCONNECT_NOTIFICATION_TYPE
-  );
 }
