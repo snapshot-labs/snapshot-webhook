@@ -36,7 +36,9 @@ describe('getProposal()', () => {
   });
 
   it('returns the proposal', () => {
-    mockSnapshotUtilsSubgraphRequest.mockResolvedValueOnce({ proposal: PROPOSAL });
+    mockSnapshotUtilsSubgraphRequest.mockResolvedValueOnce({
+      proposal: PROPOSAL
+    });
     expect(getProposal('')).resolves.toEqual(PROPOSAL);
   });
 });
