@@ -28,9 +28,10 @@ const isConfigured =
   WALLETCONNECT_PROJECT_ID &&
   WALLETCONNECT_NOTIFICATION_TYPE;
 
-async function queueNotificationsToSend(notification, accounts: string[]) {
+async function queueNotificationsToSend(notification_id: string, notification, accounts: string[]) {
   for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
     await sendNotification(
+      notification_id,
       notification,
       accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST)
     );
@@ -39,10 +40,11 @@ async function queueNotificationsToSend(notification, accounts: string[]) {
   }
 }
 
-export async function sendNotification(notification, accounts: string[]) {
+export async function sendNotification(notification_id: string, notification, accounts: string[]) {
   const notifyUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/notify`;
 
   const body = {
+    notification_id,
     accounts,
     notification
   };
@@ -104,5 +106,5 @@ export async function send(event: Event, proposal, addresses: string[]) {
 
   const accounts = addresses.map(address => `eip155:1:${address}`);
 
-  await queueNotificationsToSend(notificationMessage, accounts);
+  await queueNotificationsToSend(event.id, notificationMessage, accounts);
 }
