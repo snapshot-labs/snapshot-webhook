@@ -90,7 +90,7 @@ function formatMessage(event: Event, proposal) {
 
   const url = `${proposal.link}?app=web3inbox`;
   return {
-    title: proposal.title,
+    title: proposal.title.substring(0, 64),
     body: notificationBody,
     url,
     type: notificationType
