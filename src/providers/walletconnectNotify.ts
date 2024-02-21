@@ -28,7 +28,11 @@ const isConfigured =
   WALLETCONNECT_PROJECT_ID &&
   WALLETCONNECT_NOTIFICATION_TYPE;
 
-async function queueNotificationsToSend(notification_id: string, notification, accounts: string[]) {
+async function queueNotificationsToSend(
+  notification_id: string,
+  notification,
+  accounts: string[]
+) {
   for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
     await sendNotification(
       notification_id,
@@ -40,7 +44,11 @@ async function queueNotificationsToSend(notification_id: string, notification, a
   }
 }
 
-export async function sendNotification(notification_id: string, notification, accounts: string[]) {
+export async function sendNotification(
+  notification_id: string,
+  notification,
+  accounts: string[]
+) {
   const notifyUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/notify`;
 
   const body = {
