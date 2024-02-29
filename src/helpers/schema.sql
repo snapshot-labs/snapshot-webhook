@@ -37,6 +37,7 @@ CREATE TABLE subscriptions (
   channel VARCHAR(64) NOT NULL,
   space VARCHAR(256) NOT NULL,
   mention VARCHAR(64) NOT NULL,
+  events JSON,
   created VARCHAR(64) NOT NULL,
   updated VARCHAR(64) NOT NULL,
   PRIMARY KEY (guild, channel, space),
