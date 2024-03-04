@@ -130,7 +130,7 @@ const PROPOSAL_EVENTS = [
     id: 'proposal/end',
     label: 'Proposal End',
     message: 'Proposal closed',
-    description: 'When a proposal end.'
+    description: 'When a proposal ends.'
   },
   {
     id: 'proposal/deleted',
