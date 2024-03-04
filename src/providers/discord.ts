@@ -174,28 +174,51 @@ client.on('ready', async () => {
   await loadSubscriptions();
 });
 
+const PROPOSAL_EVENTS = [
+  {
+    id: 'proposal/created',
+    label: 'Proposal Created',
+    description: 'When a proposal is created.'
+  },
+  {
+    id: 'proposal/start',
+    label: 'Proposal Start',
+    description: 'When a proposal starts.'
+  },
+  {
+    id: 'proposal/end',
+    label: 'Proposal End',
+    description: 'When a proposal end.'
+  },
+  {
+    id: 'proposal/deleted',
+    label: 'Proposal Deleted',
+    description: 'When a proposal is deleted.'
+  }
+];
+
+async function getEventsConfigured(guildId) {
+  const events = await db.queryAsync(
+    'SELECT events FROM subscriptions WHERE guild = ?',
+    guildId
+  );
+  return JSON.parse(events[0]?.events || `["proposal/start"]`);
+}
+
 async function snapshotSelectEventsCommandHandler(interaction) {
+  const guildEvents = await getEventsConfigured(interaction.guildId);
+
   const select = new StringSelectMenuBuilder()
     .setCustomId('selectedEvents')
     .setPlaceholder('Make a selection!')
     .addOptions(
-      new StringSelectMenuOptionBuilder()
-        .setLabel('proposal/created')
-        .setDescription('When a proposal is created.')
-        .setValue('proposal/created'),
-      new StringSelectMenuOptionBuilder()
-        .setLabel('proposal/start')
-        .setDescription('When a proposal starts.')
-        .setValue('proposal/start')
-        .setDefault(true),
-      new StringSelectMenuOptionBuilder()
-        .setLabel('proposal/end')
-        .setDescription('When a proposal end.')
-        .setValue('proposal/end'),
-      new StringSelectMenuOptionBuilder()
-        .setLabel('proposal/deleted')
-        .setDescription('When a proposal is deleted.')
-        .setValue('proposal/deleted')
+      PROPOSAL_EVENTS.map(event =>
+        new StringSelectMenuOptionBuilder()
+          .setLabel(event.label)
+          .setDescription(event.description)
+          .setValue(event.id)
+          .setDefault(guildEvents.includes(event.id))
+      )
     )
     .setMinValues(1)
     .setMaxValues(4);
@@ -204,7 +227,7 @@ async function snapshotSelectEventsCommandHandler(interaction) {
 
   const response = await interaction
     .reply({
-      content: 'Select events!',
+      content: 'Select events to subscribe.',
       components: [row],
       ephemeral: true
     })
@@ -258,8 +281,13 @@ async function snapshotHelpCommandHandler(interaction) {
   } else {
     subscriptionsDescription += 'No subscriptions\n';
   }
-  subscriptionsDescription += `\n\n**Events**
-  ${events.map(e => `\`${e}\``).join('\n ')}
+
+  subscriptionsDescription += `\n\n**Configured Events**
+  ${events
+    .map(
+      (e: any) => `\`${PROPOSAL_EVENTS.find((p: any) => p.id === e)?.label}\``
+    )
+    .join('\n ')}
   `;
   subscriptionsDescription += `\n**Commands**`;
 
@@ -314,10 +342,7 @@ async function snapshotHelpCommandHandler(interaction) {
         name: '`/select-events ` - Select events for your notifications.',
         value: `
         Options:
-        \`proposal/created\`
-        \`proposal/start\` (default)
-        \`proposal/end\`
-        \`proposal/deleted\`
+        ${PROPOSAL_EVENTS.map(e => `**${e.label}**`).join('\n')}
 
         ----------------------------------------------------
 
@@ -352,16 +377,14 @@ async function snapshotCommandHandler(interaction, commandType) {
     if (!space)
       return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
 
-    const query = `SELECT events FROM subscriptions WHERE guild = ?`;
-    const subscriptions = await db.queryAsync(query, interaction.guildId);
-    const events = subscriptions[0]?.events || '';
+    const events = await getEventsConfigured(interaction.guildId);
 
     const subscription = [
       interaction.guildId,
       channelId,
       spaceId,
       mention || '',
-      events,
+      JSON.stringify(events),
       ts,
       ts
     ];
@@ -379,7 +402,7 @@ async function snapshotCommandHandler(interaction, commandType) {
         { name: 'Channel', value: `<#${channelId}>`, inline: true },
         { name: 'Mention', value: mention || 'None', inline: true }
       )
-      .setDescription('You have successfully subscribed to space events.');
+      .setDescription('You have successfully subscribed to proposal events.');
     interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
   } else if (commandType === 'remove') {
     const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
