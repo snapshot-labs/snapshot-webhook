@@ -135,7 +135,7 @@ const PROPOSAL_EVENTS = [
   {
     id: 'proposal/deleted',
     label: 'Proposal Deleted',
-    message: 'A proposal is deleted',
+    message: 'Proposal deleted',
     description: 'When a proposal is deleted.'
   }
 ];
