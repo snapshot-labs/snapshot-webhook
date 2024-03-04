@@ -225,7 +225,7 @@ async function snapshotSelectEventsCommandHandler(interaction) {
       )
     )
     .setMinValues(1)
-    .setMaxValues(4);
+    .setMaxValues(PROPOSAL_EVENTS.length);
 
   const row = new ActionRowBuilder().addComponents(select);
 
