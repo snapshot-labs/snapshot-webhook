@@ -262,7 +262,7 @@ async function snapshotSelectEventsCommandHandler(interaction) {
     }
     await i
       .update({
-        content: `Success! You will notified for events ${selection
+        content: `Success! You will be notified for events ${selection
           .map(a => `\`${a}\``)
           .join(', ')}`,
         components: [],
