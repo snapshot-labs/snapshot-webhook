@@ -113,6 +113,33 @@ const commands = [
 
 const rest = new REST({ version: '10' }).setToken(token);
 
+const PROPOSAL_EVENTS = [
+  {
+    id: 'proposal/created',
+    label: 'Proposal Created',
+    message: 'New proposal created',
+    description: 'When a proposal is created.'
+  },
+  {
+    id: 'proposal/start',
+    label: 'Proposal Start',
+    message: 'Proposal started',
+    description: 'When a proposal starts.'
+  },
+  {
+    id: 'proposal/end',
+    label: 'Proposal End',
+    message: 'Proposal closed',
+    description: 'When a proposal end.'
+  },
+  {
+    id: 'proposal/deleted',
+    label: 'Proposal Deleted',
+    message: 'A proposal is deleted',
+    description: 'When a proposal is deleted.'
+  }
+];
+
 (async () => {
   try {
     console.log('[discord] started refreshing application (/) commands.');
@@ -174,29 +201,6 @@ client.on('ready', async () => {
   await loadSubscriptions();
 });
 
-const PROPOSAL_EVENTS = [
-  {
-    id: 'proposal/created',
-    label: 'Proposal Created',
-    description: 'When a proposal is created.'
-  },
-  {
-    id: 'proposal/start',
-    label: 'Proposal Start',
-    description: 'When a proposal starts.'
-  },
-  {
-    id: 'proposal/end',
-    label: 'Proposal End',
-    description: 'When a proposal end.'
-  },
-  {
-    id: 'proposal/deleted',
-    label: 'Proposal Deleted',
-    description: 'When a proposal is deleted.'
-  }
-];
-
 async function getEventsConfigured(guildId) {
   const events = await db.queryAsync(
     'SELECT events FROM subscriptions WHERE guild = ?',
@@ -246,12 +250,13 @@ async function snapshotSelectEventsCommandHandler(interaction) {
         [JSON.stringify(selection), i.guildId]
       );
       if (response.affectedRows === 0) {
-        i.update({
+        return i.update({
           content: `No subscriptions found on this server. Please add a subscription first.`,
           components: [],
           ephemeral: true
         });
       }
+      await loadSubscriptions();
     } catch (e) {
       capture(e);
     }
@@ -402,7 +407,9 @@ async function snapshotCommandHandler(interaction, commandType) {
         { name: 'Channel', value: `<#${channelId}>`, inline: true },
         { name: 'Mention', value: mention || 'None', inline: true }
       )
-      .setDescription('You have successfully subscribed to proposal events.');
+      .setDescription(
+        'You have successfully subscribed to proposal events of this space.'
+      );
     interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
   } else if (commandType === 'remove') {
     const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
@@ -465,16 +472,16 @@ const sendToSubscribers = (event, proposal, embed, components) => {
   if (subs[proposal.space.id] || subs['*']) {
     [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
       if (sub.events && !JSON.parse(sub.events).includes(event)) return;
-      let eventName = event.replace('proposal/', '');
-      if (!eventName.endsWith('ed')) eventName = `${eventName}ed`;
+      const eventName = PROPOSAL_EVENTS.find(e => e.id === event)?.message;
       sendMessage(sub.channel, {
-        content: `Proposal ${eventName} on ${proposal.space.id} space ${sub.mention}`,
+        content: `${eventName} on \`${proposal.space.id}\` space ${sub.mention}`,
         embeds: [embed],
         components
       });
     });
   }
 };
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(eventObj, proposal, _subscribers) {
   const event = eventObj.event;
