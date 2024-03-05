@@ -397,7 +397,7 @@ async function snapshotCommandHandler(interaction, commandType) {
       channelId,
       spaceId,
       mention || '',
-      events ? JSON.stringify(events) : undefined,
+      events ? JSON.stringify(events) : '["proposal/start"]',
       ts,
       ts
     ];
