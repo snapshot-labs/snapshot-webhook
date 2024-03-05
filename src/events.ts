@@ -73,11 +73,14 @@ async function processEvents() {
 
   for (const event of events) {
     const proposalId = event.id.replace('proposal/', '');
-    let proposal = await getProposal(proposalId);
-    const subscribers = await getSubscribers(event.space);
-    if (event.event === 'proposal/deleted')
+    let proposal;
+    if (event.event === 'proposal/deleted') {
       proposal = { id: proposalId, space: { id: event.space } };
+    } else {
+      proposal = await getProposal(proposalId);
+    }
     if (proposal) {
+      const subscribers = await getSubscribers(event.space);
       providers.forEach(provider => {
         provider(event, proposal, subscribers);
       });
