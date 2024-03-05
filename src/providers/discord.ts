@@ -329,7 +329,7 @@ async function snapshotHelpCommandHandler(interaction) {
         value: '----------------------------------------------------'
       },
       {
-        name: '`/add` - Add notifications on a channel when a proposal start.',
+        name: '`/add` - Add notifications on a channel',
         value: `
         Options:
         **channel**: Channel to post the events
@@ -502,7 +502,7 @@ export async function send(eventObj, proposal, _subscribers) {
         inline: true
       });
       sendToSubscribers(event, proposal, embed, []);
-      return;
+      return { success: true };
     }
 
     let status = proposal.start > Date.now() / 1e3 ? 'Pending' : 'Active';
