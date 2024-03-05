@@ -201,16 +201,24 @@ client.on('ready', async () => {
   await loadSubscriptions();
 });
 
-async function getEventsConfigured(guildId) {
+async function getEventsConfigured(guildId: string): Promise<string[] | null> {
   const events = await db.queryAsync(
     'SELECT events FROM subscriptions WHERE guild = ?',
     guildId
   );
-  return JSON.parse(events[0]?.events || `["proposal/start"]`);
+  if (events.length === 0) return null;
+  return JSON.parse(events[0].events);
 }
 
 async function snapshotSelectEventsCommandHandler(interaction) {
   const guildEvents = await getEventsConfigured(interaction.guildId);
+  if (!guildEvents)
+    return interaction
+      .reply({
+        content: `No subscriptions found on this server. Please add a subscription first.`,
+        ephemeral: true
+      })
+      .catch(capture);
 
   const select = new StringSelectMenuBuilder()
     .setCustomId('selectedEvents')
@@ -389,7 +397,7 @@ async function snapshotCommandHandler(interaction, commandType) {
       channelId,
       spaceId,
       mention || '',
-      JSON.stringify(events),
+      events ? JSON.stringify(events) : undefined,
       ts,
       ts
     ];
