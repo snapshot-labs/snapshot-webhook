@@ -15,7 +15,8 @@ import {
   DiscordAPIError,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ComponentType
+  ComponentType,
+  ColorResolvable
 } from 'discord.js';
 import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
@@ -117,26 +118,30 @@ const PROPOSAL_EVENTS = [
   {
     id: 'proposal/created',
     label: 'Proposal Created',
-    message: 'New proposal created',
-    description: 'When a proposal is created.'
+    status: 'Created',
+    description: 'When a proposal is created.',
+    color: '#C5C5C5'
   },
   {
     id: 'proposal/start',
     label: 'Proposal Start',
-    message: 'Proposal started',
-    description: 'When a proposal starts.'
+    status: 'Started',
+    description: 'When a proposal starts.',
+    color: '#21B66F'
   },
   {
     id: 'proposal/end',
     label: 'Proposal End',
-    message: 'Proposal closed',
-    description: 'When a proposal ends.'
+    status: 'Closed',
+    description: 'When a proposal ends.',
+    color: '#BF40BF'
   },
   {
     id: 'proposal/deleted',
     label: 'Proposal Deleted',
-    message: 'Proposal deleted',
-    description: 'When a proposal is deleted.'
+    status: 'Deleted',
+    description: 'When a proposal is deleted.',
+    color: '#FF0000'
   }
 ];
 
@@ -480,9 +485,8 @@ const sendToSubscribers = (event, proposal, embed, components) => {
   if (subs[proposal.space.id] || subs['*']) {
     [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
       if (sub.events && !JSON.parse(sub.events).includes(event)) return;
-      const eventName = PROPOSAL_EVENTS.find(e => e.id === event)?.message;
       sendMessage(sub.channel, {
-        content: `${eventName} on \`${proposal.space.id}\` space ${sub.mention}`,
+        content: `${sub.mention}`,
         embeds: [embed],
         components
       });
@@ -493,21 +497,30 @@ const sendToSubscribers = (event, proposal, embed, components) => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(eventObj, proposal, _subscribers) {
   const event = eventObj.event;
+  const proposalEvent = PROPOSAL_EVENTS.find(e => e.id === event)!;
+  const color = proposalEvent.color;
+  const status = proposalEvent.status;
+  const avatar = `https://cdn.stamp.fyi/space/${proposal.space.id}?s=56`;
   try {
     if (event === 'proposal/deleted') {
-      const color = '#FF0000';
-      const embed = new EmbedBuilder().setColor(color).addFields({
-        name: 'Proposal ID',
-        value: `\`${proposal.id}\``,
-        inline: true
-      });
+      const embed = new EmbedBuilder()
+        .setAuthor({
+          name: `${proposal.space.id}`,
+          iconURL: avatar
+        })
+        .setColor(color as ColorResolvable)
+        .addFields(
+          {
+            name: 'Proposal ID',
+            value: `\`${proposal.id}\``,
+            inline: true
+          },
+          { name: 'Status', value: status, inline: true }
+        )
+        .addFields();
       sendToSubscribers(event, proposal, embed, []);
       return { success: true };
     }
-
-    let status = proposal.start > Date.now() / 1e3 ? 'Pending' : 'Active';
-    if (proposal.end < Date.now() / 1e3) status = 'Ended';
-    const color = '#21B66F';
 
     const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
 
@@ -533,10 +546,9 @@ export async function send(eventObj, proposal, _subscribers) {
     const limit = 4096 / 16;
     let preview = removeMd(proposal.body).slice(0, limit);
     if (proposal.body.length > limit) preview += `... [Read more](${url})`;
-    const avatar = `https://cdn.stamp.fyi/space/${proposal.space.id}?s=56`;
 
     const embed = new EmbedBuilder()
-      .setColor(color)
+      .setColor(color as ColorResolvable)
       .setTitle(proposal.title)
       .setURL(url)
       .setTimestamp(proposal.created * 1e3)
