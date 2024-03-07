@@ -12,12 +12,14 @@ import {
   codeBlock,
   underscore,
   inlineCode,
-  DiscordAPIError
+  DiscordAPIError,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  ComponentType
 } from 'discord.js';
 import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
-import { shortenAddress } from '../helpers/utils';
-import { getSpace } from '../helpers/utils';
+import { shortenAddress, getSpace } from '../helpers/utils';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
@@ -53,8 +55,6 @@ const client: any = new Client({
     voiceStates: sweeperOption
   }
 });
-
-export let ready = false;
 
 const commands = [
   new SlashCommandBuilder()
@@ -103,10 +103,42 @@ const commands = [
         .setName('space')
         .setDescription('space to subscribe to')
         .setRequired(true)
-    )
+    ),
+  new SlashCommandBuilder()
+    .setName('select-events')
+    .setDescription('Select events to subscribe.')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(0)
 ];
 
 const rest = new REST({ version: '10' }).setToken(token);
+
+const PROPOSAL_EVENTS = [
+  {
+    id: 'proposal/created',
+    label: 'Proposal Created',
+    message: 'New proposal created',
+    description: 'When a proposal is created.'
+  },
+  {
+    id: 'proposal/start',
+    label: 'Proposal Start',
+    message: 'Proposal started',
+    description: 'When a proposal starts.'
+  },
+  {
+    id: 'proposal/end',
+    label: 'Proposal End',
+    message: 'Proposal closed',
+    description: 'When a proposal ends.'
+  },
+  {
+    id: 'proposal/deleted',
+    label: 'Proposal Deleted',
+    message: 'Proposal deleted',
+    description: 'When a proposal is deleted.'
+  }
+];
 
 (async () => {
   try {
@@ -163,12 +195,90 @@ const checkPermissions = async (channelId, botId) => {
 };
 
 client.on('ready', async () => {
-  ready = true;
   console.log(`[discord] bot logged as "${client.user.tag}"`);
   setActivity('!');
 
   await loadSubscriptions();
 });
+
+async function getEventsConfigured(guildId: string): Promise<string[] | null> {
+  const events = await db.queryAsync(
+    'SELECT events FROM subscriptions WHERE guild = ?',
+    guildId
+  );
+  if (events.length === 0) return null;
+  return JSON.parse(events[0].events);
+}
+
+async function snapshotSelectEventsCommandHandler(interaction) {
+  const guildEvents = await getEventsConfigured(interaction.guildId);
+  if (!guildEvents)
+    return interaction
+      .reply({
+        content: `No subscriptions found on this server. Please add a subscription first.`,
+        ephemeral: true
+      })
+      .catch(capture);
+
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('selectedEvents')
+    .setPlaceholder('Make a selection!')
+    .addOptions(
+      PROPOSAL_EVENTS.map(event =>
+        new StringSelectMenuOptionBuilder()
+          .setLabel(event.label)
+          .setDescription(event.description)
+          .setValue(event.id)
+          .setDefault(guildEvents.includes(event.id))
+      )
+    )
+    .setMinValues(1)
+    .setMaxValues(PROPOSAL_EVENTS.length);
+
+  const row = new ActionRowBuilder().addComponents(select);
+
+  const response = await interaction
+    .reply({
+      content: 'Select events to subscribe.',
+      components: [row],
+      ephemeral: true
+    })
+    .catch(capture);
+
+  const collector = response.createMessageComponentCollector({
+    componentType: ComponentType.StringSelect,
+    time: 3_600_000
+  });
+
+  collector.on('collect', async i => {
+    const selection = i.values;
+    try {
+      const response = await db.queryAsync(
+        `UPDATE subscriptions SET events = ? WHERE guild = ?`,
+        [JSON.stringify(selection), i.guildId]
+      );
+      if (response.affectedRows === 0) {
+        return i.update({
+          content: `No subscriptions found on this server. Please add a subscription first.`,
+          components: [],
+          ephemeral: true
+        });
+      }
+      await loadSubscriptions();
+    } catch (e) {
+      capture(e);
+    }
+    await i
+      .update({
+        content: `Success! You will be notified for events ${selection
+          .map(a => `\`${a}\``)
+          .join(', ')}`,
+        components: [],
+        ephemeral: true
+      })
+      .catch(capture);
+  });
+}
 
 async function snapshotHelpCommandHandler(interaction) {
   const subscriptions = await db.queryAsync(
@@ -176,6 +286,7 @@ async function snapshotHelpCommandHandler(interaction) {
     interaction.guildId
   );
   let subscriptionsDescription = `\n\n**Subscriptions (${subscriptions.length})**\n\n`;
+  const events = JSON.parse(subscriptions[0]?.events || `["proposal/start"]`);
   if (subscriptions.length > 0) {
     subscriptions.forEach(subscription => {
       subscriptionsDescription += `<#${subscription.channel}> ${subscription.space}\n`;
@@ -183,7 +294,16 @@ async function snapshotHelpCommandHandler(interaction) {
   } else {
     subscriptionsDescription += 'No subscriptions\n';
   }
+
+  subscriptionsDescription += `\n\n**Configured Events**
+  ${events
+    .map(
+      (e: any) => `\`${PROPOSAL_EVENTS.find((p: any) => p.id === e)?.label}\``
+    )
+    .join('\n ')}
+  `;
   subscriptionsDescription += `\n**Commands**`;
+
   const addSubscriptionExample = codeBlock(
     `/add channel:#snapshot space:yam.eth mention:@everyone`
   );
@@ -200,29 +320,44 @@ async function snapshotHelpCommandHandler(interaction) {
       'https://github.com/snapshot-labs/brand/blob/master/icon/icon.png?raw=true'
     )
     .addFields(
-      { name: '`/ping`', value: 'Description: Make sure the bot is online.' },
       {
-        name: '`/help`',
-        value: 'Description: List all commands and current notifications.'
+        name: '`/ping` - Make sure the bot is online.',
+        value: '----------------------------------------------------'
       },
       {
-        name: '`/add`',
-        value: `Description: Add notifications on a channel when a proposal start.
+        name: '`/help` - List all commands and current notifications.',
+        value: '----------------------------------------------------'
+      },
+      {
+        name: '`/add` - Add notifications on a channel',
+        value: `
         Options:
-        *channel*: Channel to post the events
-        *space*: Space id to subscribe to
-        *mention*: Mention role (optional)
+        **channel**: Channel to post the events
+        **space**: Space id to subscribe to
+        **mention**: Mention role (optional)
+
         Example:
-        ${addSubscriptionExample}`
+        ${addSubscriptionExample}
+        ----------------------------------------------------`
       },
       {
-        name: '`/remove`',
-        value: `Description: Remove notifications on a channel.
+        name: '`/remove` - Remove notifications on a channel.',
+        value: `
         Options:
-        *channel*: Channel to post the events
-        *space*: Space id to subscribe to
+        **channel**: Channel to post the events
+        **space**: Space id to subscribe to
+
         Example:
         ${removeSubscriptionExample}
+        ----------------------------------------------------`
+      },
+      {
+        name: '`/select-events ` - Select events for your notifications.',
+        value: `
+        Options:
+        ${PROPOSAL_EVENTS.map(e => `**${e.label}**`).join('\n')}
+
+        ----------------------------------------------------
 
 
         Have any questions? Join our discord: https://discord.snapshot.org`
@@ -255,16 +390,19 @@ async function snapshotCommandHandler(interaction, commandType) {
     if (!space)
       return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
 
+    const events = await getEventsConfigured(interaction.guildId);
+
     const subscription = [
       interaction.guildId,
       channelId,
       spaceId,
       mention || '',
+      events ? JSON.stringify(events) : '["proposal/start"]',
       ts,
       ts
     ];
     await db.queryAsync(
-      `INSERT INTO subscriptions (guild, channel, space, mention, created, updated) VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO subscriptions (guild, channel, space, mention, events, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
       [...subscription, ...subscription]
     );
@@ -277,7 +415,9 @@ async function snapshotCommandHandler(interaction, commandType) {
         { name: 'Channel', value: `<#${channelId}>`, inline: true },
         { name: 'Mention', value: mention || 'None', inline: true }
       )
-      .setDescription('You have successfully subscribed to space events.');
+      .setDescription(
+        'You have successfully subscribed to proposal events of this space.'
+      );
     interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
   } else if (commandType === 'remove') {
     const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
@@ -309,6 +449,8 @@ client.on('interactionCreate', async interaction => {
     snapshotCommandHandler(interaction, 'add');
   } else if (interaction.commandName === 'remove') {
     snapshotCommandHandler(interaction, 'remove');
+  } else if (interaction.commandName === 'select-events') {
+    snapshotSelectEventsCommandHandler(interaction);
   }
 });
 
@@ -334,17 +476,41 @@ export const sendMessage = async (channel, message) => {
   }
 };
 
+const sendToSubscribers = (event, proposal, embed, components) => {
+  if (subs[proposal.space.id] || subs['*']) {
+    [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
+      if (sub.events && !JSON.parse(sub.events).includes(event)) return;
+      const eventName = PROPOSAL_EVENTS.find(e => e.id === event)?.message;
+      sendMessage(sub.channel, {
+        content: `${eventName} on \`${proposal.space.id}\` space ${sub.mention}`,
+        embeds: [embed],
+        components
+      });
+    });
+  }
+};
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(eventObj, proposal, _subscribers) {
   const event = eventObj.event;
   try {
-    // Only supports proposal/start event
-    if (event !== 'proposal/start') return;
+    if (event === 'proposal/deleted') {
+      const color = '#FF0000';
+      const embed = new EmbedBuilder().setColor(color).addFields({
+        name: 'Proposal ID',
+        value: `\`${proposal.id}\``,
+        inline: true
+      });
+      sendToSubscribers(event, proposal, embed, []);
+      return { success: true };
+    }
 
-    const status = 'Active';
+    let status = proposal.start > Date.now() / 1e3 ? 'Pending' : 'Active';
+    if (proposal.end < Date.now() / 1e3) status = 'Ended';
     const color = '#21B66F';
 
     const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
+
     let components =
       !proposal.choices.length || proposal.choices.length > 5
         ? []
@@ -385,17 +551,7 @@ export async function send(eventObj, proposal, _subscribers) {
       )
       .setDescription(preview || ' ');
 
-    if (subs[proposal.space.id] || subs['*']) {
-      [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(
-        sub => {
-          sendMessage(sub.channel, {
-            content: `${sub.mention} `,
-            embeds: [embed],
-            components
-          });
-        }
-      );
-    }
+    sendToSubscribers(event, proposal, embed, components);
 
     return { success: true };
   } catch (e: any) {
