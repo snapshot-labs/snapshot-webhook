@@ -3,6 +3,7 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 import type { Event } from '../types';
+import { truncate } from '../helpers/utils';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL =
   process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
@@ -28,7 +29,11 @@ const isConfigured =
   WALLETCONNECT_PROJECT_ID &&
   WALLETCONNECT_NOTIFICATION_TYPE;
 
-async function queueNotificationsToSend(notification_id: string, notification, accounts: string[]) {
+async function queueNotificationsToSend(
+  notification_id: string,
+  notification,
+  accounts: string[]
+) {
   for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
     await sendNotification(
       notification_id,
@@ -40,7 +45,11 @@ async function queueNotificationsToSend(notification_id: string, notification, a
   }
 }
 
-export async function sendNotification(notification_id: string, notification, accounts: string[]) {
+export async function sendNotification(
+  notification_id: string,
+  notification,
+  accounts: string[]
+) {
   const notifyUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/notify`;
 
   const body = {
@@ -86,12 +95,12 @@ function formatMessage(event: Event, proposal) {
   if (!space) return null;
 
   const notificationType = WALLETCONNECT_NOTIFICATION_TYPE;
-  const notificationBody = `🟢 New proposal on ${space.name} @${space.id}\n\n`;
+  // const notificationBody = `🟢 New proposal on ${space.name} @${space.id}\n\n`;
 
   const url = `${proposal.link}?app=web3inbox`;
   return {
-    title: proposal.title.substring(0, 64),
-    body: notificationBody,
+    title: truncate(proposal.title, 64),
+    // body: notificationBody,
     url,
     type: notificationType
   };
