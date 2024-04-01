@@ -95,12 +95,12 @@ function formatMessage(event: Event, proposal) {
   if (!space) return null;
 
   const notificationType = WALLETCONNECT_NOTIFICATION_TYPE;
-  // const notificationBody = `🟢 New proposal on ${space.name} @${space.id}\n\n`;
+  const notificationBody = `🟢 New proposal on ${space.name} @${space.id}\n\n`;
 
   const url = `${proposal.link}?app=web3inbox`;
   return {
     title: truncate(proposal.title, 64),
-    // body: notificationBody,
+    body: notificationBody,
     url,
     type: notificationType
   };
