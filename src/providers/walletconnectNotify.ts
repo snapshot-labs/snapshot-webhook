@@ -3,6 +3,7 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 import type { Event } from '../types';
+import { truncate } from '../helpers/utils';
 
 const WALLETCONNECT_NOTIFY_SERVER_URL =
   process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
@@ -98,7 +99,7 @@ function formatMessage(event: Event, proposal) {
 
   const url = `${proposal.link}?app=web3inbox`;
   return {
-    title: proposal.title,
+    title: truncate(proposal.title, 64),
     body: notificationBody,
     url,
     type: notificationType

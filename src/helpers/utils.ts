@@ -106,3 +106,9 @@ export async function getSpace(id) {
     return null;
   }
 }
+
+export function truncate(string: string, length: number) {
+  return string.length > length
+    ? `${string.substring(0, length - 1)}…`
+    : string;
+}
