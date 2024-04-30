@@ -402,12 +402,12 @@ async function snapshotCommandHandler(interaction, commandType) {
       channelId,
       spaceId,
       mention || '',
-      events ? JSON.stringify(events) : '["proposal/start"]',
       ts,
+      events ? JSON.stringify(events) : '["proposal/start"]',
       ts
     ];
     await db.queryAsync(
-      `INSERT INTO subscriptions (guild, channel, space, mention, events, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO subscriptions (guild, channel, space, mention, updated, events, created) VALUES (?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
       [...subscription, ...subscription]
     );
