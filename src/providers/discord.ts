@@ -522,7 +522,7 @@ export async function send(eventObj, proposal, _subscribers) {
       return { success: true };
     }
 
-    const url = `https://snapshot.org/#/${proposal.space.id}/proposal/${proposal.id}`;
+    const url = `https://snapshot.box/#/s:${proposal.space.id}/proposal/${proposal.id}`;
 
     let components =
       !proposal.choices.length || proposal.choices.length > 5
