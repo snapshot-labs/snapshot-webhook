@@ -4,7 +4,7 @@ import db from './helpers/mysql';
 import { getProposal, getSubscribers } from './helpers/utils';
 import providers from './providers';
 
-const DELAY = 5;
+const DELAY = 10;
 const INTERVAL = 15;
 const SERVICE_EVENTS = parseInt(process.env.SERVICE_EVENTS || '0');
 
