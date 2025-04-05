@@ -11,7 +11,7 @@ export let last_mci = 0;
 async function getLastMci() {
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
-  last_mci = parseInt(results[0].value);
+  last_mci = parseInt(results[0]?.value);
   return last_mci;
 }
 
@@ -50,8 +50,9 @@ async function getNextMessages(mci: number) {
 }
 
 async function updateLastMci(mci: number) {
-  const query = 'UPDATE _metadatas SET value = ? WHERE id = ? LIMIT 1';
-  await db.queryAsync(query, [mci.toString(), 'last_mci']);
+  const query =
+    'INSERT INTO _metadatas (value, id) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?';
+  await db.queryAsync(query, [mci.toString(), 'last_mci', mci.toString()]);
 }
 
 async function processMessages(messages: any[]) {
