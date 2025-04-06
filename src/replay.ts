@@ -11,7 +11,7 @@ export let last_mci = 0;
 async function getLastMci() {
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
-  last_mci = parseInt(results[0]?.value || "0");
+  last_mci = parseInt(results[0]?.value || '0');
   return last_mci;
 }
 
