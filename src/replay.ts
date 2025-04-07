@@ -89,20 +89,15 @@ async function processMessages(messages: any[]) {
 
 export async function run() {
   while (true) {
-    try {
-      // Check latest indexed MCI from db
-      const lastMci = await getLastMci();
-      console.log('[replay] Last MCI', lastMci);
+    // Check latest indexed MCI from db
+    const lastMci = await getLastMci();
+    console.log('[replay] Last MCI', lastMci);
 
-      // Load next messages after latest indexed MCI
-      const messages = await getNextMessages(lastMci);
-      if (messages && messages.length > 0) {
-        await processMessages(messages);
-      }
-    } catch (error) {
-      console.error('[replay] Error in run loop:', error);
-    } finally {
-      await snapshot.utils.sleep(10e3);
+    // Load next messages after latest indexed MCI
+    const messages = await getNextMessages(lastMci);
+    if (messages && messages.length > 0) {
+      await processMessages(messages);
     }
+    await snapshot.utils.sleep(10e3);
   }
 }
