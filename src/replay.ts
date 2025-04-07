@@ -88,17 +88,16 @@ async function processMessages(messages: any[]) {
 }
 
 export async function run() {
-  // Check latest indexed MCI from db
-  const lastMci = await getLastMci();
-  console.log('[replay] Last MCI', lastMci);
+  while (true) {
+    // Check latest indexed MCI from db
+    const lastMci = await getLastMci();
+    console.log('[replay] Last MCI', lastMci);
 
-  // Load next messages after latest indexed MCI
-  const messages = await getNextMessages(lastMci);
-  if (messages && messages.length > 0) {
-    await processMessages(messages);
+    // Load next messages after latest indexed MCI
+    const messages = await getNextMessages(lastMci);
+    if (messages && messages.length > 0) {
+      await processMessages(messages);
+    }
+    await snapshot.utils.sleep(10e3);
   }
-
-  // Run again after 10sec
-  await snapshot.utils.sleep(10e3);
-  return run();
 }
