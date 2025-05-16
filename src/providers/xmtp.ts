@@ -16,7 +16,7 @@ const wallet: Wallet = new Wallet(XMTP_PK);
 let client: Client | undefined = undefined;
 let ready = false;
 
-let disabled: string[] = [];
+const disabled = new Set<string>();
 
 const infoMsg = `👋 Gm,
 
@@ -34,11 +34,13 @@ if (XMTP_PK) {
     await client.publishUserContact();
     console.log(`[xmtp] listening on ${c.address}`);
 
-    const rows = await db.queryAsync(
+    const disabledPeers = await db.queryAsync(
       'SELECT address FROM xmtp WHERE status = 0'
     );
 
-    disabled = rows.map(row => row.address);
+    for (const peer of disabledPeers) {
+      disabled.add(peer.address);
+    }
     ready = true;
 
     for await (const message of await client.conversations.streamAllMessages()) {
@@ -58,7 +60,7 @@ if (XMTP_PK) {
             [address, 0, address, 0]
           );
 
-          disabled.push(address);
+          disabled.add(address);
 
           await message.conversation.send(
             `Got it 🫡, I'll not send you any notifications.`
@@ -74,7 +76,7 @@ if (XMTP_PK) {
             [address, 1, address, 1]
           );
 
-          disabled = disabled.filter(a => a !== address);
+          disabled.delete(address);
 
           await message.conversation.send(
             `Got it 🫡, I'll notify you when there is a new proposal.`
@@ -109,23 +111,22 @@ async function sendMessages(addresses: string[], msg) {
   if (!client) return;
 
   const canMessage = await client.canMessage(addresses);
+  const validAddresses = addresses.filter(
+    (address, i) => canMessage[i] && !disabled.has(address.toLowerCase())
+  );
 
-  for (let i = 0; i < addresses.length; i++) {
-    const peer = addresses[i];
-
-    if (canMessage[i] && !disabled.includes(peer.toLowerCase())) {
-      const end = timeOutgoingRequest.startTimer({ provider: 'xmtp' });
-      try {
-        const conversation = await client.conversations.newConversation(peer);
-        await conversation.send(msg);
-        end({ status: 200 });
-        outgoingMessages.inc({ provider: 'xmtp', status: 1 });
-        console.log('[xmtp] sent message to', peer);
-      } catch (e: any) {
-        capture(e);
-        outgoingMessages.inc({ provider: 'xmtp', status: 0 });
-        end({ status: 500 });
-      }
+  for (const address of validAddresses) {
+    const end = timeOutgoingRequest.startTimer({ provider: 'xmtp' });
+    try {
+      const conversation = await client.conversations.newConversation(address);
+      await conversation.send(msg);
+      end({ status: 200 });
+      outgoingMessages.inc({ provider: 'xmtp', status: 1 });
+      console.log('[xmtp] sent message to', address);
+    } catch (e: any) {
+      capture(e);
+      outgoingMessages.inc({ provider: 'xmtp', status: 0 });
+      end({ status: 500 });
     }
   }
 }
