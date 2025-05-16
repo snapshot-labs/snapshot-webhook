@@ -8,6 +8,7 @@ import {
   outgoingMessages
 } from '../helpers/metrics';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { Event } from '../types';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
 const XMTP_ENV = (process.env.XMTP_ENV || 'dev') as keyof typeof ApiUrls;
@@ -93,21 +94,17 @@ if (XMTP_PK) {
   });
 }
 
-export async function send(event, proposal, subscribers) {
+export async function send(event: Event, proposal, subscribers: string[]) {
   if (!ready || event.event !== 'proposal/start') return;
 
-  const space = await getSpace(event.space);
-
-  if (!space) return;
-
-  let msg = `🟢 New proposal on ${space.name} @${space.id}:\n\n`;
+  let msg = `🟢 New proposal on ${proposal.space.name} @${proposal.space.id}:\n\n`;
   msg += `${proposal.title}\n`;
   msg += `${proposal.link}?app=xmtp`;
 
   await sendMessages(subscribers, msg);
 }
 
-async function sendMessages(addresses: string[], msg) {
+async function sendMessages(addresses: string[], msg: string) {
   if (!client) return;
 
   const canMessage = await client.canMessage(addresses);
