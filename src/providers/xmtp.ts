@@ -60,7 +60,7 @@ if (XMTP_PK) {
             [address, 0, address, 0]
           );
 
-          disabled.add(address);
+          disabled.add(address.toLowerCase());
 
           await message.conversation.send(
             `Got it 🫡, I'll not send you any notifications.`
@@ -76,7 +76,7 @@ if (XMTP_PK) {
             [address, 1, address, 1]
           );
 
-          disabled.delete(address);
+          disabled.delete(address.toLowerCase());
 
           await message.conversation.send(
             `Got it 🫡, I'll notify you when there is a new proposal.`
