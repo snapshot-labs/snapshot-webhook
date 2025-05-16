@@ -1,6 +1,5 @@
 import { ApiUrls, Client } from '@xmtp/xmtp-js';
 import { Wallet } from '@ethersproject/wallet';
-import { getSpace } from '../helpers/utils';
 import db from '../helpers/mysql';
 import {
   xmtpIncomingMessages,
@@ -112,10 +111,10 @@ async function sendMessages(addresses: string[], msg: string) {
     (address, i) => canMessage[i] && !disabled.has(address.toLowerCase())
   );
 
-  for (const address of validAddresses) {
+  const sendPromises = validAddresses.map(async address => {
     const end = timeOutgoingRequest.startTimer({ provider: 'xmtp' });
     try {
-      const conversation = await client.conversations.newConversation(address);
+      const conversation = await client!.conversations.newConversation(address);
       await conversation.send(msg);
       end({ status: 200 });
       outgoingMessages.inc({ provider: 'xmtp', status: 1 });
@@ -125,5 +124,7 @@ async function sendMessages(addresses: string[], msg: string) {
       outgoingMessages.inc({ provider: 'xmtp', status: 0 });
       end({ status: 500 });
     }
-  }
+  });
+
+  await Promise.allSettled(sendPromises);
 }
