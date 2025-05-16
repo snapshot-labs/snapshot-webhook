@@ -36,6 +36,7 @@ const isConfigured =
   WALLETCONNECT_PROJECT_SECRET &&
   WALLETCONNECT_PROJECT_ID &&
   WALLETCONNECT_NOTIFICATION_TYPE;
+const TIMEOUT = 10000;
 
 async function queueNotificationsToSend(
   notification_id: string,
@@ -72,6 +73,7 @@ export async function sendNotification(
         ...AUTH_HEADER,
         'Content-Type': 'application/json'
       },
+      timeout: TIMEOUT,
       body: JSON.stringify(body)
     });
 
