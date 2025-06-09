@@ -4,6 +4,14 @@ import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 import type { Event } from '../types';
 import { truncate } from '../helpers/utils';
+import chunk from 'lodash.chunk';
+
+type Notification = {
+  title: string;
+  body: string;
+  url: string;
+  type: string;
+};
 
 const WALLETCONNECT_NOTIFY_SERVER_URL =
   process.env.WALLETCONNECT_NOTIFY_SERVER_URL;
@@ -28,26 +36,23 @@ const isConfigured =
   WALLETCONNECT_PROJECT_SECRET &&
   WALLETCONNECT_PROJECT_ID &&
   WALLETCONNECT_NOTIFICATION_TYPE;
+const TIMEOUT = 10000;
 
 async function queueNotificationsToSend(
   notification_id: string,
-  notification,
+  notification: Notification,
   accounts: string[]
 ) {
-  for (let i = 0; i < accounts.length; i += MAX_ACCOUNTS_PER_REQUEST) {
-    await sendNotification(
-      notification_id,
-      notification,
-      accounts.slice(i, i + MAX_ACCOUNTS_PER_REQUEST)
-    );
-
+  const accountChunks: string[][] = chunk(accounts, MAX_ACCOUNTS_PER_REQUEST);
+  for (const accountChunk of accountChunks) {
+    await sendNotification(notification_id, notification, accountChunk);
     await snapshot.utils.sleep(WAIT_TIME);
   }
 }
 
 export async function sendNotification(
   notification_id: string,
-  notification,
+  notification: Notification,
   accounts: string[]
 ) {
   const notifyUrl = `${WALLETCONNECT_NOTIFY_SERVER_URL}/${WALLETCONNECT_PROJECT_ID}/notify`;
@@ -68,6 +73,7 @@ export async function sendNotification(
         ...AUTH_HEADER,
         'Content-Type': 'application/json'
       },
+      timeout: TIMEOUT,
       body: JSON.stringify(body)
     });
 
@@ -89,29 +95,19 @@ export async function sendNotification(
   }
 }
 
-// Transform proposal event into notification format.
-function formatMessage(event: Event, proposal) {
-  const space = proposal.space;
-  if (!space) return null;
-
-  const notificationType = WALLETCONNECT_NOTIFICATION_TYPE;
-  const notificationBody = `🟢 New proposal on ${space.name} @${space.id}\n\n`;
-
-  const url = `${proposal.link}?app=web3inbox`;
-  return {
-    title: truncate(proposal.title, 64),
-    body: notificationBody,
-    url,
-    type: notificationType
-  };
-}
-
 export async function send(event: Event, proposal, addresses: string[]) {
   if (!isConfigured) {
     return console.log('[WalletConnect] Sending skipped: client not setup');
   }
+
   if (event.event !== 'proposal/start') return;
-  const notificationMessage = formatMessage(event, proposal);
+
+  const notificationMessage: Notification = {
+    title: truncate(proposal.title, 64),
+    body: `🟢 New proposal on ${proposal.space.name} @${proposal.space.id}\n\n`,
+    url: `${proposal.link}?app=web3inbox`,
+    type: WALLETCONNECT_NOTIFICATION_TYPE
+  };
 
   const accounts = addresses.map(address => `eip155:1:${address}`);
 
