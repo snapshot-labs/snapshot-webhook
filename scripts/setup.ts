@@ -15,13 +15,14 @@ async function createTables() {
 
     // Remove comments and split by semicolon
     const cleanedSchema = schema
+      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
       .split('\n')
       .map(line => line.trim())
       .filter(line => line && !line.startsWith('#') && !line.startsWith('--'))
       .join('\n');
 
     const statements = cleanedSchema
-      .split(';')
+      .split(/;\s*(?=(?:[^']*'[^']*')*[^']*$)/) // Split respecting quoted strings
       .map(stmt => stmt.trim())
       .filter(stmt => stmt);
 
