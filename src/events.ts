@@ -102,15 +102,16 @@ async function processEvents() {
 }
 
 async function run() {
-  try {
-    await processEvents();
-  } catch (e) {
-    capture(e);
-    console.log('[events] Failed to process', e);
+  while (true) {
+    try {
+      await processEvents();
+    } catch (e) {
+      capture(e);
+      console.log('[events] Failed to process', e);
+    } finally {
+      await snapshot.utils.sleep(INTERVAL * 1e3);
+    }
   }
-
-  await snapshot.utils.sleep(INTERVAL * 1e3);
-  await run();
 }
 
 if (SERVICE_EVENTS) {
