@@ -16,7 +16,8 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   ComponentType,
-  ColorResolvable
+  ColorResolvable,
+  Options
 } from 'discord.js';
 import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
@@ -34,10 +35,14 @@ let subs = {};
 const client: any = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.DirectMessages
   ],
+  makeCache: Options.cacheWithLimits({
+    MessageManager: 0,
+    GuildMemberManager: 0,
+    UserManager: 0
+  }),
   // Remove cache for every 5 minutes to prevent memory leaks https://discord.js.org/#/docs/discord.js/stable/class/Sweepers?scrollTo=options
   sweepers: {
     messages: sweeperOption,
