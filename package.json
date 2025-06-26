@@ -9,7 +9,8 @@
     "build": "tsc",
     "dev": "nodemon src/index.ts",
     "start": "node dist/src/index.js",
-    "test": "yarn jest"
+    "test": "yarn jest",
+    "setup": "ts-node scripts/setup.ts"
   },
   "eslintConfig": {
     "extends": "@snapshot-labs"

@@ -17,7 +17,11 @@ HUB_URL=https://hub.snapshot.org # Use https://testnet.hub.snapshot.org for the 
 SERVICE_EVENTS=1
 ```
 
-- Run [this MySQL query](src/helpers/schema.sql) to create tables on the database.
+- Set up the database (creates tables and initializes metadata):
+
+```shell
+yarn setup
+```
 
 - Comment line(s) on [this file](src/providers/index.ts) to disable provider(s).
 
