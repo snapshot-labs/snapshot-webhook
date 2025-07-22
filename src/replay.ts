@@ -9,10 +9,6 @@ const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 export let last_mci = 0;
 
 async function getLastMci() {
-  if (Math.random() < 0.5) {
-    throw new Error('Simulated crash for testing');
-  }
-
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
   last_mci = parseInt(results[0].value);
@@ -93,15 +89,21 @@ async function processMessages(messages: any[]) {
 
 export async function run() {
   while (true) {
-    // Check latest indexed MCI from db
-    const lastMci = await getLastMci();
-    console.log('[replay] Last MCI', lastMci);
+    try {
+      // Check latest indexed MCI from db
+      const lastMci = await getLastMci();
+      console.log('[replay] Last MCI', lastMci);
 
-    // Load next messages after latest indexed MCI
-    const messages = await getNextMessages(lastMci);
-    if (messages && messages.length > 0) {
-      await processMessages(messages);
+      // Load next messages after latest indexed MCI
+      const messages = await getNextMessages(lastMci);
+      if (messages && messages.length > 0) {
+        await processMessages(messages);
+      }
+      await snapshot.utils.sleep(10e3);
+    } catch (error) {
+      capture(error);
+      // CRASH THE ENTIRE SERVER
+      process.exit(1);
     }
-    await snapshot.utils.sleep(10e3);
   }
 }
