@@ -9,6 +9,10 @@ const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 export let last_mci = 0;
 
 async function getLastMci() {
+  if (Math.random() < 0.5) {
+    throw new Error('Simulated crash for testing');
+  }
+
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
   last_mci = parseInt(results[0].value);
