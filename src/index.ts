@@ -7,6 +7,7 @@ import initMetrics from './helpers/metrics';
 import api from './api';
 import pkg from '../package.json';
 import { last_mci, run } from './replay';
+import { closeDatabase } from './helpers/mysql';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,4 +44,26 @@ app.use((_, res) => {
   });
 });
 
-app.listen(PORT, () => console.log(`Listening at http://localhost:${PORT}`));
+const server = app.listen(PORT, () =>
+  console.log(`Listening at http://localhost:${PORT}`)
+);
+
+const gracefulShutdown = async (signal: string) => {
+  console.log(`Received ${signal}. Starting graceful shutdown...`);
+
+  server.close(async () => {
+    console.log('Express server closed.');
+
+    try {
+      await closeDatabase();
+      console.log('Graceful shutdown completed.');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
