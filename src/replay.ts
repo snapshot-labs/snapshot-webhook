@@ -89,15 +89,21 @@ async function processMessages(messages: any[]) {
 
 export async function run() {
   while (true) {
-    // Check latest indexed MCI from db
-    const lastMci = await getLastMci();
-    console.log('[replay] Last MCI', lastMci);
+    try {
+      // Check latest indexed MCI from db
+      const lastMci = await getLastMci();
+      console.log('[replay] Last MCI', lastMci);
 
-    // Load next messages after latest indexed MCI
-    const messages = await getNextMessages(lastMci);
-    if (messages && messages.length > 0) {
-      await processMessages(messages);
+      // Load next messages after latest indexed MCI
+      const messages = await getNextMessages(lastMci);
+      if (messages && messages.length > 0) {
+        await processMessages(messages);
+      }
+      await snapshot.utils.sleep(10e3);
+    } catch (error) {
+      capture(error);
+      // CRASH THE ENTIRE SERVER
+      process.exit(1);
     }
-    await snapshot.utils.sleep(10e3);
   }
 }
