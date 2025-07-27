@@ -20,4 +20,13 @@ config.charset = 'utf8mb4';
 bluebird.promisifyAll([Pool, Connection]);
 const db = mysql.createPool(config);
 
+export const closeDatabase = (): Promise<void> => {
+  return new Promise(resolve => {
+    db.end(() => {
+      console.log('Database connection pool closed.');
+      resolve();
+    });
+  });
+};
+
 export default db;
