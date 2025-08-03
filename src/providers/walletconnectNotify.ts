@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
@@ -67,7 +66,7 @@ export async function sendNotification(
   let success = false;
 
   try {
-    const notifyRs = await fetch(notifyUrl, {
+    const notifyRs = await snapshot.utils.fetch(notifyUrl, {
       method: 'POST',
       headers: {
         ...AUTH_HEADER,

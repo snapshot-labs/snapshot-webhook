@@ -1,5 +1,5 @@
-import fetch from 'node-fetch';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import snapshot from '@snapshot-labs/snapshot.js';
 import db from '../helpers/mysql';
 import { sha256 } from '../helpers/utils';
 import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
@@ -16,7 +16,7 @@ export async function sendEvent(event, to, method = 'POST') {
   let res;
 
   try {
-    res = await fetch(url, {
+    res = await snapshot.utils.fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
