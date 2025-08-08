@@ -7,8 +7,10 @@ import { handleCreatedEvent, handleDeletedEvent } from './events';
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 export let last_mci = 0;
+export let lastActivityTime = Date.now();
 
 async function getLastMci() {
+  lastActivityTime = Date.now(); // Update activity time
   const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
   const results = await db.queryAsync(query, ['last_mci']);
   last_mci = parseInt(results[0].value);
