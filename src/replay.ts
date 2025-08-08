@@ -104,9 +104,8 @@ export async function run() {
       await snapshot.utils.sleep(10e3);
     } catch (error) {
       capture(error);
-      console.error('[replay] Error in run loop:', error);
-      // Break the loop and let it be restarted by health check
-      break;
+      // CRASH THE ENTIRE SERVER
+      process.exit(1);
     }
   }
 }
