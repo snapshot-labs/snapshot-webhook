@@ -6,7 +6,7 @@ import { initLogger, fallbackLogger } from '@snapshot-labs/snapshot-sentry';
 import initMetrics from './helpers/metrics';
 import api from './api';
 import pkg from '../package.json';
-import { last_mci, run } from './replay';
+import { last_mci, lastActivityTime, run } from './replay';
 import { closeDatabase } from './helpers/mysql';
 
 const app = express();
@@ -22,6 +22,15 @@ app.use(bodyParser.urlencoded({ limit: '8mb', extended: false }));
 app.use(cors({ maxAge: 86400 }));
 
 app.get('/', async (req, res) => {
+  const timeSinceLastActivity = (Date.now() - lastActivityTime) / 1000;
+  const isStale = timeSinceLastActivity > 10 * 60; // 10 minutes
+
+  // Restart if stale
+  if (isStale) {
+    console.log(`[index] Restarting run loop`);
+    run();
+  }
+
   return res.json({
     name: pkg.name,
     version: pkg.version,
