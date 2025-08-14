@@ -175,15 +175,17 @@ const checkPermissions = async (channelId, botId) => {
   try {
     const discordChannel = await client.channels.fetch(channelId);
     if (!discordChannel.isTextBased()) return 'Channel is not text';
+
+    const botMember = await discordChannel.guild.members.fetch(botId);
     if (
       !discordChannel
-        .permissionsFor(botId)
+        .permissionsFor(botMember)
         ?.has(PermissionsBitField.Flags.ViewChannel)
     )
       return `I do not have permission to view this channel ${discordChannel.toString()}, Add me to the channel and try again`;
     if (
       !discordChannel
-        .permissionsFor(botId)
+        .permissionsFor(botMember)
         ?.has(PermissionsBitField.Flags.SendMessages)
     )
       return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
