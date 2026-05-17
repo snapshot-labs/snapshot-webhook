@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
-import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import snapshot from '@snapshot-labs/snapshot.js';
 
 const HUB_URL = process.env.HUB_URL || 'https://hub.snapshot.org';
 

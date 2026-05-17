@@ -1,6 +1,6 @@
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import express from 'express';
 import { sendEvent } from './providers/webhook';
-import { capture } from '@snapshot-labs/snapshot-sentry';
 
 const router = express.Router();
 

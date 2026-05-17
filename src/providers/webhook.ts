@@ -1,8 +1,8 @@
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
+import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
 import db from '../helpers/mysql';
 import { sha256 } from '../helpers/utils';
-import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
 const HTTP_WEBHOOK_TIMEOUT = 15000;
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');

@@ -1,13 +1,13 @@
-import { ApiUrls, Client } from '@xmtp/xmtp-js';
 import { Wallet } from '@ethersproject/wallet';
-import { getSpace } from '../helpers/utils';
-import db from '../helpers/mysql';
-import {
-  xmtpIncomingMessages,
-  timeOutgoingRequest,
-  outgoingMessages
-} from '../helpers/metrics';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { ApiUrls, Client } from '@xmtp/xmtp-js';
+import {
+  outgoingMessages,
+  timeOutgoingRequest,
+  xmtpIncomingMessages
+} from '../helpers/metrics';
+import db from '../helpers/mysql';
+import { getSpace } from '../helpers/utils';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
 const XMTP_ENV = (process.env.XMTP_ENV || 'dev') as keyof typeof ApiUrls;

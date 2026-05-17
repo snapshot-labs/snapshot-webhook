@@ -1,29 +1,29 @@
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import {
-  Client,
-  GatewayIntentBits,
-  REST,
-  Routes,
-  SlashCommandBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionsBitField,
-  EmbedBuilder,
+  Client,
   codeBlock,
-  underscore,
-  inlineCode,
+  ColorResolvable,
+  ComponentType,
   DiscordAPIError,
+  EmbedBuilder,
+  GatewayIntentBits,
+  inlineCode,
+  Options,
+  PermissionsBitField,
+  REST,
+  Routes,
+  SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ComponentType,
-  ColorResolvable,
-  Options
+  underscore
 } from 'discord.js';
-import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
-import { shortenAddress, getSpace } from '../helpers/utils';
-import { capture } from '@snapshot-labs/snapshot-sentry';
-import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
+import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
+import db from '../helpers/mysql';
+import { getSpace, shortenAddress } from '../helpers/utils';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';

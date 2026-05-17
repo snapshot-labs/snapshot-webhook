@@ -1,7 +1,7 @@
 import PushNotifications from '@pusher/push-notifications-server';
-import chunk from 'lodash.chunk';
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
+import chunk from 'lodash.chunk';
+import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
 
 const SERVICE_PUSH_NOTIFICATIONS = parseInt(
   process.env.SERVICE_PUSH_NOTIFICATIONS || '0'
