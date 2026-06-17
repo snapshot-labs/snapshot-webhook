@@ -20,8 +20,8 @@
     "@ethersproject/wallet": "^5.7.0",
     "@pusher/push-notifications-server": "^1.2.5",
     "@snapshot-labs/snapshot-metrics": "^1.4.2",
-    "@snapshot-labs/snapshot-sentry": "^1.5.5",
-    "@snapshot-labs/snapshot.js": "^0.14.6",
+    "@snapshot-labs/snapshot-sentry": "^2.1.0",
+    "@snapshot-labs/snapshot.js": "^0.14.22",
     "@xmtp/xmtp-js": "^10.2.0",
     "bluebird": "^3.7.2",
     "body-parser": "^1.20.2",
@@ -42,8 +42,8 @@
     "typescript": "5.2.2"
   },
   "devDependencies": {
-    "@snapshot-labs/eslint-config": "^0.1.0-beta.15",
-    "@snapshot-labs/prettier-config": "^0.1.0-beta.15",
+    "@snapshot-labs/eslint-config": "^0.1.1",
+    "@snapshot-labs/prettier-config": "^0.1.0",
     "@types/express": "^4.17.11",
     "@types/jest": "^29.5.10",
     "@types/node": "^18.0.0",
