@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
-import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import snapshot from '@snapshot-labs/snapshot.js';
 
 const HUB_URL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
@@ -28,8 +28,8 @@ export async function getSubscribers(space) {
       query
     );
     subscriptions = result.subscriptions || [];
-  } catch (e: any) {
-    capture(e, { contexts: { input: { query, space } } });
+  } catch (err: any) {
+    capture(err, { contexts: { input: { query, space } } });
   }
   return subscriptions.map(subscription => subscription.address);
 }
@@ -72,8 +72,8 @@ export async function getProposal(
       );
     }
     return result.proposal?.flagged ? null : result.proposal || null;
-  } catch (e: any) {
-    capture(e, { contexts: { input: { query, id } } });
+  } catch (err: any) {
+    capture(err, { contexts: { input: { query, id } } });
     return null;
   }
 }
@@ -101,8 +101,8 @@ export async function getSpace(id) {
     }
     space = result.space || null;
     return space;
-  } catch (e: any) {
-    capture(e, { contexts: { input: { query, id } } });
+  } catch (err: any) {
+    capture(err, { contexts: { input: { query, id } } });
     return null;
   }
 }

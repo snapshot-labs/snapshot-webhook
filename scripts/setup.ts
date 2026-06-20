@@ -33,18 +33,18 @@ async function createTables() {
           await db.queryAsync(statement);
           const tableName = statement.match(/CREATE TABLE (\w+)/i)?.[1];
           console.log(`✓ Table ${tableName} created or already exists`);
-        } catch (error: any) {
-          if (error.code === 'ER_TABLE_EXISTS_ERROR') {
+        } catch (err: any) {
+          if (err.code === 'ER_TABLE_EXISTS_ERROR') {
             const tableName = statement.match(/CREATE TABLE (\w+)/i)?.[1];
             console.log(`✓ Table ${tableName} already exists`);
           } else {
-            console.error('Error creating table:', error.message);
+            console.error('Error creating table:', err.message);
           }
         }
       }
     }
-  } catch (error) {
-    console.error('Error reading schema file or creating tables:', error);
+  } catch (err) {
+    console.error('Error reading schema file or creating tables:', err);
   }
 }
 
@@ -66,8 +66,8 @@ async function initLastMci() {
     await db.queryAsync(insertQuery, ['last_mci', '0']);
 
     console.log('✓ Successfully initialized last_mci with value: 0');
-  } catch (error) {
-    console.error('Error initializing last_mci:', error);
+  } catch (err) {
+    console.error('Error initializing last_mci:', err);
   }
 }
 

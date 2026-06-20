@@ -1,8 +1,8 @@
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
-import db from './helpers/mysql';
-import { capture } from '@snapshot-labs/snapshot-sentry';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
+import db from './helpers/mysql';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
@@ -42,9 +42,9 @@ async function getNextMessages(mci: number) {
       query
     );
     return results.messages;
-  } catch (e: any) {
-    capture(e, { contexts: { input: { query, mci } } });
-    console.log('Failed to load messages', e);
+  } catch (err: any) {
+    capture(err, { contexts: { input: { query, mci } } });
+    console.log('Failed to load messages', err);
     return;
   }
 }
@@ -74,8 +74,8 @@ async function processMessages(messages: any[]) {
         });
       }
       lastMessageMci = message.mci;
-    } catch (error) {
-      capture(error);
+    } catch (err) {
+      capture(err);
       break;
     }
   }
@@ -100,8 +100,8 @@ export async function run() {
         await processMessages(messages);
       }
       await snapshot.utils.sleep(10e3);
-    } catch (error) {
-      capture(error);
+    } catch (err) {
+      capture(err);
       // CRASH THE ENTIRE SERVER
       process.exit(1);
     }

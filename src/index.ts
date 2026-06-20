@@ -1,13 +1,13 @@
 import 'dotenv/config';
-import express from 'express';
+import { fallbackLogger, initLogger } from '@snapshot-labs/snapshot-sentry';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { initLogger, fallbackLogger } from '@snapshot-labs/snapshot-sentry';
-import initMetrics from './helpers/metrics';
+import express from 'express';
 import api from './api';
 import pkg from '../package.json';
-import { last_mci, run } from './replay';
+import initMetrics from './helpers/metrics';
 import { closeDatabase } from './helpers/mysql';
+import { last_mci, run } from './replay';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -58,8 +58,8 @@ const gracefulShutdown = async (signal: string) => {
       await closeDatabase();
       console.log('Graceful shutdown completed.');
       process.exit(0);
-    } catch (error) {
-      console.error('Error during shutdown:', error);
+    } catch (err) {
+      console.error('Error during shutdown:', err);
       process.exit(1);
     }
   });

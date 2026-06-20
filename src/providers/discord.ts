@@ -1,29 +1,29 @@
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import {
-  Client,
-  GatewayIntentBits,
-  REST,
-  Routes,
-  SlashCommandBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionsBitField,
-  EmbedBuilder,
+  Client,
   codeBlock,
-  underscore,
-  inlineCode,
+  ColorResolvable,
+  ComponentType,
   DiscordAPIError,
+  EmbedBuilder,
+  GatewayIntentBits,
+  inlineCode,
+  Options,
+  PermissionsBitField,
+  REST,
+  Routes,
+  SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ComponentType,
-  ColorResolvable,
-  Options
+  underscore
 } from 'discord.js';
-import db from '../helpers/mysql';
 import removeMd from 'remove-markdown';
-import { shortenAddress, getSpace } from '../helpers/utils';
-import { capture } from '@snapshot-labs/snapshot-sentry';
-import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
+import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
+import db from '../helpers/mysql';
+import { getSpace, shortenAddress } from '../helpers/utils';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -155,8 +155,8 @@ const PROPOSAL_EVENTS = [
     console.log('[discord] started refreshing application (/) commands.');
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
     console.log('[discord] successfully reloaded application (/) commands.');
-  } catch (error) {
-    capture(error);
+  } catch (err) {
+    capture(err);
   }
 })();
 
@@ -166,8 +166,8 @@ export const setActivity = (message, url?) => {
   try {
     client.user.setActivity(message, { type: 'WATCHING', url });
     return true;
-  } catch (e) {
-    capture(e);
+  } catch (err) {
+    capture(err);
   }
 };
 
@@ -190,11 +190,11 @@ const checkPermissions = async (channelId, botId) => {
     )
       return `I do not have permission to send messages in this channel ${discordChannel.toString()}, Add permission and try again`;
     return true;
-  } catch (error) {
-    if (!(error instanceof DiscordAPIError)) {
-      capture(error);
+  } catch (err) {
+    if (!(err instanceof DiscordAPIError)) {
+      capture(err);
     }
-    console.error('[discord] error checking permissions', error);
+    console.error('[discord] error checking permissions', err);
     const channelExistWithName = client.channels.cache.find(
       c => c.name === channelId
     );
@@ -277,8 +277,8 @@ async function snapshotSelectEventsCommandHandler(interaction) {
         });
       }
       await loadSubscriptions();
-    } catch (e) {
-      capture(e);
+    } catch (err) {
+      capture(err);
     }
     await i
       .update({
@@ -477,11 +477,11 @@ export const sendMessage = async (channel, message) => {
     await speaker.send(message);
     success = true;
     return true;
-  } catch (error) {
-    if (!(error instanceof DiscordAPIError)) {
-      capture(error);
+  } catch (err) {
+    if (!(err instanceof DiscordAPIError)) {
+      capture(err);
     }
-    console.error('[discord] Failed to send message', channel, error);
+    console.error('[discord] Failed to send message', channel, err);
   } finally {
     outgoingMessages.inc({ provider: 'discord', status: success ? 1 : 0 });
     end({ status: success ? 200 : 500 });
@@ -573,8 +573,8 @@ export async function send(eventObj, proposal, _subscribers) {
     sendToSubscribers(event, proposal, embed, components);
 
     return { success: true };
-  } catch (e: any) {
-    capture(e, { proposal, event });
+  } catch (err: any) {
+    capture(err, { proposal, event });
     return { success: false };
   }
 }

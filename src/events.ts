@@ -1,5 +1,5 @@
-import snapshot from '@snapshot-labs/snapshot.js';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import snapshot from '@snapshot-labs/snapshot.js';
 import db from './helpers/mysql';
 import { getProposal, getSubscribers } from './helpers/utils';
 import providers from './providers';
@@ -94,9 +94,9 @@ async function processEvents() {
         [event.id, event.event]
       );
       console.log(`[events] Event sent ${event.id} ${event.event}`);
-    } catch (e) {
-      capture(e);
-      console.log('[events]', e);
+    } catch (err) {
+      capture(err);
+      console.log('[events]', err);
     }
   }
 }
@@ -105,9 +105,9 @@ async function run() {
   while (true) {
     try {
       await processEvents();
-    } catch (e) {
-      capture(e);
-      console.log('[events] Failed to process', e);
+    } catch (err) {
+      capture(err);
+      console.log('[events] Failed to process', err);
     } finally {
       await snapshot.utils.sleep(INTERVAL * 1e3);
     }

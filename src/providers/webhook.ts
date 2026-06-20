@@ -1,8 +1,8 @@
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
+import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
 import db from '../helpers/mysql';
 import { sha256 } from '../helpers/utils';
-import { timeOutgoingRequest, outgoingMessages } from '../helpers/metrics';
 
 const HTTP_WEBHOOK_TIMEOUT = 15000;
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
@@ -27,13 +27,13 @@ export async function sendEvent(event, to, method = 'POST') {
     });
 
     return true;
-  } catch (error: any) {
-    if (error.message.includes('network timeout')) {
+  } catch (err: any) {
+    if (err.message.includes('network timeout')) {
       console.error('[webhook] request timed out', url);
     } else {
-      console.error('[webhook] request error', url, JSON.stringify(error));
+      console.error('[webhook] request error', url, JSON.stringify(err));
     }
-    throw error;
+    throw err;
   } finally {
     outgoingMessages.inc({
       provider: 'http',
