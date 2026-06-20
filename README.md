@@ -1,10 +1,11 @@
 # Snapshot webhook
 
-Microservice to send Snapshot related notifications to multiple communication channels. 
+Microservice to send Snapshot related notifications to multiple communication channels.
 
 ### Get started
 
-- Fork this repository then run this command to install dependencies: 
+- Fork this repository then run this command to install dependencies:
+
 ```shell
 yarn install
 ```
@@ -26,6 +27,7 @@ yarn setup
 - Comment line(s) on [this file](src/providers/index.ts) to disable provider(s).
 
 - Run the `dev` script to start the server
+
 ```shell
 yarn dev
 ```
