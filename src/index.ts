@@ -12,7 +12,7 @@ import { last_mci, run } from './replay';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-initLogger(app);
+initLogger();
 initMetrics(app);
 
 run();
