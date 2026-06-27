@@ -1,13 +1,13 @@
-import { ApiUrls, Client } from '@xmtp/xmtp-js';
 import { Wallet } from '@ethersproject/wallet';
-import { getSpace } from '../helpers/utils';
-import db from '../helpers/mysql';
-import {
-  xmtpIncomingMessages,
-  timeOutgoingRequest,
-  outgoingMessages
-} from '../helpers/metrics';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { ApiUrls, Client } from '@xmtp/xmtp-js';
+import {
+  outgoingMessages,
+  timeOutgoingRequest,
+  xmtpIncomingMessages
+} from '../helpers/metrics';
+import db from '../helpers/mysql';
+import { getSpace } from '../helpers/utils';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
 const XMTP_ENV = (process.env.XMTP_ENV || 'dev') as keyof typeof ApiUrls;
@@ -84,8 +84,8 @@ if (XMTP_PK) {
         }
 
         await message.conversation.send(infoMsg);
-      } catch (e) {
-        console.log('[xmtp] error', e, message);
+      } catch (err) {
+        console.log('[xmtp] error', err, message);
       }
     }
   });
@@ -121,8 +121,8 @@ async function sendMessages(addresses: string[], msg) {
         end({ status: 200 });
         outgoingMessages.inc({ provider: 'xmtp', status: 1 });
         console.log('[xmtp] sent message to', peer);
-      } catch (e: any) {
-        capture(e);
+      } catch (err: any) {
+        capture(err);
         outgoingMessages.inc({ provider: 'xmtp', status: 0 });
         end({ status: 500 });
       }
