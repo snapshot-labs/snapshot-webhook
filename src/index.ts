@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { fallbackLogger, initLogger } from '@snapshot-labs/snapshot-sentry';
+import './instrument';
+import { fallbackLogger } from '@snapshot-labs/snapshot-sentry';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
@@ -12,7 +13,6 @@ import { last_mci, run } from './replay';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-initLogger();
 initMetrics(app);
 
 run();

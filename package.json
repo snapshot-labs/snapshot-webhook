@@ -15,8 +15,6 @@
   "prettier": "@snapshot-labs/prettier-config",
   "dependencies": {
     "@ethersproject/wallet": "^5.7.0",
-    "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/core": "^2.8.0",
     "@pusher/push-notifications-server": "^1.2.5",
     "@snapshot-labs/snapshot-metrics": "^1.4.2",
     "@snapshot-labs/snapshot-sentry": "^3.0.1",
