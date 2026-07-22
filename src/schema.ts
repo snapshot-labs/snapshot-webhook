@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  boolean,
   index,
-  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -11,6 +11,8 @@ import {
   uniqueIndex,
   varchar
 } from 'drizzle-orm/pg-core';
+
+export const DEFAULT_EVENTS = ['proposal/start'];
 
 export const metadatas = pgTable('_metadatas', {
   id: varchar({ length: 20 }).primaryKey(),
@@ -41,7 +43,7 @@ export const subscribers = pgTable(
     url: text().notNull(),
     method: varchar({ length: 5 }).notNull().default('POST'),
     space: varchar({ length: 256 }).notNull(),
-    active: integer().notNull().default(1),
+    active: boolean().notNull().default(true),
     created: bigint({ mode: 'number' })
       .notNull()
       .default(sql`(extract(epoch from now()))::bigint`)
@@ -66,9 +68,9 @@ export const subscriptions = pgTable(
     events: jsonb()
       .$type<string[]>()
       .notNull()
-      .default(sql`'["proposal/start"]'::jsonb`),
-    created: varchar({ length: 64 }).notNull(),
-    updated: varchar({ length: 64 }).notNull()
+      .default(sql.raw(`'${JSON.stringify(DEFAULT_EVENTS)}'::jsonb`)),
+    created: bigint({ mode: 'number' }).notNull(),
+    updated: bigint({ mode: 'number' }).notNull()
   },
   table => [
     primaryKey({ columns: [table.guild, table.channel, table.space] }),
@@ -82,7 +84,7 @@ export const xmtp = pgTable(
   'xmtp',
   {
     address: varchar({ length: 256 }).primaryKey(),
-    status: integer().notNull()
+    status: boolean().notNull()
   },
   table => [index('xmtp_status_idx').on(table.status)]
 );

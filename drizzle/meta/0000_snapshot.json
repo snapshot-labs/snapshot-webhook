@@ -1,5 +1,5 @@
 {
-  "id": "bb8e36ac-49b5-465a-b532-652dd587ed08",
+  "id": "adeed640-e0b7-4fa6-ab32-f6a4c211c767",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -142,10 +142,10 @@
         },
         "active": {
           "name": "active",
-          "type": "integer",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": 1
+          "default": true
         },
         "created": {
           "name": "created",
@@ -282,13 +282,13 @@
         },
         "created": {
           "name": "created",
-          "type": "varchar(64)",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
         "updated": {
           "name": "updated",
-          "type": "varchar(64)",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         }
@@ -353,7 +353,7 @@
         },
         "status": {
           "name": "status",
-          "type": "integer",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true
         }

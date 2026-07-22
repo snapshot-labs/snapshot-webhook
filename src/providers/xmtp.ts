@@ -20,6 +20,12 @@ let ready = false;
 
 let disabled: string[] = [];
 
+const setXmtpStatus = (address: string, status: boolean) =>
+  db
+    .insert(xmtp)
+    .values({ address, status })
+    .onConflictDoUpdate({ target: xmtp.address, set: { status } });
+
 const infoMsg = `👋 Gm,
 
 Snapshot bot here, ready to ping you with fresh proposals.
@@ -38,7 +44,7 @@ if (XMTP_PK) {
 
     const rows = await db.query.xmtp.findMany({
       columns: { address: true },
-      where: eq(xmtp.status, 0)
+      where: eq(xmtp.status, false)
     });
 
     disabled = rows.map(row => row.address);
@@ -55,13 +61,7 @@ if (XMTP_PK) {
         const address = message.senderAddress.toLowerCase();
 
         if (message.content.toLowerCase() === 'stop') {
-          await db
-            .insert(xmtp)
-            .values({ address, status: 0 })
-            .onConflictDoUpdate({
-              target: xmtp.address,
-              set: { status: 0 }
-            });
+          await setXmtpStatus(address, false);
 
           disabled.push(address);
 
@@ -73,13 +73,7 @@ if (XMTP_PK) {
         }
 
         if (message.content.toLowerCase() === 'start') {
-          await db
-            .insert(xmtp)
-            .values({ address, status: 1 })
-            .onConflictDoUpdate({
-              target: xmtp.address,
-              set: { status: 1 }
-            });
+          await setXmtpStatus(address, true);
 
           disabled = disabled.filter(a => a !== address);
 

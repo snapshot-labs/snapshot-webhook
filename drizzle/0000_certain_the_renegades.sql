@@ -17,7 +17,7 @@ CREATE TABLE "subscribers" (
 	"url" text NOT NULL,
 	"method" varchar(5) DEFAULT 'POST' NOT NULL,
 	"space" varchar(256) NOT NULL,
-	"active" integer DEFAULT 1 NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
 	"created" bigint DEFAULT (extract(epoch from now()))::bigint NOT NULL
 );
 --> statement-breakpoint
@@ -27,14 +27,14 @@ CREATE TABLE "subscriptions" (
 	"space" varchar(256) NOT NULL,
 	"mention" varchar(64) NOT NULL,
 	"events" jsonb DEFAULT '["proposal/start"]'::jsonb NOT NULL,
-	"created" varchar(64) NOT NULL,
-	"updated" varchar(64) NOT NULL,
+	"created" bigint NOT NULL,
+	"updated" bigint NOT NULL,
 	CONSTRAINT "subscriptions_guild_channel_space_pk" PRIMARY KEY("guild","channel","space")
 );
 --> statement-breakpoint
 CREATE TABLE "xmtp" (
 	"address" varchar(256) PRIMARY KEY NOT NULL,
-	"status" integer NOT NULL
+	"status" boolean NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX "events_space_idx" ON "events" USING btree ("space");--> statement-breakpoint

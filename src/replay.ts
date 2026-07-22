@@ -14,7 +14,7 @@ async function getLastMci() {
   const result = await db.query.metadatas.findFirst({
     where: eq(metadatas.id, 'last_mci')
   });
-  last_mci = parseInt(result!.value);
+  last_mci = parseInt(result?.value ?? '0');
   return last_mci;
 }
 
@@ -54,9 +54,12 @@ async function getNextMessages(mci: number) {
 
 async function updateLastMci(mci: number) {
   await db
-    .update(metadatas)
-    .set({ value: mci.toString() })
-    .where(eq(metadatas.id, 'last_mci'));
+    .insert(metadatas)
+    .values({ id: 'last_mci', value: mci.toString() })
+    .onConflictDoUpdate({
+      target: metadatas.id,
+      set: { value: mci.toString() }
+    });
 }
 
 async function processMessages(messages: any[]) {

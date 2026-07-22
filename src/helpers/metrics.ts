@@ -36,8 +36,12 @@ new client.Gauge({
   help: 'Number of subscribers per type',
   labelNames: ['type'],
   async collect() {
-    this.set({ type: 'http' }, await db.$count(subscribers));
-    this.set({ type: 'discord' }, await db.$count(subscriptions));
+    const [http, discord] = await Promise.all([
+      db.$count(subscribers),
+      db.$count(subscriptions)
+    ]);
+    this.set({ type: 'http' }, http);
+    this.set({ type: 'discord' }, discord);
     // No xmtp count: the XMTP provider is disabled in providers/index.ts, so
     // its subscriber table is neither read nor written.
   }

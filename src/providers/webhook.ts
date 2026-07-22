@@ -51,7 +51,7 @@ export async function send(event, _proposal, _subscribersAddresses) {
   // predicate alone matches exactly — no JS re-filter needed.
   const activeSubscribers = await db.query.subscribers.findMany({
     where: and(
-      eq(subscribers.active, 1),
+      eq(subscribers.active, true),
       inArray(subscribers.space, [event.space, '*'])
     )
   });

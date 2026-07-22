@@ -25,7 +25,7 @@ import removeMd from 'remove-markdown';
 import { db } from '../db';
 import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
 import { getSpace, shortenAddress } from '../helpers/utils';
-import { subscriptions } from '../schema';
+import { DEFAULT_EVENTS, subscriptions } from '../schema';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -215,12 +215,14 @@ client.on('ready', async () => {
   await loadSubscriptions();
 });
 
-async function getEventsConfigured(guildId: string): Promise<string[] | null> {
+async function getEventsConfigured(
+  guildId: string
+): Promise<string[] | undefined> {
   const row = await db.query.subscriptions.findFirst({
     columns: { events: true },
     where: eq(subscriptions.guild, guildId)
   });
-  return row?.events ?? null;
+  return row?.events;
 }
 
 async function snapshotSelectEventsCommandHandler(interaction) {
@@ -266,12 +268,11 @@ async function snapshotSelectEventsCommandHandler(interaction) {
   collector.on('collect', async i => {
     const selection = i.values;
     try {
-      const updatedRows = await db
+      const result = await db
         .update(subscriptions)
         .set({ events: selection })
-        .where(eq(subscriptions.guild, i.guildId))
-        .returning({ guild: subscriptions.guild });
-      if (updatedRows.length === 0) {
+        .where(eq(subscriptions.guild, i.guildId));
+      if (result.rowCount === 0) {
         return i.update({
           content: `No subscriptions found on this server. Please add a subscription first.`,
           components: [],
@@ -299,7 +300,7 @@ async function snapshotHelpCommandHandler(interaction) {
     where: eq(subscriptions.guild, interaction.guildId)
   });
   let subscriptionsDescription = `\n\n**Subscriptions (${guildSubscriptions.length})**\n\n`;
-  const events = guildSubscriptions[0]?.events || ['proposal/start'];
+  const events = guildSubscriptions[0]?.events || DEFAULT_EVENTS;
   if (guildSubscriptions.length > 0) {
     guildSubscriptions.forEach(subscription => {
       subscriptionsDescription += `<#${subscription.channel}> ${subscription.space}\n`;
@@ -412,9 +413,9 @@ async function snapshotCommandHandler(interaction, commandType) {
         channel: channelId,
         space: spaceId,
         mention: mention || '',
-        updated: ts.toString(),
-        events: events || ['proposal/start'],
-        created: ts.toString()
+        updated: ts,
+        events,
+        created: ts
       })
       .onConflictDoUpdate({
         target: [
@@ -422,7 +423,7 @@ async function snapshotCommandHandler(interaction, commandType) {
           subscriptions.channel,
           subscriptions.space
         ],
-        set: { mention: mention || '', updated: ts.toString() }
+        set: { mention: mention || '', updated: ts }
       });
     await loadSubscriptions();
     const color = '#21B66F';

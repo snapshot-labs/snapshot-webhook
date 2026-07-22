@@ -19,10 +19,6 @@ export const db = drizzle({
 
 export async function runMigrations() {
   await migrate(db, { migrationsFolder: 'drizzle' });
-  await db
-    .insert(schema.metadatas)
-    .values({ id: 'last_mci', value: '0' })
-    .onConflictDoNothing();
 }
 
 export async function closeDatabase() {
