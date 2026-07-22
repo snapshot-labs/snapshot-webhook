@@ -42,14 +42,32 @@ app.use((_, res) => {
   });
 });
 
-let server;
-
 async function start() {
   await runMigrations();
   run();
-  server = app.listen(PORT, () =>
+  const server = app.listen(PORT, () =>
     console.log(`Listening at http://localhost:${PORT}`)
   );
+
+  const gracefulShutdown = (signal: string) => {
+    console.log(`Received ${signal}. Starting graceful shutdown...`);
+
+    server.close(async () => {
+      console.log('Express server closed.');
+
+      try {
+        await closeDatabase();
+        console.log('Graceful shutdown completed.');
+        process.exit(0);
+      } catch (err) {
+        console.error('Error during shutdown:', err);
+        process.exit(1);
+      }
+    });
+  };
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 }
 
 start().catch(err => {
@@ -57,28 +75,3 @@ start().catch(err => {
   console.error('Failed to start', err);
   process.exit(1);
 });
-
-const gracefulShutdown = async (signal: string) => {
-  console.log(`Received ${signal}. Starting graceful shutdown...`);
-
-  if (!server) {
-    await closeDatabase().catch(() => undefined);
-    process.exit(0);
-  }
-
-  server.close(async () => {
-    console.log('Express server closed.');
-
-    try {
-      await closeDatabase();
-      console.log('Graceful shutdown completed.');
-      process.exit(0);
-    } catch (err) {
-      console.error('Error during shutdown:', err);
-      process.exit(1);
-    }
-  });
-};
-
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

@@ -1,5 +1,5 @@
 {
-  "id": "3ffdbc4d-36ad-4677-b8fa-5359c440cfc2",
+  "id": "c5cee6f6-171f-4785-b01d-acaf6904fefc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -355,24 +355,7 @@
           "notNull": true
         }
       },
-      "indexes": {
-        "xmtp_disabled_idx": {
-          "name": "xmtp_disabled_idx",
-          "columns": [
-            {
-              "expression": "address",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "not \"xmtp\".\"status\"",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

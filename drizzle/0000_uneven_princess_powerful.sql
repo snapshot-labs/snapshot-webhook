@@ -44,5 +44,4 @@ CREATE INDEX "subscribers_owner_idx" ON "subscribers" USING btree ("owner");--> 
 CREATE INDEX "subscribers_space_idx" ON "subscribers" USING btree ("space") WHERE "subscribers"."active";--> statement-breakpoint
 CREATE INDEX "subscribers_created_idx" ON "subscribers" USING btree ("created");--> statement-breakpoint
 CREATE INDEX "subscriptions_created_idx" ON "subscriptions" USING btree ("created");--> statement-breakpoint
-CREATE INDEX "subscriptions_updated_idx" ON "subscriptions" USING btree ("updated");--> statement-breakpoint
-CREATE INDEX "xmtp_disabled_idx" ON "xmtp" USING btree ("address") WHERE not "xmtp"."status";
+CREATE INDEX "subscriptions_updated_idx" ON "subscriptions" USING btree ("updated");

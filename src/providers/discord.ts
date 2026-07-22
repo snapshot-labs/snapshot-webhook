@@ -405,6 +405,7 @@ async function snapshotCommandHandler(interaction, commandType) {
       return interaction.reply(`Space not found: ${inlineCode(spaceId)}`);
 
     const events = await getEventsConfigured(interaction.guildId);
+    const mentionValue = mention || '';
 
     await db
       .insert(subscriptions)
@@ -412,7 +413,7 @@ async function snapshotCommandHandler(interaction, commandType) {
         guild: interaction.guildId,
         channel: channelId,
         space: spaceId,
-        mention: mention || '',
+        mention: mentionValue,
         updated: ts,
         events,
         created: ts
@@ -423,7 +424,7 @@ async function snapshotCommandHandler(interaction, commandType) {
           subscriptions.channel,
           subscriptions.space
         ],
-        set: { mention: mention || '', updated: ts }
+        set: { mention: mentionValue, updated: ts }
       });
     await loadSubscriptions();
     const color = '#21B66F';

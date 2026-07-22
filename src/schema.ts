@@ -77,16 +77,7 @@ export const subscriptions = pgTable(
 );
 
 // XMTP provider
-export const xmtp = pgTable(
-  'xmtp',
-  {
-    address: text().primaryKey(),
-    status: boolean().notNull()
-  },
-  table => [
-    // ponytail: only serves the startup disabled-list query; delete if scanning is fine
-    index('xmtp_disabled_idx')
-      .on(table.address)
-      .where(sql`not ${table.status}`)
-  ]
-);
+export const xmtp = pgTable('xmtp', {
+  address: text().primaryKey(),
+  status: boolean().notNull()
+});

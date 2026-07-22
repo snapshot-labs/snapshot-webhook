@@ -52,14 +52,12 @@ export async function handleDeletedEvent(event) {
 
   const id = `proposal/${proposalId}`;
 
-  return db.transaction(async tx => {
-    await tx.delete(events).where(eq(events.id, id));
-    // expire 0 makes the deleted event fire on the next processing cycle
-    await tx
-      .insert(events)
-      .values({ id, event: 'proposal/deleted', space: event.space, expire: 0 })
-      .onConflictDoNothing();
-  });
+  await db.delete(events).where(eq(events.id, id));
+  // expire 0 makes the deleted event fire on the next processing cycle
+  await db
+    .insert(events)
+    .values({ id, event: 'proposal/deleted', space: event.space, expire: 0 })
+    .onConflictDoNothing();
 }
 
 async function processEvents() {
