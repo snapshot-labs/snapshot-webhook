@@ -3,28 +3,27 @@ import {
   bigint,
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
-  serial,
   text,
-  uniqueIndex,
-  varchar
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
 
 export const DEFAULT_EVENTS = ['proposal/start'];
 
 export const metadatas = pgTable('_metadatas', {
-  id: varchar({ length: 20 }).primaryKey(),
-  value: varchar({ length: 128 }).notNull()
+  id: text().primaryKey(),
+  value: text().notNull()
 });
 
 export const events = pgTable(
   'events',
   {
-    id: varchar({ length: 256 }).notNull(),
-    event: varchar({ length: 64 }).notNull(),
-    space: varchar({ length: 256 }).notNull(),
+    id: text().notNull(),
+    event: text().notNull(),
+    space: text().notNull(),
     expire: bigint({ mode: 'number' }).notNull()
   },
   table => [
@@ -38,11 +37,11 @@ export const events = pgTable(
 export const subscribers = pgTable(
   'subscribers',
   {
-    id: serial().primaryKey(),
-    owner: varchar({ length: 256 }).notNull(),
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    owner: text().notNull(),
     url: text().notNull(),
-    method: varchar({ length: 5 }).notNull().default('POST'),
-    space: varchar({ length: 256 }).notNull(),
+    method: text().notNull().default('POST'),
+    space: text().notNull(),
     active: boolean().notNull().default(true),
     created: bigint({ mode: 'number' })
       .notNull()
@@ -51,8 +50,9 @@ export const subscribers = pgTable(
   table => [
     uniqueIndex('subscribers_url_space_idx').on(table.url, table.space),
     index('subscribers_owner_idx').on(table.owner),
-    index('subscribers_space_idx').on(table.space),
-    index('subscribers_active_idx').on(table.active),
+    index('subscribers_space_idx')
+      .on(table.space)
+      .where(sql`${table.active}`),
     index('subscribers_created_idx').on(table.created)
   ]
 );
@@ -61,14 +61,11 @@ export const subscribers = pgTable(
 export const subscriptions = pgTable(
   'subscriptions',
   {
-    guild: varchar({ length: 64 }).notNull(),
-    channel: varchar({ length: 64 }).notNull(),
-    space: varchar({ length: 256 }).notNull(),
-    mention: varchar({ length: 64 }).notNull(),
-    events: jsonb()
-      .$type<string[]>()
-      .notNull()
-      .default(sql.raw(`'${JSON.stringify(DEFAULT_EVENTS)}'::jsonb`)),
+    guild: text().notNull(),
+    channel: text().notNull(),
+    space: text().notNull(),
+    mention: text().notNull(),
+    events: jsonb().$type<string[]>().notNull().default(DEFAULT_EVENTS),
     created: bigint({ mode: 'number' }).notNull(),
     updated: bigint({ mode: 'number' }).notNull()
   },
@@ -83,8 +80,13 @@ export const subscriptions = pgTable(
 export const xmtp = pgTable(
   'xmtp',
   {
-    address: varchar({ length: 256 }).primaryKey(),
+    address: text().primaryKey(),
     status: boolean().notNull()
   },
-  table => [index('xmtp_status_idx').on(table.status)]
+  table => [
+    // ponytail: only serves the startup disabled-list query; delete if scanning is fine
+    index('xmtp_disabled_idx')
+      .on(table.address)
+      .where(sql`not ${table.status}`)
+  ]
 );

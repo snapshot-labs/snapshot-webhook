@@ -1,5 +1,5 @@
 {
-  "id": "adeed640-e0b7-4fa6-ab32-f6a4c211c767",
+  "id": "3ffdbc4d-36ad-4677-b8fa-5359c440cfc2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -10,19 +10,19 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "event": {
           "name": "event",
-          "type": "varchar(64)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "space": {
           "name": "space",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -86,13 +86,13 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar(20)",
+          "type": "text",
           "primaryKey": true,
           "notNull": true
         },
         "value": {
           "name": "value",
-          "type": "varchar(128)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -111,13 +111,24 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "subscribers_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "owner": {
           "name": "owner",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -129,14 +140,14 @@
         },
         "method": {
           "name": "method",
-          "type": "varchar(5)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "'POST'"
         },
         "space": {
           "name": "space",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -203,21 +214,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "subscribers_active_idx": {
-          "name": "subscribers_active_idx",
-          "columns": [
-            {
-              "expression": "active",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
+          "where": "\"subscribers\".\"active\"",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -251,25 +248,25 @@
       "columns": {
         "guild": {
           "name": "guild",
-          "type": "varchar(64)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "channel": {
           "name": "channel",
-          "type": "varchar(64)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "space": {
           "name": "space",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "mention": {
           "name": "mention",
-          "type": "varchar(64)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -347,7 +344,7 @@
       "columns": {
         "address": {
           "name": "address",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": true,
           "notNull": true
         },
@@ -359,17 +356,18 @@
         }
       },
       "indexes": {
-        "xmtp_status_idx": {
-          "name": "xmtp_status_idx",
+        "xmtp_disabled_idx": {
+          "name": "xmtp_disabled_idx",
           "columns": [
             {
-              "expression": "status",
+              "expression": "address",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
+          "where": "not \"xmtp\".\"status\"",
           "concurrently": false,
           "method": "btree",
           "with": {}

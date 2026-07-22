@@ -61,7 +61,12 @@ start().catch(err => {
 const gracefulShutdown = async (signal: string) => {
   console.log(`Received ${signal}. Starting graceful shutdown...`);
 
-  server?.close(async () => {
+  if (!server) {
+    await closeDatabase().catch(() => undefined);
+    process.exit(0);
+  }
+
+  server.close(async () => {
     console.log('Express server closed.');
 
     try {

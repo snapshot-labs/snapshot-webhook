@@ -1,31 +1,31 @@
 CREATE TABLE "events" (
-	"id" varchar(256) NOT NULL,
-	"event" varchar(64) NOT NULL,
-	"space" varchar(256) NOT NULL,
+	"id" text NOT NULL,
+	"event" text NOT NULL,
+	"space" text NOT NULL,
 	"expire" bigint NOT NULL,
 	CONSTRAINT "events_id_event_pk" PRIMARY KEY("id","event")
 );
 --> statement-breakpoint
 CREATE TABLE "_metadatas" (
-	"id" varchar(20) PRIMARY KEY NOT NULL,
-	"value" varchar(128) NOT NULL
+	"id" text PRIMARY KEY NOT NULL,
+	"value" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscribers" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"owner" varchar(256) NOT NULL,
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "subscribers_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"owner" text NOT NULL,
 	"url" text NOT NULL,
-	"method" varchar(5) DEFAULT 'POST' NOT NULL,
-	"space" varchar(256) NOT NULL,
+	"method" text DEFAULT 'POST' NOT NULL,
+	"space" text NOT NULL,
 	"active" boolean DEFAULT true NOT NULL,
 	"created" bigint DEFAULT (extract(epoch from now()))::bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscriptions" (
-	"guild" varchar(64) NOT NULL,
-	"channel" varchar(64) NOT NULL,
-	"space" varchar(256) NOT NULL,
-	"mention" varchar(64) NOT NULL,
+	"guild" text NOT NULL,
+	"channel" text NOT NULL,
+	"space" text NOT NULL,
+	"mention" text NOT NULL,
 	"events" jsonb DEFAULT '["proposal/start"]'::jsonb NOT NULL,
 	"created" bigint NOT NULL,
 	"updated" bigint NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE "subscriptions" (
 );
 --> statement-breakpoint
 CREATE TABLE "xmtp" (
-	"address" varchar(256) PRIMARY KEY NOT NULL,
+	"address" text PRIMARY KEY NOT NULL,
 	"status" boolean NOT NULL
 );
 --> statement-breakpoint
@@ -41,9 +41,8 @@ CREATE INDEX "events_space_idx" ON "events" USING btree ("space");--> statement-
 CREATE INDEX "events_expire_idx" ON "events" USING btree ("expire");--> statement-breakpoint
 CREATE UNIQUE INDEX "subscribers_url_space_idx" ON "subscribers" USING btree ("url","space");--> statement-breakpoint
 CREATE INDEX "subscribers_owner_idx" ON "subscribers" USING btree ("owner");--> statement-breakpoint
-CREATE INDEX "subscribers_space_idx" ON "subscribers" USING btree ("space");--> statement-breakpoint
-CREATE INDEX "subscribers_active_idx" ON "subscribers" USING btree ("active");--> statement-breakpoint
+CREATE INDEX "subscribers_space_idx" ON "subscribers" USING btree ("space") WHERE "subscribers"."active";--> statement-breakpoint
 CREATE INDEX "subscribers_created_idx" ON "subscribers" USING btree ("created");--> statement-breakpoint
 CREATE INDEX "subscriptions_created_idx" ON "subscriptions" USING btree ("created");--> statement-breakpoint
 CREATE INDEX "subscriptions_updated_idx" ON "subscriptions" USING btree ("updated");--> statement-breakpoint
-CREATE INDEX "xmtp_status_idx" ON "xmtp" USING btree ("status");
+CREATE INDEX "xmtp_disabled_idx" ON "xmtp" USING btree ("address") WHERE not "xmtp"."status";

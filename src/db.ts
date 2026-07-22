@@ -11,7 +11,8 @@ export const db = drizzle({
     connectionString: process.env.DATABASE_URL,
     connectionTimeoutMillis: 60e3,
     query_timeout: 60e3,
-    idleTimeoutMillis: 0,
+    // above the 10-15s poll cadence so the pollers' connection stays warm
+    idleTimeoutMillis: 60e3,
     keepAlive: true
   },
   schema
