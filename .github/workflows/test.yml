@@ -11,3 +11,5 @@ jobs:
     secrets: inherit
     with:
       target: ${{ matrix.target }}
+      postgres_database_name: snapshot_webhook_test
+      postgres_schema_path: ''

@@ -1,17 +1,20 @@
 import { capture, Sentry } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
+import { eq } from 'drizzle-orm';
 import { EnumType } from 'json-to-graphql-query';
+import { db } from './db';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
-import db from './helpers/mysql';
+import { metadatas } from './schema';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 export let last_mci = 0;
 
 async function getLastMci() {
-  const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
-  const results = await db.queryAsync(query, ['last_mci']);
-  last_mci = parseInt(results[0].value);
+  const result = await db.query.metadatas.findFirst({
+    where: eq(metadatas.id, 'last_mci')
+  });
+  last_mci = parseInt(result!.value);
   return last_mci;
 }
 
@@ -50,8 +53,10 @@ async function getNextMessages(mci: number) {
 }
 
 async function updateLastMci(mci: number) {
-  const query = 'UPDATE _metadatas SET value = ? WHERE id = ? LIMIT 1';
-  await db.queryAsync(query, [mci.toString(), 'last_mci']);
+  await db
+    .update(metadatas)
+    .set({ value: mci.toString() })
+    .where(eq(metadatas.id, 'last_mci'));
 }
 
 async function processMessages(messages: any[]) {

@@ -1,8 +1,10 @@
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
+import { and, eq, inArray } from 'drizzle-orm';
+import { db } from '../db';
 import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
-import db from '../helpers/mysql';
 import { sha256 } from '../helpers/utils';
+import { subscribers } from '../schema';
 
 const HTTP_WEBHOOK_TIMEOUT = 15000;
 const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
@@ -45,20 +47,22 @@ export async function sendEvent(event, to, method = 'POST') {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, _proposal, _subscribersAddresses) {
-  // utf8mb4_general_ci makes the SQL predicate case-, accent- and
-  // trailing-space-insensitive, so the JS filter keeps the match exact.
-  // Collating the column in SQL instead would drop the index.
-  const candidates = await db.queryAsync(
-    'SELECT space, url, method FROM subscribers WHERE active = 1 AND space IN (?)',
-    [[event.space, '*']]
+  // Postgres text equality is byte-exact (no collation folding), so the SQL
+  // predicate alone matches exactly — no JS re-filter needed.
+  const activeSubscribers = await db.query.subscribers.findMany({
+    where: and(
+      eq(subscribers.active, 1),
+      inArray(subscribers.space, [event.space, '*'])
+    )
+  });
+  console.log(
+    '[webhook] subscribers for',
+    event.space,
+    activeSubscribers.length
   );
-  const subscribers = candidates.filter(subscriber =>
-    [event.space, '*'].includes(subscriber.space)
-  );
-  console.log('[webhook] subscribers for', event.space, subscribers.length);
 
   Promise.allSettled(
-    subscribers.map(subscriber =>
+    activeSubscribers.map(subscriber =>
       sendEvent(event, subscriber.url, subscriber.method)
     )
   )

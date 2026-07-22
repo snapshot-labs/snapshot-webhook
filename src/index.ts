@@ -1,21 +1,19 @@
 import 'dotenv/config';
 import './instrument';
-import { fallbackLogger } from '@snapshot-labs/snapshot-sentry';
+import { capture, fallbackLogger } from '@snapshot-labs/snapshot-sentry';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import api from './api';
 import pkg from '../package.json';
+import { closeDatabase, runMigrations } from './db';
 import initMetrics from './helpers/metrics';
-import { closeDatabase } from './helpers/mysql';
 import { last_mci, run } from './replay';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 initMetrics(app);
-
-run();
 
 app.use(bodyParser.json({ limit: '8mb' }));
 app.use(bodyParser.urlencoded({ limit: '8mb', extended: false }));
@@ -44,14 +42,26 @@ app.use((_, res) => {
   });
 });
 
-const server = app.listen(PORT, () =>
-  console.log(`Listening at http://localhost:${PORT}`)
-);
+let server;
+
+async function start() {
+  await runMigrations();
+  run();
+  server = app.listen(PORT, () =>
+    console.log(`Listening at http://localhost:${PORT}`)
+  );
+}
+
+start().catch(err => {
+  capture(err);
+  console.error('Failed to start', err);
+  process.exit(1);
+});
 
 const gracefulShutdown = async (signal: string) => {
   console.log(`Received ${signal}. Starting graceful shutdown...`);
 
-  server.close(async () => {
+  server?.close(async () => {
     console.log('Express server closed.');
 
     try {

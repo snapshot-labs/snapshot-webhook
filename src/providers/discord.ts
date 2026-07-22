@@ -20,10 +20,12 @@ import {
   StringSelectMenuOptionBuilder,
   underscore
 } from 'discord.js';
+import { and, eq } from 'drizzle-orm';
 import removeMd from 'remove-markdown';
+import { db } from '../db';
 import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
-import db from '../helpers/mysql';
 import { getSpace, shortenAddress } from '../helpers/utils';
+import { subscriptions } from '../schema';
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
@@ -214,12 +216,11 @@ client.on('ready', async () => {
 });
 
 async function getEventsConfigured(guildId: string): Promise<string[] | null> {
-  const events = await db.queryAsync(
-    'SELECT events FROM subscriptions WHERE guild = ?',
-    guildId
-  );
-  if (events.length === 0) return null;
-  return JSON.parse(events[0].events);
+  const row = await db.query.subscriptions.findFirst({
+    columns: { events: true },
+    where: eq(subscriptions.guild, guildId)
+  });
+  return row?.events ?? null;
 }
 
 async function snapshotSelectEventsCommandHandler(interaction) {
@@ -265,11 +266,12 @@ async function snapshotSelectEventsCommandHandler(interaction) {
   collector.on('collect', async i => {
     const selection = i.values;
     try {
-      const response = await db.queryAsync(
-        `UPDATE subscriptions SET events = ? WHERE guild = ?`,
-        [JSON.stringify(selection), i.guildId]
-      );
-      if (response.affectedRows === 0) {
+      const updatedRows = await db
+        .update(subscriptions)
+        .set({ events: selection })
+        .where(eq(subscriptions.guild, i.guildId))
+        .returning({ guild: subscriptions.guild });
+      if (updatedRows.length === 0) {
         return i.update({
           content: `No subscriptions found on this server. Please add a subscription first.`,
           components: [],
@@ -293,14 +295,13 @@ async function snapshotSelectEventsCommandHandler(interaction) {
 }
 
 async function snapshotHelpCommandHandler(interaction) {
-  const subscriptions = await db.queryAsync(
-    'SELECT * FROM subscriptions WHERE guild = ?',
-    interaction.guildId
-  );
-  let subscriptionsDescription = `\n\n**Subscriptions (${subscriptions.length})**\n\n`;
-  const events = JSON.parse(subscriptions[0]?.events || `["proposal/start"]`);
-  if (subscriptions.length > 0) {
-    subscriptions.forEach(subscription => {
+  const guildSubscriptions = await db.query.subscriptions.findMany({
+    where: eq(subscriptions.guild, interaction.guildId)
+  });
+  let subscriptionsDescription = `\n\n**Subscriptions (${guildSubscriptions.length})**\n\n`;
+  const events = guildSubscriptions[0]?.events || ['proposal/start'];
+  if (guildSubscriptions.length > 0) {
+    guildSubscriptions.forEach(subscription => {
       subscriptionsDescription += `<#${subscription.channel}> ${subscription.space}\n`;
     });
   } else {
@@ -404,20 +405,25 @@ async function snapshotCommandHandler(interaction, commandType) {
 
     const events = await getEventsConfigured(interaction.guildId);
 
-    const subscription = [
-      interaction.guildId,
-      channelId,
-      spaceId,
-      mention || '',
-      ts,
-      events ? JSON.stringify(events) : '["proposal/start"]',
-      ts
-    ];
-    await db.queryAsync(
-      `INSERT INTO subscriptions (guild, channel, space, mention, updated, events, created) VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE guild = ?, channel = ?, space = ?, mention = ?, updated = ?`,
-      [...subscription, ...subscription]
-    );
+    await db
+      .insert(subscriptions)
+      .values({
+        guild: interaction.guildId,
+        channel: channelId,
+        space: spaceId,
+        mention: mention || '',
+        updated: ts.toString(),
+        events: events || ['proposal/start'],
+        created: ts.toString()
+      })
+      .onConflictDoUpdate({
+        target: [
+          subscriptions.guild,
+          subscriptions.channel,
+          subscriptions.space
+        ],
+        set: { mention: mention || '', updated: ts.toString() }
+      });
     await loadSubscriptions();
     const color = '#21B66F';
     const embed = new EmbedBuilder()
@@ -432,8 +438,15 @@ async function snapshotCommandHandler(interaction, commandType) {
       );
     interaction.reply({ embeds: [embed], ephemeral: true }).catch(capture);
   } else if (commandType === 'remove') {
-    const query = `DELETE FROM subscriptions WHERE guild = ? AND channel = ? AND space = ?`;
-    await db.queryAsync(query, [interaction.guildId, channelId, spaceId]);
+    await db
+      .delete(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.guild, interaction.guildId),
+          eq(subscriptions.channel, channelId),
+          eq(subscriptions.space, spaceId)
+        )
+      );
     await loadSubscriptions();
     const color = '#EE4145';
     const embed = new EmbedBuilder()
@@ -491,7 +504,7 @@ export const sendMessage = async (channel, message) => {
 const sendToSubscribers = (event, proposal, embed, components) => {
   if (subs[proposal.space.id] || subs['*']) {
     [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
-      if (sub.events && !JSON.parse(sub.events).includes(event)) return;
+      if (sub.events && !sub.events.includes(event)) return;
       sendMessage(sub.channel, {
         content: `${sub.mention}`,
         embeds: [embed],
@@ -580,7 +593,7 @@ export async function send(eventObj, proposal, _subscribers) {
 }
 
 async function loadSubscriptions() {
-  const results = await db.queryAsync('SELECT * FROM subscriptions');
+  const results = await db.query.subscriptions.findMany();
   subs = {};
   results.forEach(sub => {
     if (!subs[sub.space]) subs[sub.space] = [];
