@@ -1,5 +1,5 @@
 {
-  "id": "c5cee6f6-171f-4785-b01d-acaf6904fefc",
+  "id": "c3b82c13-b3b2-4c39-9a5b-896cde30b647",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -34,21 +34,6 @@
         }
       },
       "indexes": {
-        "events_space_idx": {
-          "name": "events_space_idx",
-          "columns": [
-            {
-              "expression": "space",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "events_expire_idx": {
           "name": "events_expire_idx",
           "columns": [
@@ -188,21 +173,6 @@
           "method": "btree",
           "with": {}
         },
-        "subscribers_owner_idx": {
-          "name": "subscribers_owner_idx",
-          "columns": [
-            {
-              "expression": "owner",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "subscribers_space_idx": {
           "name": "subscribers_space_idx",
           "columns": [
@@ -215,21 +185,6 @@
           ],
           "isUnique": false,
           "where": "\"subscribers\".\"active\"",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "subscribers_created_idx": {
-          "name": "subscribers_created_idx",
-          "columns": [
-            {
-              "expression": "created",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -290,38 +245,7 @@
           "notNull": true
         }
       },
-      "indexes": {
-        "subscriptions_created_idx": {
-          "name": "subscriptions_created_idx",
-          "columns": [
-            {
-              "expression": "created",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "subscriptions_updated_idx": {
-          "name": "subscriptions_updated_idx",
-          "columns": [
-            {
-              "expression": "updated",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "subscriptions_guild_channel_space_pk": {

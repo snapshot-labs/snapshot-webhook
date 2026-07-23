@@ -14,7 +14,12 @@ async function getLastMci() {
   const result = await db.query.metadatas.findFirst({
     where: eq(metadatas.id, 'last_mci')
   });
-  last_mci = parseInt(result?.value ?? '0');
+  if (!result) {
+    throw new Error(
+      "Missing 'last_mci' row in _metadatas: seed it before starting replay"
+    );
+  }
+  last_mci = parseInt(result.value);
   return last_mci;
 }
 

@@ -7,6 +7,7 @@ import express from 'express';
 import api from './api';
 import pkg from '../package.json';
 import { closeDatabase, runMigrations } from './db';
+import { start as startEvents } from './events';
 import initMetrics from './helpers/metrics';
 import { last_mci, run } from './replay';
 
@@ -45,6 +46,7 @@ app.use((_, res) => {
 async function start() {
   await runMigrations();
   run();
+  startEvents();
   const server = app.listen(PORT, () =>
     console.log(`Listening at http://localhost:${PORT}`)
   );

@@ -28,7 +28,6 @@ export const events = pgTable(
   },
   table => [
     primaryKey({ columns: [table.id, table.event] }),
-    index('events_space_idx').on(table.space),
     index('events_expire_idx').on(table.expire)
   ]
 );
@@ -49,11 +48,9 @@ export const subscribers = pgTable(
   },
   table => [
     uniqueIndex('subscribers_url_space_idx').on(table.url, table.space),
-    index('subscribers_owner_idx').on(table.owner),
     index('subscribers_space_idx')
       .on(table.space)
-      .where(sql`${table.active}`),
-    index('subscribers_created_idx').on(table.created)
+      .where(sql`${table.active}`)
   ]
 );
 
@@ -69,11 +66,7 @@ export const subscriptions = pgTable(
     created: bigint({ mode: 'number' }).notNull(),
     updated: bigint({ mode: 'number' }).notNull()
   },
-  table => [
-    primaryKey({ columns: [table.guild, table.channel, table.space] }),
-    index('subscriptions_created_idx').on(table.created),
-    index('subscriptions_updated_idx').on(table.updated)
-  ]
+  table => [primaryKey({ columns: [table.guild, table.channel, table.space] })]
 );
 
 // XMTP provider

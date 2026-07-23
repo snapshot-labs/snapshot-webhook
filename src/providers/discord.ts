@@ -212,6 +212,10 @@ client.on('ready', async () => {
   console.log(`[discord] bot logged as "${client.user.tag}"`);
   setActivity('!');
 
+  // If this rejects, discord.js (captureRejections) re-emits it as an
+  // unhandled 'error' event and the process hard-crashes. Deliberate: it can
+  // only happen on the very first boot, if 'ready' fires while the initial
+  // migration is still creating the tables — the supervisor restart resolves it.
   await loadSubscriptions();
 });
 

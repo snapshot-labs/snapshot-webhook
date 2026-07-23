@@ -110,6 +110,8 @@ async function run() {
   }
 }
 
-if (SERVICE_EVENTS) {
-  setTimeout(() => run(), INTERVAL * 1e3);
+export function start() {
+  if (SERVICE_EVENTS) {
+    setTimeout(() => run(), INTERVAL * 1e3);
+  }
 }

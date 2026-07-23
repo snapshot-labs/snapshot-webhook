@@ -19,6 +19,9 @@ export const db = drizzle({
 });
 
 export async function runMigrations() {
+  // No advisory lock — replicas racing this DDL self-heal (loser's
+  // transaction rolls back, restart no-ops via the __drizzle_migrations
+  // ledger). Single instance today; if replicas >1, migrate in a deploy step.
   await migrate(db, { migrationsFolder: 'drizzle' });
 }
 
