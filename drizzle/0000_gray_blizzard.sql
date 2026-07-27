@@ -39,4 +39,5 @@ CREATE TABLE "xmtp" (
 --> statement-breakpoint
 CREATE INDEX "events_expire_idx" ON "events" USING btree ("expire");--> statement-breakpoint
 CREATE UNIQUE INDEX "subscribers_url_space_idx" ON "subscribers" USING btree ("url","space");--> statement-breakpoint
-CREATE INDEX "subscribers_space_idx" ON "subscribers" USING btree ("space") WHERE "subscribers"."active";
+CREATE INDEX "subscribers_space_idx" ON "subscribers" USING btree ("space") WHERE "subscribers"."active";--> statement-breakpoint
+CREATE INDEX "xmtp_status_idx" ON "xmtp" USING btree ("status");

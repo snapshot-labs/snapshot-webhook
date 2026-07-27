@@ -1,1 +1,0 @@
-CREATE INDEX "xmtp_status_idx" ON "xmtp" USING btree ("status");
