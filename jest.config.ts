@@ -16,6 +16,7 @@ export default {
   ],
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-node-single-context',
+  globalSetup: '<rootDir>/test/global-setup.ts',
   setupFiles: ['<rootDir>/test/setup.ts'],
   moduleFileExtensions: ['js', 'ts'],
   verbose: true

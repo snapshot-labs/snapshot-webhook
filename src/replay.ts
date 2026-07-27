@@ -10,7 +10,7 @@ const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 export let last_mci = 0;
 
-async function getLastMci() {
+export async function getLastMci() {
   const result = await db.query.metadatas.findFirst({
     where: eq(metadatas.id, LAST_MCI_METADATA_ID)
   });

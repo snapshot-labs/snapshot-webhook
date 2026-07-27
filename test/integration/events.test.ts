@@ -1,5 +1,5 @@
 import { eq, inArray } from 'drizzle-orm';
-import { closeDatabase, db, runMigrations } from '../../src/db';
+import { closeDatabase, db } from '../../src/db';
 import { handleDeletedEvent } from '../../src/events';
 import { events } from '../../src/schema';
 
@@ -34,7 +34,6 @@ describe('handleDeletedEvent()', () => {
     db.delete(events).where(inArray(events.id, [ID, OTHER_ID]));
 
   beforeAll(async () => {
-    await runMigrations();
     await cleanup();
   });
 
