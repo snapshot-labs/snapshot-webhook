@@ -16,7 +16,7 @@ async function getLastMci() {
   });
   if (!result) {
     throw new Error(
-      "Missing 'last_mci' row in _metadatas: run `yarn db:seed [mci]` before starting replay"
+      "Missing 'last_mci' row in _metadatas: run `yarn db:set-mci <mci>` before starting replay"
     );
   }
   last_mci = parseInt(result.value);

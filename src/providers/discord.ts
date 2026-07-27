@@ -162,7 +162,11 @@ const PROPOSAL_EVENTS = [
   }
 })();
 
-client.login(token);
+// Called from start() in index.ts after runMigrations() resolves, so the
+// 'ready' handler's loadSubscriptions() can never race the initial migration.
+export function init() {
+  client.login(token);
+}
 
 export const setActivity = (message, url?) => {
   try {
@@ -212,10 +216,6 @@ client.on('ready', async () => {
   console.log(`[discord] bot logged as "${client.user.tag}"`);
   setActivity('!');
 
-  // If this rejects, discord.js (captureRejections) re-emits it as an
-  // unhandled 'error' event and the process hard-crashes. Deliberate: it can
-  // only happen on the very first boot, if 'ready' fires while the initial
-  // migration is still creating the tables — the supervisor restart resolves it.
   await loadSubscriptions();
 });
 

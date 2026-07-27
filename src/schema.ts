@@ -11,7 +11,7 @@ import {
   uniqueIndex
 } from 'drizzle-orm/pg-core';
 
-export const DEFAULT_EVENTS = ['proposal/start'];
+export const DEFAULT_EVENTS: readonly string[] = ['proposal/start'];
 
 export const metadatas = pgTable('_metadatas', {
   id: text().primaryKey(),
@@ -62,7 +62,10 @@ export const subscriptions = pgTable(
     channel: text().notNull(),
     space: text().notNull(),
     mention: text().notNull(),
-    events: jsonb().$type<string[]>().notNull().default(DEFAULT_EVENTS),
+    events: jsonb()
+      .$type<string[]>()
+      .notNull()
+      .default([...DEFAULT_EVENTS]),
     created: bigint({ mode: 'number' }).notNull(),
     updated: bigint({ mode: 'number' }).notNull()
   },

@@ -9,6 +9,7 @@ import pkg from '../package.json';
 import { closeDatabase, runMigrations } from './db';
 import { start as startEvents } from './events';
 import initMetrics from './helpers/metrics';
+import { init as initDiscord } from './providers/discord';
 import { last_mci, run } from './replay';
 
 const app = express();
@@ -45,6 +46,7 @@ app.use((_, res) => {
 
 async function start() {
   await runMigrations();
+  initDiscord();
   run();
   startEvents();
   const server = app.listen(PORT, () =>
