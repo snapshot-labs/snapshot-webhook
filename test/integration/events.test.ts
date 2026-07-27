@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import * as dbModule from '../../src/db';
-import * as eventsModule from '../../src/events';
-import * as schemaModule from '../../src/schema';
+import { closeDatabase, db, runMigrations } from '../../src/db';
+import { handleDeletedEvent } from '../../src/events';
+import { events } from '../../src/schema';
 
 const PROPOSAL_ID = '0xdeadbeef-integration-test';
 const ID = `proposal/${PROPOSAL_ID}`;
@@ -23,26 +23,11 @@ jest.mock('@snapshot-labs/snapshot.js', () => {
 
 jest.mock('../../src/providers', () => ({ __esModule: true, default: [] }));
 
-const d = process.env.DATABASE_URL?.startsWith('postgres')
-  ? describe
-  : describe.skip;
-
-d('handleDeletedEvent()', () => {
-  let db: typeof dbModule.db;
-  let closeDatabase: typeof dbModule.closeDatabase;
-  let events: typeof schemaModule.events;
-  let handleDeletedEvent: typeof eventsModule.handleDeletedEvent;
-
+describe('handleDeletedEvent()', () => {
   const getRows = () => db.query.events.findMany({ where: eq(events.id, ID) });
   const cleanup = () => db.delete(events).where(eq(events.id, ID));
 
   beforeAll(async () => {
-    // Imported lazily so a skipped suite (no Postgres DATABASE_URL) never
-    // loads src/db, which throws without one.
-    let runMigrations: typeof dbModule.runMigrations;
-    ({ db, closeDatabase, runMigrations } = await import('../../src/db'));
-    ({ events } = await import('../../src/schema'));
-    ({ handleDeletedEvent } = await import('../../src/events'));
     await runMigrations();
     await cleanup();
   });
