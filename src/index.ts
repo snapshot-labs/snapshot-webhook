@@ -76,6 +76,5 @@ async function start() {
 start().catch(err => {
   console.error('Failed to start', err);
   capture(err);
-  // Grace period so Sentry's async transport can deliver the event before exit.
-  setTimeout(() => process.exit(1), 2000);
+  process.exit(1);
 });
