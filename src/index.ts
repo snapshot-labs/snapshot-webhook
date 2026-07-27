@@ -80,8 +80,6 @@ async function start() {
 start().catch(async err => {
   console.error('Failed to start', err);
   capture(err);
-  // Drain Sentry's transport queue (max 2s) so the event is delivered
-  // before exit.
   await Sentry.close(2000);
   process.exit(1);
 });
