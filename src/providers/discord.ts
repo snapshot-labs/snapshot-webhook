@@ -162,11 +162,7 @@ const PROPOSAL_EVENTS = [
   }
 })();
 
-// Called from start() in index.ts after runMigrations() resolves, so the
-// 'ready' handler's loadSubscriptions() can never race the initial migration.
-export function init() {
-  client.login(token);
-}
+client.login(token);
 
 export const setActivity = (message, url?) => {
   try {
