@@ -25,6 +25,14 @@ export async function runMigrations() {
   await migrate(db, { migrationsFolder: 'drizzle' });
 }
 
+export async function updateLastMci(mci: number) {
+  const value = mci.toString();
+  await db
+    .insert(schema.metadatas)
+    .values({ id: schema.LAST_MCI_ID, value })
+    .onConflictDoUpdate({ target: schema.metadatas.id, set: { value } });
+}
+
 export async function closeDatabase() {
   await db.$client.end();
   console.log('Database connection pool closed.');

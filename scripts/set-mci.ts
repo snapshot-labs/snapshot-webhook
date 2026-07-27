@@ -1,8 +1,7 @@
 #!/usr/bin/env ts-node
 
 import 'dotenv/config';
-import { closeDatabase, db, runMigrations } from '../src/db';
-import { metadatas } from '../src/schema';
+import { closeDatabase, runMigrations, updateLastMci } from '../src/db';
 
 async function setMci() {
   const mci = process.argv[2];
@@ -16,10 +15,7 @@ async function setMci() {
 
   await runMigrations();
 
-  await db
-    .insert(metadatas)
-    .values({ id: 'last_mci', value: mci })
-    .onConflictDoUpdate({ target: metadatas.id, set: { value: mci } });
+  await updateLastMci(Number(mci));
 
   console.log(`✓ last_mci set to ${mci}`);
 }

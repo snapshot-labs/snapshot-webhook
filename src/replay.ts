@@ -2,9 +2,9 @@ import { capture, Sentry } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { eq } from 'drizzle-orm';
 import { EnumType } from 'json-to-graphql-query';
-import { db } from './db';
+import { db, updateLastMci } from './db';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
-import { metadatas } from './schema';
+import { LAST_MCI_ID, metadatas } from './schema';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
@@ -12,7 +12,7 @@ export let last_mci = 0;
 
 async function getLastMci() {
   const result = await db.query.metadatas.findFirst({
-    where: eq(metadatas.id, 'last_mci')
+    where: eq(metadatas.id, LAST_MCI_ID)
   });
   if (!result) {
     throw new Error(
@@ -55,13 +55,6 @@ async function getNextMessages(mci: number) {
     console.log('Failed to load messages', err);
     return;
   }
-}
-
-async function updateLastMci(mci: number) {
-  await db
-    .update(metadatas)
-    .set({ value: mci.toString() })
-    .where(eq(metadatas.id, 'last_mci'));
 }
 
 async function processMessages(messages: any[]) {

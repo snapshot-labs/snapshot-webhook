@@ -50,6 +50,7 @@ export async function send(event, _proposal, _subscribersAddresses) {
   // Postgres text equality is byte-exact (no collation folding), so the SQL
   // predicate alone matches exactly — no JS re-filter needed.
   const activeSubscribers = await db.query.subscribers.findMany({
+    columns: { url: true, method: true },
     where: and(
       eq(subscribers.active, true),
       inArray(subscribers.space, [event.space, '*'])

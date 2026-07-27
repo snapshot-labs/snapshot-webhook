@@ -1,6 +1,6 @@
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
-import { and, eq, lte } from 'drizzle-orm';
+import { and, eq, lte, ne } from 'drizzle-orm';
 import { db } from './db';
 import { getProposal, getSubscribers } from './helpers/utils';
 import providers from './providers';
@@ -52,9 +52,18 @@ export async function handleDeletedEvent(event) {
 
   const id = `proposal/${proposalId}`;
 
-  await db.delete(events).where(eq(events.id, id));
-  // expire 0 makes the deleted event fire on the next processing cycle
+  // expire 0 makes the deleted event fire on the next processing cycle.
+  // CTE: atomic delete + insert, single round-trip. The delete excludes the
+  // inserted key: CTEs share the statement's snapshot, so deleting the same
+  // key the insert targets can still raise a duplicate-key error on re-runs.
+  const deleted = db.$with('deleted').as(
+    db
+      .delete(events)
+      .where(and(eq(events.id, id), ne(events.event, 'proposal/deleted')))
+      .returning()
+  );
   await db
+    .with(deleted)
     .insert(events)
     .values({ id, event: 'proposal/deleted', space: event.space, expire: 0 })
     .onConflictDoNothing();
