@@ -79,12 +79,11 @@ export async function run() {
   while (true) {
     try {
       // Check latest indexed MCI from db
-      const lastMci = await getLastMci();
-      last_mci = lastMci;
-      console.log('[replay] Last MCI', lastMci);
+      last_mci = await getLastMci();
+      console.log('[replay] Last MCI', last_mci);
 
       // Load next messages after latest indexed MCI
-      const messages = await getNextMessages(lastMci);
+      const messages = await getNextMessages(last_mci);
       if (messages && messages.length > 0) {
         await processMessages(messages);
       }
