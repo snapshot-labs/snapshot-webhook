@@ -7,6 +7,8 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
+export const LAST_MCI_METADATA_ID = 'last_mci';
+
 export const db = drizzle({
   connection: {
     connectionString: process.env.DATABASE_URL,
@@ -28,7 +30,7 @@ export async function runMigrations() {
 
 export async function getLastMci() {
   const result = await db.query.metadatas.findFirst({
-    where: eq(schema.metadatas.id, schema.LAST_MCI_METADATA_ID)
+    where: eq(schema.metadatas.id, LAST_MCI_METADATA_ID)
   });
   if (!result) {
     throw new Error(
@@ -42,7 +44,7 @@ export async function updateLastMci(mci: number) {
   const value = mci.toString();
   await db
     .insert(schema.metadatas)
-    .values({ id: schema.LAST_MCI_METADATA_ID, value })
+    .values({ id: LAST_MCI_METADATA_ID, value })
     .onConflictDoUpdate({ target: schema.metadatas.id, set: { value } });
 }
 

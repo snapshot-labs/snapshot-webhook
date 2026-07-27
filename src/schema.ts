@@ -13,8 +13,6 @@ import {
 
 export const DEFAULT_EVENTS = ['proposal/start'];
 
-export const LAST_MCI_METADATA_ID = 'last_mci';
-
 export const metadatas = pgTable('_metadatas', {
   id: text().primaryKey(),
   value: text().notNull()

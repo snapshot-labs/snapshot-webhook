@@ -1,6 +1,12 @@
 import { eq } from 'drizzle-orm';
-import { closeDatabase, db, getLastMci, updateLastMci } from '../../src/db';
-import { LAST_MCI_METADATA_ID, metadatas } from '../../src/schema';
+import {
+  closeDatabase,
+  db,
+  getLastMci,
+  LAST_MCI_METADATA_ID,
+  updateLastMci
+} from '../../src/db';
+import { metadatas } from '../../src/schema';
 
 describe('last_mci metadata', () => {
   const cleanup = () =>
