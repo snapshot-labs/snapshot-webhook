@@ -6,9 +6,10 @@ import { db } from '../db';
 import { events, subscribers, subscriptions } from '../schema';
 
 export default function initMetrics(app: Express) {
-  init(app, {
+  return init(app, {
     whitelistedPath: [/^\/$/, /^\/api\/test$/],
-    errorHandler: capture
+    errorHandler: capture,
+    db: db.$client
   });
 }
 

@@ -9,7 +9,10 @@ if (!process.env.DATABASE_URL) {
 export const db = drizzle({
   connection: {
     connectionString: process.env.DATABASE_URL,
-    connectionTimeoutMillis: 60e3,
+    // PS-5 caps direct connections at 25; leave headroom for migrations, psql
+    // and PlanetScale's reserved connections. Single instance needs far less.
+    max: 10,
+    connectionTimeoutMillis: 10e3,
     query_timeout: 60e3,
     // above the 10-15s poll cadence so the pollers' connection stays warm
     idleTimeoutMillis: 60e3,

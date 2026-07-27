@@ -14,7 +14,10 @@ import { last_mci, run } from './replay';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-initMetrics(app);
+const { stop: stopMetrics } = initMetrics(app);
+// stop() is synchronous (clears pushgateway timers), so it can run on 'exit';
+// 'once' guarantees a single call whatever path terminates the process.
+process.once('exit', () => stopMetrics());
 
 app.use(bodyParser.json({ limit: '8mb' }));
 app.use(bodyParser.urlencoded({ limit: '8mb', extended: false }));
@@ -73,7 +76,8 @@ async function start() {
 }
 
 start().catch(err => {
-  capture(err);
   console.error('Failed to start', err);
-  process.exit(1);
+  capture(err);
+  // Grace period so Sentry's async transport can deliver the event before exit.
+  setTimeout(() => process.exit(1), 2000);
 });

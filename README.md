@@ -23,6 +23,12 @@ HUB_URL=https://hub.snapshot.org # Use https://testnet.hub.snapshot.org for the 
 SERVICE_EVENTS=1
 ```
 
+- On a fresh database, seed the replay cursor once (the app refuses to start without it, to prevent an accidental full-history replay). This applies the migrations and sets `last_mci` (defaults to `0`, i.e. replay from the beginning — pass the current MCI from the hub to start from now):
+
+```shell
+yarn db:seed [mci]
+```
+
 - After each schema change (`src/schema.ts`), run `yarn db:generate` to generate the matching migration.
 
 - Comment line(s) on [this file](src/providers/index.ts) to disable provider(s).
