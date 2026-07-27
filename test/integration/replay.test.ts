@@ -1,9 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { closeDatabase, db, updateLastMci } from '../../src/db';
-import { getLastMci } from '../../src/replay';
+import { closeDatabase, db, getLastMci, updateLastMci } from '../../src/db';
 import { LAST_MCI_METADATA_ID, metadatas } from '../../src/schema';
-
-jest.mock('../../src/providers', () => ({ __esModule: true, default: [] }));
 
 describe('last_mci metadata', () => {
   const cleanup = () =>

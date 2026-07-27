@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import * as schema from './schema';
@@ -23,6 +24,18 @@ export async function runMigrations() {
   // transaction rolls back, restart no-ops via the __drizzle_migrations
   // ledger). Single instance today; if replicas >1, migrate in a deploy step.
   await migrate(db, { migrationsFolder: 'drizzle' });
+}
+
+export async function getLastMci() {
+  const result = await db.query.metadatas.findFirst({
+    where: eq(schema.metadatas.id, schema.LAST_MCI_METADATA_ID)
+  });
+  if (!result) {
+    throw new Error(
+      "Missing 'last_mci' row in _metadatas: run `yarn db:set-mci <mci>` before starting replay"
+    );
+  }
+  return parseInt(result.value);
 }
 
 export async function updateLastMci(mci: number) {

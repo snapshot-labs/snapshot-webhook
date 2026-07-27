@@ -1,27 +1,12 @@
 import { capture, Sentry } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
-import { eq } from 'drizzle-orm';
 import { EnumType } from 'json-to-graphql-query';
-import { db, updateLastMci } from './db';
+import { getLastMci, updateLastMci } from './db';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
-import { LAST_MCI_METADATA_ID, metadatas } from './schema';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 export let last_mci = 0;
-
-export async function getLastMci() {
-  const result = await db.query.metadatas.findFirst({
-    where: eq(metadatas.id, LAST_MCI_METADATA_ID)
-  });
-  if (!result) {
-    throw new Error(
-      "Missing 'last_mci' row in _metadatas: run `yarn db:set-mci <mci>` before starting replay"
-    );
-  }
-  last_mci = parseInt(result.value);
-  return last_mci;
-}
 
 async function getNextMessages(mci: number) {
   const query = {
@@ -95,6 +80,7 @@ export async function run() {
     try {
       // Check latest indexed MCI from db
       const lastMci = await getLastMci();
+      last_mci = lastMci;
       console.log('[replay] Last MCI', lastMci);
 
       // Load next messages after latest indexed MCI
