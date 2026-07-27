@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { EnumType } from 'json-to-graphql-query';
 import { db, updateLastMci } from './db';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
-import { LAST_MCI_ID, metadatas } from './schema';
+import { LAST_MCI_METADATA_ID, metadatas } from './schema';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
@@ -12,7 +12,7 @@ export let last_mci = 0;
 
 async function getLastMci() {
   const result = await db.query.metadatas.findFirst({
-    where: eq(metadatas.id, LAST_MCI_ID)
+    where: eq(metadatas.id, LAST_MCI_METADATA_ID)
   });
   if (!result) {
     throw new Error(

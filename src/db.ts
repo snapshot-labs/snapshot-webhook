@@ -29,7 +29,7 @@ export async function updateLastMci(mci: number) {
   const value = mci.toString();
   await db
     .insert(schema.metadatas)
-    .values({ id: schema.LAST_MCI_ID, value })
+    .values({ id: schema.LAST_MCI_METADATA_ID, value })
     .onConflictDoUpdate({ target: schema.metadatas.id, set: { value } });
 }
 
