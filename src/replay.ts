@@ -58,14 +58,10 @@ async function getNextMessages(mci: number) {
 }
 
 async function updateLastMci(mci: number) {
-  const value = mci.toString();
   await db
-    .insert(metadatas)
-    .values({ id: 'last_mci', value })
-    .onConflictDoUpdate({
-      target: metadatas.id,
-      set: { value }
-    });
+    .update(metadatas)
+    .set({ value: mci.toString() })
+    .where(eq(metadatas.id, 'last_mci'));
 }
 
 async function processMessages(messages: any[]) {

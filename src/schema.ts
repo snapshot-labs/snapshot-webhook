@@ -70,7 +70,11 @@ export const subscriptions = pgTable(
 );
 
 // XMTP provider
-export const xmtp = pgTable('xmtp', {
-  address: text().primaryKey(),
-  status: boolean().notNull()
-});
+export const xmtp = pgTable(
+  'xmtp',
+  {
+    address: text().primaryKey(),
+    status: boolean().notNull()
+  },
+  table => [index('xmtp_status_idx').on(table.status)]
+);

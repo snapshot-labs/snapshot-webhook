@@ -15,9 +15,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const { stop: stopMetrics } = initMetrics(app);
-// stop() is synchronous (clears pushgateway timers), so it can run on 'exit';
-// 'once' guarantees a single call whatever path terminates the process.
-process.once('exit', () => stopMetrics());
 
 app.use(bodyParser.json({ limit: '8mb' }));
 app.use(bodyParser.urlencoded({ limit: '8mb', extended: false }));
@@ -61,6 +58,7 @@ async function start() {
       console.log('Express server closed.');
 
       try {
+        stopMetrics();
         await closeDatabase();
         console.log('Graceful shutdown completed.');
         process.exit(0);
