@@ -1,6 +1,10 @@
 import 'dotenv/config';
 import './instrument';
-import { capture, fallbackLogger } from '@snapshot-labs/snapshot-sentry';
+import {
+  capture,
+  fallbackLogger,
+  Sentry
+} from '@snapshot-labs/snapshot-sentry';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
@@ -73,8 +77,11 @@ async function start() {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 }
 
-start().catch(err => {
+start().catch(async err => {
   console.error('Failed to start', err);
   capture(err);
+  // Drain Sentry's transport queue (max 2s) so the event is delivered
+  // before exit.
+  await Sentry.close(2000);
   process.exit(1);
 });

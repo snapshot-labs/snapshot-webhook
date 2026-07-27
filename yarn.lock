@@ -432,11 +432,6 @@
   dependencies:
     tslib "^2.4.0"
 
-"@ensdomains/eth-ens-namehash@^2.0.15":
-  version "2.0.15"
-  resolved "https://registry.yarnpkg.com/@ensdomains/eth-ens-namehash/-/eth-ens-namehash-2.0.15.tgz#5e5f2f24ba802aff8bc19edd822c9a11200cdf4a"
-  integrity sha512-JRDFP6+Hczb1E0/HhIg0PONgBYasfGfDheujmfxaZaAv/NAH4jE6Kf48WbqfRZdxt4IZI3jl3Ri7sZ1nP09lgw==
-
 "@esbuild-kit/core-utils@^3.3.2":
   version "3.3.2"
   resolved "https://registry.yarnpkg.com/@esbuild-kit/core-utils/-/core-utils-3.3.2.tgz#186b6598a5066f0413471d7c4d45828e399ba96c"
@@ -1821,28 +1816,27 @@
   resolved "https://registry.yarnpkg.com/@snapshot-labs/prettier-config/-/prettier-config-0.1.0.tgz#f0eafa4a3aed6a7fabaf88c016659f3343041071"
   integrity sha512-8MYAHuewlAdJs55f94qQtEs/WLFmjgYfuIVb1iJPa9gUZauHEXMzbVpKZfnkQsgpwwcXxq9hzg0S/OeOkgj3+w==
 
-"@snapshot-labs/snapshot-metrics@^1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@snapshot-labs/snapshot-metrics/-/snapshot-metrics-1.5.0.tgz#5b650e5d62fa9934c44771e688d6dfcaeb2090ee"
-  integrity sha512-wiWJWo72yZZ4Bq5hvFPCNCzWLJFpbZc86Wbr7UcR+CZqCVpQU6h++XGcekmeikygirhGiQkiFAnBw3y+fQ3AmQ==
+"@snapshot-labs/snapshot-metrics@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@snapshot-labs/snapshot-metrics/-/snapshot-metrics-2.0.0.tgz#7064279cb69037778644a854aaabc089eb0fb831"
+  integrity sha512-lxbHwDNCCuaWeh537c1anpPlurEEbxIkCEy3wOVJbNhmIZ0PjOuQYrguQ22J3be0Jjr5uJm5VuXkKH3Pj30HRg==
   dependencies:
     express-prom-bundle "^6.6.0"
     node-fetch "^2.7.0"
     prom-client "^14.2.0"
 
-"@snapshot-labs/snapshot-sentry@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@snapshot-labs/snapshot-sentry/-/snapshot-sentry-3.0.1.tgz#e9c6e43b1a592e02c6d41fc769e0ca4e34dda9b7"
-  integrity sha512-SURO5JZA5k64Qxe5iUVUOjpxNyRcdwj+sP0UrxlMLXXqtf4yRAm91fFKHnn0AhO1F757ldrt3faZVSftcCRASQ==
+"@snapshot-labs/snapshot-sentry@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@snapshot-labs/snapshot-sentry/-/snapshot-sentry-3.1.0.tgz#9e9c306ea6e32025d6c902fbe45e7e882dbde2a3"
+  integrity sha512-MIIQyW0GZisXa93JvDWFdMO0Ycu9JXBH0P3ca0qJ7HhbxfNrzqLOr1dzhKdhXT0e+sTWO7UCxdeQTGF3dV0l7w==
   dependencies:
     "@sentry/node" "^10.52.0"
 
-"@snapshot-labs/snapshot.js@^0.14.24":
-  version "0.14.24"
-  resolved "https://registry.yarnpkg.com/@snapshot-labs/snapshot.js/-/snapshot.js-0.14.24.tgz#48da404ae28d3b0897de1786514f2f5e6acc32a9"
-  integrity sha512-Vhz3SmUPNasrW9OICXh2Y3v0hEmQJ4dWJxQsQDIlE8lbPoefngcWqNbv84xZ8r/bbt9hx8MHLidz2UrxdBuEMA==
+"@snapshot-labs/snapshot.js@^0.14.27":
+  version "0.14.27"
+  resolved "https://registry.yarnpkg.com/@snapshot-labs/snapshot.js/-/snapshot.js-0.14.27.tgz#8caa2c4a6b422ee75836b133fc86cc81b16a6d30"
+  integrity sha512-6cQot9NNpBiQnc0rqG8ECXyjglRtsA77KAtW3XvOa5joJOiUqUEmkgQzk8yc6FQ1tFf+hojbkDQFLQl5AGijTQ==
   dependencies:
-    "@ensdomains/eth-ens-namehash" "^2.0.15"
     "@ethersproject/abi" "^5.6.4"
     "@ethersproject/address" "^5.6.1"
     "@ethersproject/bignumber" "^5.7.0"
