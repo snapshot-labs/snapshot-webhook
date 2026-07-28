@@ -53,6 +53,7 @@ export async function getProposal(
       title: true,
       body: true,
       choices: true,
+      created: true,
       start: true,
       end: true,
       link: true,
