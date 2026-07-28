@@ -1,4 +1,4 @@
-import { capture } from '@snapshot-labs/snapshot-sentry';
+import { capture, Sentry } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
@@ -101,7 +101,9 @@ export async function run() {
       }
       await snapshot.utils.sleep(10e3);
     } catch (err) {
+      console.error(err);
       capture(err);
+      await Sentry.close(2000);
       // CRASH THE ENTIRE SERVER
       process.exit(1);
     }
