@@ -40,14 +40,15 @@ new client.Gauge({
       (await db.queryAsync(`SELECT count(*) as count FROM subscriptions`))[0]
         .count as any
     );
-    this.set(
-      { type: 'xmtp' },
-      (
-        await db.queryAsync(
-          `SELECT count(*) as count FROM xmtp WHERE status = 1`
-        )
-      )[0].count as any
-    );
+    // XMTP provider is disabled in providers/index.ts
+    // this.set(
+    //   { type: 'xmtp' },
+    //   (
+    //     await db.queryAsync(
+    //       `SELECT count(*) as count FROM xmtp WHERE status = 1`
+    //     )
+    //   )[0].count as any
+    // );
   }
 });
 
