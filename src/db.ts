@@ -1,3 +1,4 @@
+import { capture } from '@snapshot-labs/snapshot-sentry';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -12,8 +13,9 @@ export const LAST_MCI_METADATA_ID = 'last_mci';
 export const db = drizzle({
   connection: {
     connectionString: process.env.DATABASE_URL,
-    connectionTimeoutMillis: 10e3,
+    connectionTimeoutMillis: 60e3,
     query_timeout: 60e3,
+    statement_timeout: 60e3,
     // above the 10-15s poll cadence so the pollers' connection stays warm
     idleTimeoutMillis: 60e3,
     keepAlive: true
@@ -21,10 +23,15 @@ export const db = drizzle({
   schema
 });
 
+// Without a listener, an error on an idle pooled client (e.g. a PG failover) is an
+// unhandled EventEmitter 'error' and crashes the process.
+db.$client.on('error', err => capture(err));
+
 export async function runMigrations() {
-  // No advisory lock — replicas racing this DDL self-heal (loser's
-  // transaction rolls back, restart no-ops via the __drizzle_migrations
-  // ledger). Single instance today; if replicas >1, migrate in a deploy step.
+  // No advisory lock — replicas racing this DDL self-heal (loser fails on the
+  // non-atomic CREATE SCHEMA IF NOT EXISTS and restarts into a no-op via the
+  // __drizzle_migrations ledger). Single instance today; if replicas >1,
+  // migrate in a deploy step.
   await migrate(db, { migrationsFolder: 'drizzle' });
 }
 
@@ -45,7 +52,7 @@ export async function getLastMci() {
   return parseInt(result.value, 10);
 }
 
-export async function updateLastMci(mci: number) {
+export async function updateLastMci(mci: number | string) {
   const value = mci.toString();
   await db
     .insert(schema.metadatas)

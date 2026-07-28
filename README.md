@@ -29,6 +29,8 @@ SERVICE_EVENTS=1
 yarn db:set-mci <mci>
 ```
 
+- Fresh install: set `<mci>` to the hub's current MCI — query `{ messages(first: 1, orderBy: "mci", orderDirection: desc) { mci } }` on `<HUB_URL>/graphql`. Using `0` replays the entire hub history.
+
 - After each schema change (`src/schema.ts`), run `yarn db:generate` to generate the matching migration.
 
 - Comment line(s) on [this file](src/providers/index.ts) to disable provider(s).
@@ -38,6 +40,10 @@ yarn db:set-mci <mci>
 ```shell
 yarn dev
 ```
+
+### Testing
+
+- Run `yarn test`. Requires a local PostgreSQL database named `snapshot_webhook_test` (connection defaults in `test/.env.test`) — migrations are applied automatically before the suite runs.
 
 ### Add a provider
 

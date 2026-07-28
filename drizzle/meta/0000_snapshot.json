@@ -1,5 +1,5 @@
 {
-  "id": "25038cc8-3141-4bac-ae0a-3bae604ca1aa",
+  "id": "85989c0d-268d-4752-ba6e-9e98968f368a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -279,23 +279,7 @@
           "notNull": true
         }
       },
-      "indexes": {
-        "xmtp_status_idx": {
-          "name": "xmtp_status_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
