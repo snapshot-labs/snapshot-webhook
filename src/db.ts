@@ -37,7 +37,12 @@ export async function getLastMci() {
       "Missing 'last_mci' row in _metadatas: run `yarn db:set-mci <mci>` before starting replay"
     );
   }
-  return parseInt(result.value);
+  if (!/^\d+$/.test(result.value)) {
+    throw new Error(
+      `Invalid 'last_mci' value in _metadatas: '${result.value}' is not a non-negative integer`
+    );
+  }
+  return parseInt(result.value, 10);
 }
 
 export async function updateLastMci(mci: number) {

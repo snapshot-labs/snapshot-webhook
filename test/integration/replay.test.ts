@@ -25,6 +25,16 @@ describe('last_mci metadata', () => {
     await expect(getLastMci()).rejects.toThrow('yarn db:set-mci');
   });
 
+  it('getLastMci throws when the stored value is not a non-negative integer', async () => {
+    await db
+      .insert(metadatas)
+      .values({ id: LAST_MCI_METADATA_ID, value: '12abc' });
+
+    await expect(getLastMci()).rejects.toThrow("Invalid 'last_mci' value");
+
+    await cleanup();
+  });
+
   it('updateLastMci bootstraps the row when absent', async () => {
     await updateLastMci(123);
 
