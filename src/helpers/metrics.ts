@@ -19,6 +19,9 @@ new client.Gauge({
     const result = await db.queryAsync(
       `SELECT count(*) as count, event FROM events GROUP BY event`
     );
+    // Drop series for event types no longer present, otherwise a type that
+    // disappears from the table keeps reporting its last value forever.
+    this.reset();
     result.forEach(async function callback(this: any, data) {
       this.set({ type: data.event }, data.count);
     }, this);
