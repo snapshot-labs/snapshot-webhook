@@ -45,9 +45,20 @@ export async function sendEvent(event, to, method = 'POST') {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, _proposal, _subscribersAddresses) {
-  const subscribers = await db.queryAsync(
-    'SELECT url, method FROM subscribers WHERE active = 1 AND space IN (?)',
+  // The indexed SQL predicate narrows 'every active row' down to a small
+  // candidate set, but it matches under the column collation
+  // (utf8mb4_general_ci: case-insensitive, accent-insensitive, PAD SPACE), so
+  // it can also return rows whose space is not byte-identical to the event's
+  // -- 'FOO.ETH', 'fóo.eth' and 'foo.eth ' all match an event for 'foo.eth'.
+  // Re-apply the exact JS comparison to the candidates so the set we actually
+  // send to stays identical to a plain equality filter. Collating the column
+  // in SQL instead would defeat the index this query relies on.
+  const candidates = await db.queryAsync(
+    'SELECT space, url, method FROM subscribers WHERE active = 1 AND space IN (?)',
     [[event.space, '*']]
+  );
+  const subscribers = candidates.filter(subscriber =>
+    [event.space, '*'].includes(subscriber.space)
   );
   console.log('[webhook] subscribers for', event.space, subscribers.length);
 
