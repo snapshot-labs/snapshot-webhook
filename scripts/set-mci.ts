@@ -5,9 +5,11 @@ import { closeDatabase, runMigrations, updateLastMci } from '../src/db';
 
 async function setMci() {
   const mci = process.argv[2];
-  if (!mci || !/^\d+$/.test(mci)) {
+  // Hub's messages.where.mci_gt is a GraphQL Int: anything above 2^31-1 is
+  // rejected by the API, leaving replay failing every cycle instead of idling.
+  if (!mci || !/^\d+$/.test(mci) || Number(mci) > 2147483647) {
     console.error(
-      `Usage: yarn db:set-mci <mci> — expected a non-negative integer, got '${
+      `Usage: yarn db:set-mci <mci> — expected an integer between 0 and 2147483647, got '${
         mci ?? ''
       }'`
     );
