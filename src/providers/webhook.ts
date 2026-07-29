@@ -45,15 +45,22 @@ export async function sendEvent(event, to, method = 'POST') {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, _proposal, _subscribersAddresses) {
-  const subscribers = await db.queryAsync(
-    'SELECT * FROM subscribers WHERE active = 1'
+  // utf8mb4_general_ci makes the SQL predicate case-, accent- and
+  // trailing-space-insensitive, so the JS filter keeps the match exact.
+  // Collating the column in SQL instead would drop the index.
+  const candidates = await db.queryAsync(
+    'SELECT space, url, method FROM subscribers WHERE active = 1 AND space IN (?)',
+    [[event.space, '*']]
   );
-  console.log('[webhook] subscribers', subscribers.length);
+  const subscribers = candidates.filter(subscriber =>
+    [event.space, '*'].includes(subscriber.space)
+  );
+  console.log('[webhook] subscribers for', event.space, subscribers.length);
 
   Promise.allSettled(
-    subscribers
-      .filter(subscriber => [event.space, '*'].includes(subscriber.space))
-      .map(subscriber => sendEvent(event, subscriber.url, subscriber.method))
+    subscribers.map(subscriber =>
+      sendEvent(event, subscriber.url, subscriber.method)
+    )
   )
     .then(() => console.log('[webhook] process event done'))
     .catch(e => capture(e));
