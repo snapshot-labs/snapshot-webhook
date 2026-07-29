@@ -35,10 +35,7 @@ const EVENT = {
   expire: 1647343155
 };
 
-// Lets the fire-and-forget Promise.allSettled inside send() settle.
 const flush = () => new Promise(resolve => setImmediate(resolve));
-
-// Returns the URLs that actually received a webhook.
 const deliveredUrls = () => mockFetch.mock.calls.map(call => call[0]).sort();
 
 beforeEach(() => {
@@ -75,11 +72,6 @@ describe('webhook provider', () => {
       ]);
     });
 
-    // The SQL predicate matches under the column collation
-    // (utf8mb4_general_ci), which is case-insensitive, accent-insensitive and
-    // PAD SPACE. Each of the rows below is really returned by
-    // `space IN ('foo.eth', '*')` but is not byte-identical to the event's
-    // space, so none of them may receive the webhook.
     it.each([
       ['an upper-case variant', 'FOO.ETH'],
       ['a mixed-case variant', 'Foo.Eth'],

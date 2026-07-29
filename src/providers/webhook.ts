@@ -45,14 +45,9 @@ export async function sendEvent(event, to, method = 'POST') {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function send(event, _proposal, _subscribersAddresses) {
-  // The indexed SQL predicate narrows 'every active row' down to a small
-  // candidate set, but it matches under the column collation
-  // (utf8mb4_general_ci: case-insensitive, accent-insensitive, PAD SPACE), so
-  // it can also return rows whose space is not byte-identical to the event's
-  // -- 'FOO.ETH', 'fóo.eth' and 'foo.eth ' all match an event for 'foo.eth'.
-  // Re-apply the exact JS comparison to the candidates so the set we actually
-  // send to stays identical to a plain equality filter. Collating the column
-  // in SQL instead would defeat the index this query relies on.
+  // utf8mb4_general_ci makes the SQL predicate case-, accent- and
+  // trailing-space-insensitive, so the JS filter keeps the match exact.
+  // Collating the column in SQL instead would drop the index.
   const candidates = await db.queryAsync(
     'SELECT space, url, method FROM subscribers WHERE active = 1 AND space IN (?)',
     [[event.space, '*']]
