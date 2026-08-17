@@ -28,10 +28,10 @@ export const db = drizzle({
 db.$client.on('error', err => capture(err));
 
 export async function runMigrations() {
-  // No advisory lock — replicas racing this DDL self-heal (loser fails on the
-  // non-atomic CREATE SCHEMA IF NOT EXISTS and restarts into a no-op via the
-  // __drizzle_migrations ledger). Single instance today; if replicas >1,
-  // migrate in a deploy step.
+  // No advisory lock — replicas racing this DDL self-heal: the loser errors on
+  // whichever CREATE it loses (schema, ledger, or a table inside the migration
+  // txn), exits, and restarts into a no-op via the __drizzle_migrations ledger.
+  // Single instance today; if replicas >1, migrate in a deploy step.
   await migrate(db, { migrationsFolder: 'drizzle' });
 }
 
