@@ -62,7 +62,7 @@ export async function send(event, _proposal, _subscribersAddresses) {
     activeSubscribers.length
   );
 
-  Promise.allSettled(
+  await Promise.allSettled(
     activeSubscribers.map(subscriber =>
       sendEvent(event, subscriber.url, subscriber.method)
     )
