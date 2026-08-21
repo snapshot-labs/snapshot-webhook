@@ -1,13 +1,15 @@
 import init, { client } from '@snapshot-labs/snapshot-metrics';
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import { count } from 'drizzle-orm';
 import { Express } from 'express';
-import db from './mysql';
+import { db } from '../db';
+import { events, subscribers, subscriptions } from '../schema';
 
 export default function initMetrics(app: Express) {
-  init(app, {
+  return init(app, {
     whitelistedPath: [/^\/$/, /^\/api\/test$/],
     errorHandler: capture,
-    db
+    db: db.$client
   });
 }
 
@@ -16,15 +18,17 @@ new client.Gauge({
   help: 'Number of events per type',
   labelNames: ['type'],
   async collect() {
-    const result = await db.queryAsync(
-      `SELECT count(*) as count, event FROM events GROUP BY event`
-    );
     // Drop series for event types no longer present, otherwise a type that
     // disappears from the table keeps reporting its last value forever.
     this.reset();
-    result.forEach(async function callback(this: any, data) {
-      this.set({ type: data.event }, data.count);
-    }, this);
+    const results = await db
+      .select({ event: events.event, count: count() })
+      .from(events)
+      .groupBy(events.event);
+
+    results.forEach(result => {
+      this.set({ type: result.event }, result.count);
+    });
   }
 });
 
@@ -33,16 +37,12 @@ new client.Gauge({
   help: 'Number of subscribers per type',
   labelNames: ['type'],
   async collect() {
-    this.set(
-      { type: 'http' },
-      (await db.queryAsync(`SELECT count(*) as count FROM subscribers`))[0]
-        .count as any
-    );
-    this.set(
-      { type: 'discord' },
-      (await db.queryAsync(`SELECT count(*) as count FROM subscriptions`))[0]
-        .count as any
-    );
+    const [http, discord] = await Promise.all([
+      db.$count(subscribers),
+      db.$count(subscriptions)
+    ]);
+    this.set({ type: 'http' }, http);
+    this.set({ type: 'discord' }, discord);
     // No xmtp count: the XMTP provider is disabled in providers/index.ts, so
     // its subscriber table is neither read nor written.
   }

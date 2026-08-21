@@ -1,19 +1,12 @@
 import { capture, Sentry } from '@snapshot-labs/snapshot-sentry';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { EnumType } from 'json-to-graphql-query';
+import { getLastMci, updateLastMci } from './db';
 import { handleCreatedEvent, handleDeletedEvent } from './events';
-import db from './helpers/mysql';
 
 const hubURL = process.env.HUB_URL || 'https://hub.snapshot.org';
 
 export let last_mci = 0;
-
-async function getLastMci() {
-  const query = 'SELECT value FROM _metadatas WHERE id = ? LIMIT 1';
-  const results = await db.queryAsync(query, ['last_mci']);
-  last_mci = parseInt(results[0].value);
-  return last_mci;
-}
 
 async function getNextMessages(mci: number) {
   const query = {
@@ -47,11 +40,6 @@ async function getNextMessages(mci: number) {
     console.log('Failed to load messages', err);
     return;
   }
-}
-
-async function updateLastMci(mci: number) {
-  const query = 'UPDATE _metadatas SET value = ? WHERE id = ? LIMIT 1';
-  await db.queryAsync(query, [mci.toString(), 'last_mci']);
 }
 
 async function processMessages(messages: any[]) {
@@ -91,11 +79,11 @@ export async function run() {
   while (true) {
     try {
       // Check latest indexed MCI from db
-      const lastMci = await getLastMci();
-      console.log('[replay] Last MCI', lastMci);
+      last_mci = await getLastMci();
+      console.log('[replay] Last MCI', last_mci);
 
       // Load next messages after latest indexed MCI
-      const messages = await getNextMessages(lastMci);
+      const messages = await getNextMessages(last_mci);
       if (messages && messages.length > 0) {
         await processMessages(messages);
       }

@@ -1,13 +1,15 @@
 import { Wallet } from '@ethersproject/wallet';
 import { capture } from '@snapshot-labs/snapshot-sentry';
 import { ApiUrls, Client } from '@xmtp/xmtp-js';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
 import {
   outgoingMessages,
   timeOutgoingRequest,
   xmtpIncomingMessages
 } from '../helpers/metrics';
-import db from '../helpers/mysql';
 import { getSpace } from '../helpers/utils';
+import { xmtp } from '../schema';
 
 const XMTP_PK = process.env.XMTP_PK || Wallet.createRandom().privateKey;
 const XMTP_ENV = (process.env.XMTP_ENV || 'dev') as keyof typeof ApiUrls;
@@ -17,6 +19,12 @@ let client: Client | undefined = undefined;
 let ready = false;
 
 let disabled: string[] = [];
+
+const setXmtpStatus = (address: string, status: boolean) =>
+  db
+    .insert(xmtp)
+    .values({ address, status })
+    .onConflictDoUpdate({ target: xmtp.address, set: { status } });
 
 const infoMsg = `👋 Gm,
 
@@ -34,9 +42,10 @@ if (XMTP_PK) {
     await client.publishUserContact();
     console.log(`[xmtp] listening on ${c.address}`);
 
-    const rows = await db.queryAsync(
-      'SELECT address FROM xmtp WHERE status = 0'
-    );
+    const rows = await db.query.xmtp.findMany({
+      columns: { address: true },
+      where: eq(xmtp.status, false)
+    });
 
     disabled = rows.map(row => row.address);
     ready = true;
@@ -52,11 +61,7 @@ if (XMTP_PK) {
         const address = message.senderAddress.toLowerCase();
 
         if (message.content.toLowerCase() === 'stop') {
-          await db.queryAsync(
-            `INSERT INTO xmtp (address, status) VALUES(?, ?)
-            ON DUPLICATE KEY UPDATE address = ?, status = ?;`,
-            [address, 0, address, 0]
-          );
+          await setXmtpStatus(address, false);
 
           disabled.push(address);
 
@@ -68,11 +73,7 @@ if (XMTP_PK) {
         }
 
         if (message.content.toLowerCase() === 'start') {
-          await db.queryAsync(
-            `INSERT INTO xmtp (address, status) VALUES(?, ?)
-            ON DUPLICATE KEY UPDATE address = ?, status = ?;`,
-            [address, 1, address, 1]
-          );
+          await setXmtpStatus(address, true);
 
           disabled = disabled.filter(a => a !== address);
 

@@ -11,3 +11,8 @@ jobs:
     secrets: inherit
     with:
       target: ${{ matrix.target }}
+      postgres_database_name: snapshot_webhook_test
+      postgres_schema_path: ''
+      # Shared action provisions postgres with password "postgres"; local
+      # .env.test uses "password" to match the sx-monorepo instance.
+      dotenv_vars: DATABASE_URL=postgres://postgres:postgres@localhost:5432/snapshot_webhook_test
