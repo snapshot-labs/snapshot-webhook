@@ -156,8 +156,6 @@ describe('sendEvent()', () => {
   ])(
     'sends a token and secret matching the Authentication header, for %s',
     async (_label, salt) => {
-      mockFetch.mockClear();
-      mockFetch.mockResolvedValue({ status: 200 });
       const sendEvent = await loadSendEvent(salt);
 
       const event: any = { id: 'proposal/0xabc' };
