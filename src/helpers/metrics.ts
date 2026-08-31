@@ -5,29 +5,50 @@ import { Express } from 'express';
 import { db } from '../db';
 import { events, subscribers, subscriptions } from '../schema';
 
+const activeDatabaseCollections = new Set<Promise<void>>();
+
+async function trackDatabaseCollection(collect: () => Promise<void>) {
+  const running = collect();
+  activeDatabaseCollections.add(running);
+  try {
+    await running;
+  } finally {
+    activeDatabaseCollections.delete(running);
+  }
+}
+
 export default function initMetrics(app: Express) {
-  return init(app, {
+  const metrics = init(app, {
     whitelistedPath: [/^\/$/, /^\/api\/test$/],
     errorHandler: capture,
     db: db.$client
   });
+
+  return {
+    async stop() {
+      metrics.stop();
+      await Promise.allSettled(activeDatabaseCollections);
+    }
+  };
 }
 
 new client.Gauge({
   name: 'events_per_type_count',
   help: 'Number of events per type',
   labelNames: ['type'],
-  async collect() {
-    // Drop series for event types no longer present, otherwise a type that
-    // disappears from the table keeps reporting its last value forever.
-    this.reset();
-    const results = await db
-      .select({ event: events.event, count: count() })
-      .from(events)
-      .groupBy(events.event);
+  collect() {
+    return trackDatabaseCollection(async () => {
+      // Drop series for event types no longer present, otherwise a type that
+      // disappears from the table keeps reporting its last value forever.
+      this.reset();
+      const results = await db
+        .select({ event: events.event, count: count() })
+        .from(events)
+        .groupBy(events.event);
 
-    results.forEach(result => {
-      this.set({ type: result.event }, result.count);
+      results.forEach(result => {
+        this.set({ type: result.event }, result.count);
+      });
     });
   }
 });
@@ -36,15 +57,17 @@ new client.Gauge({
   name: 'subscribers_per_type_count',
   help: 'Number of subscribers per type',
   labelNames: ['type'],
-  async collect() {
-    const [http, discord] = await Promise.all([
-      db.$count(subscribers),
-      db.$count(subscriptions)
-    ]);
-    this.set({ type: 'http' }, http);
-    this.set({ type: 'discord' }, discord);
-    // No xmtp count: the XMTP provider is disabled in providers/index.ts, so
-    // its subscriber table is neither read nor written.
+  collect() {
+    return trackDatabaseCollection(async () => {
+      const [http, discord] = await Promise.all([
+        db.$count(subscribers),
+        db.$count(subscriptions)
+      ]);
+      this.set({ type: 'http' }, http);
+      this.set({ type: 'discord' }, discord);
+      // No xmtp count: the XMTP provider is disabled in providers/index.ts, so
+      // its subscriber table is neither read nor written.
+    });
   }
 });
 
