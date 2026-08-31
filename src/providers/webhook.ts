@@ -7,12 +7,12 @@ import { sha256 } from '../helpers/utils';
 import { subscribers } from '../schema';
 
 const HTTP_WEBHOOK_TIMEOUT = 15000;
-const serviceEventsSalt = parseInt(process.env.SERVICE_EVENTS_SALT || '12345');
+const serviceEventsSalt = process.env.SERVICE_EVENTS_SALT || '12345';
 
 export async function sendEvent(event, to, method = 'POST') {
-  event.token = sha256(`${to}${serviceEventsSalt}`);
-  event.secret = sha256(`${to}${serviceEventsSalt}`);
-  const headerSecret = sha256(`${to}${process.env.SERVICE_EVENTS_SALT}`);
+  const secret = sha256(`${to}${serviceEventsSalt}`);
+  event.token = secret;
+  event.secret = secret;
   const url = to.replace('[PROPOSAL-ID]', event.id.split('/')[1]);
   const end = timeOutgoingRequest.startTimer({ method, provider: 'http' });
   let res;
@@ -22,7 +22,7 @@ export async function sendEvent(event, to, method = 'POST') {
       method,
       headers: {
         'Content-Type': 'application/json',
-        Authentication: headerSecret
+        Authentication: secret
       },
       timeout: HTTP_WEBHOOK_TIMEOUT,
       ...(method === 'POST' ? { body: JSON.stringify(event) } : {})
