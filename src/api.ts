@@ -19,7 +19,11 @@ router.get('/test', async (req, res) => {
 
     return res.json({ url, success: true });
   } catch (err: any) {
-    return res.json({ url, error: err });
+    // Unusable input (malformed URL, non-HTTP scheme, no host) is rejected
+    // with a TypeError before any request goes out; anything else is a
+    // failed delivery to the caller's URL.
+    const status = err instanceof TypeError ? 400 : 500;
+    return res.status(status).json({ url, error: err });
   }
 });
 

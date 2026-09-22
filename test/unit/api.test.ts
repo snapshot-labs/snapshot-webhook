@@ -11,13 +11,15 @@ const mockSendEvent = sendEvent as jest.Mock;
 let server: http.Server;
 
 const get = (path: string) =>
-  new Promise<any>((resolve, reject) => {
+  new Promise<{ status: number; body: any }>((resolve, reject) => {
     const { port } = server.address() as any;
     http
       .get(`http://127.0.0.1:${port}${path}`, res => {
         let body = '';
         res.on('data', chunk => (body += chunk));
-        res.on('end', () => resolve(JSON.parse(body)));
+        res.on('end', () =>
+          resolve({ status: res.statusCode as number, body: JSON.parse(body) })
+        );
       })
       .on('error', reject);
   });
@@ -34,8 +36,11 @@ describe('GET /api/test', () => {
   it('reports success when the webhook is delivered', async () => {
     mockSendEvent.mockResolvedValueOnce(true);
 
-    const body = await get('/api/test?url=https%3A%2F%2Fexample.com');
+    const { status, body } = await get(
+      '/api/test?url=https%3A%2F%2Fexample.com'
+    );
 
+    expect(status).toBe(200);
     expect(body).toEqual({ url: 'https://example.com', success: true });
     expect(mockSendEvent).toHaveBeenCalledWith(
       expect.anything(),
@@ -46,10 +51,12 @@ describe('GET /api/test', () => {
   });
 
   // Every failure here is caused by the caller's URL, never by the service,
-  // so none of them belong in Sentry.
+  // so none of them belong in Sentry. Unusable input is a 400, a failed
+  // delivery to a usable URL is a 500.
   it.each([
-    ['invalid url', 'not a url', null],
+    [400, 'invalid url', 'not a url', null],
     [
+      500,
       'unreachable host',
       'http://127.0.0.1:1',
       Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:1'), {
@@ -58,26 +65,35 @@ describe('GET /api/test', () => {
       })
     ],
     [
+      400,
       'non-http scheme',
       'ftp://example.com',
       new TypeError('Only HTTP(S) protocols are supported')
     ],
     [
+      400,
       'url without hostname',
       'file:///tmp/x',
       new TypeError('Only absolute URLs are supported')
     ],
     [
+      500,
       'timeout',
       'https://example.com',
       new Error('Request timeout after 15000ms')
     ]
-  ])('does not report a caller %s to sentry', async (_, url, err) => {
-    if (err) mockSendEvent.mockRejectedValueOnce(err);
+  ])(
+    'returns %i for a caller %s without reporting to sentry',
+    async (expected, _, url, err) => {
+      if (err) mockSendEvent.mockRejectedValueOnce(err);
 
-    const body = await get(`/api/test?url=${encodeURIComponent(url)}`);
+      const { status, body } = await get(
+        `/api/test?url=${encodeURIComponent(url)}`
+      );
 
-    expect(body).toEqual({ url, error: expect.anything() });
-    expect(capture).not.toHaveBeenCalled();
-  });
+      expect(status).toBe(expected);
+      expect(body).toEqual({ url, error: expect.anything() });
+      expect(capture).not.toHaveBeenCalled();
+    }
+  );
 });
