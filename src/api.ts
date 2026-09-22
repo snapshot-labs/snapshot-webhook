@@ -1,4 +1,3 @@
-import { capture } from '@snapshot-labs/snapshot-sentry';
 import express from 'express';
 import { sendEvent } from './providers/webhook';
 
@@ -20,10 +19,6 @@ router.get('/test', async (req, res) => {
 
     return res.json({ url, success: true });
   } catch (err: any) {
-    if (err.code !== 'ERR_INVALID_URL' && err.name !== 'FetchError') {
-      capture(err);
-    }
-
     return res.json({ url, error: err });
   }
 });
