@@ -50,9 +50,6 @@ describe('GET /api/test', () => {
     expect(capture).not.toHaveBeenCalled();
   });
 
-  // Every failure here is caused by the caller's URL, never by the service,
-  // so none of them belong in Sentry. Unusable input is a 400, a failed
-  // delivery to a usable URL is a 500.
   it.each([
     [400, 'invalid url', 'not a url', null],
     [
