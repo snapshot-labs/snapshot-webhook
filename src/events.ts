@@ -8,7 +8,10 @@ import { events } from './schema';
 
 const DELAY = 10;
 const INTERVAL = 15;
-const SERVICE_EVENTS = parseInt(process.env.SERVICE_EVENTS || '0');
+
+let timer: NodeJS.Timeout | undefined;
+let running: Promise<void> | undefined;
+let stopped = false;
 
 export async function handleCreatedEvent(event) {
   const { space, id } = event;
@@ -70,6 +73,8 @@ async function processEvents() {
   console.log('[events] Process event start', ts, expiredEvents.length);
 
   for (const event of expiredEvents) {
+    if (stopped) break;
+
     const proposalId = event.id.replace('proposal/', '');
     let proposal;
     if (event.event === 'proposal/deleted') {
@@ -79,9 +84,9 @@ async function processEvents() {
     }
     if (proposal) {
       const subscribers = await getSubscribers(event.space);
-      providers.forEach(provider => {
-        provider(event, proposal, subscribers);
-      });
+      await Promise.allSettled(
+        providers.map(provider => provider(event, proposal, subscribers))
+      );
     } else {
       console.log(`[events] Proposal ${proposalId} not found`);
     }
@@ -99,20 +104,23 @@ async function processEvents() {
 }
 
 async function run() {
-  while (true) {
-    try {
-      await processEvents();
-    } catch (err) {
-      capture(err);
-      console.log('[events] Failed to process', err);
-    } finally {
-      await snapshot.utils.sleep(INTERVAL * 1e3);
-    }
-  }
+  running = processEvents().catch(err => {
+    capture(err);
+    console.log('[events] Failed to process', err);
+  });
+  await running;
+
+  if (!stopped) timer = setTimeout(run, INTERVAL * 1e3);
 }
 
 export function start() {
-  if (SERVICE_EVENTS) {
-    setTimeout(() => run(), INTERVAL * 1e3);
-  }
+  stopped = false;
+  timer = setTimeout(run, INTERVAL * 1e3);
+}
+
+export async function stop() {
+  stopped = true;
+  clearTimeout(timer);
+  await running;
+  console.log('[events] Loop stopped');
 }

@@ -33,6 +33,16 @@ const sweeperOption = { interval: 300, filter: () => null };
 // const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
 
 let subs = {};
+let stopping = false;
+const activeTasks = new Set<Promise<unknown>>();
+
+function track(task: () => Promise<unknown>) {
+  if (stopping) return;
+
+  const running = Promise.resolve().then(task).catch(capture);
+  activeTasks.add(running);
+  void running.finally(() => activeTasks.delete(running));
+}
 
 const client: any = new Client({
   intents: [
@@ -152,7 +162,9 @@ const PROPOSAL_EVENTS = [
   }
 ];
 
-(async () => {
+export async function start() {
+  stopping = false;
+
   try {
     console.log('[discord] started refreshing application (/) commands.');
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
@@ -160,9 +172,16 @@ const PROPOSAL_EVENTS = [
   } catch (err) {
     capture(err);
   }
-})();
 
-client.login(token);
+  await client.login(token);
+}
+
+export async function stop() {
+  stopping = true;
+  await Promise.allSettled(activeTasks);
+  await client.destroy();
+  console.log('[discord] client destroyed.');
+}
 
 export const setActivity = (message, url?) => {
   try {
@@ -208,12 +227,14 @@ const checkPermissions = async (channelId, botId) => {
   }
 };
 
-client.on('ready', async () => {
-  console.log(`[discord] bot logged as "${client.user.tag}"`);
-  setActivity('!');
+client.on('ready', () =>
+  track(async () => {
+    console.log(`[discord] bot logged as "${client.user.tag}"`);
+    setActivity('!');
 
-  await loadSubscriptions();
-});
+    await loadSubscriptions();
+  })
+);
 
 async function getEventsConfigured(
   guildId: string
@@ -265,34 +286,36 @@ async function snapshotSelectEventsCommandHandler(interaction) {
     time: 3_600_000
   });
 
-  collector.on('collect', async i => {
-    const selection = i.values;
-    try {
-      const result = await db
-        .update(subscriptions)
-        .set({ events: selection })
-        .where(eq(subscriptions.guild, i.guildId));
-      if (result.rowCount === 0) {
-        return i.update({
-          content: `No subscriptions found on this server. Please add a subscription first.`,
+  collector.on('collect', i =>
+    track(async () => {
+      const selection = i.values;
+      try {
+        const result = await db
+          .update(subscriptions)
+          .set({ events: selection })
+          .where(eq(subscriptions.guild, i.guildId));
+        if (result.rowCount === 0) {
+          return i.update({
+            content: `No subscriptions found on this server. Please add a subscription first.`,
+            components: [],
+            ephemeral: true
+          });
+        }
+        await loadSubscriptions();
+      } catch (err) {
+        capture(err);
+      }
+      await i
+        .update({
+          content: `Success! You will be notified for events ${selection
+            .map(a => `\`${a}\``)
+            .join(', ')}`,
           components: [],
           ephemeral: true
-        });
-      }
-      await loadSubscriptions();
-    } catch (err) {
-      capture(err);
-    }
-    await i
-      .update({
-        content: `Success! You will be notified for events ${selection
-          .map(a => `\`${a}\``)
-          .join(', ')}`,
-        components: [],
-        ephemeral: true
-      })
-      .catch(capture);
-  });
+        })
+        .catch(capture);
+    })
+  );
 }
 
 async function snapshotHelpCommandHandler(interaction) {
@@ -462,7 +485,7 @@ async function snapshotCommandHandler(interaction, commandType) {
   }
 }
 
-client.on('interactionCreate', async interaction => {
+async function handleInteraction(interaction) {
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'ping') {
@@ -471,15 +494,19 @@ client.on('interactionCreate', async interaction => {
       ephemeral: true
     });
   } else if (interaction.commandName === 'help') {
-    snapshotHelpCommandHandler(interaction);
+    await snapshotHelpCommandHandler(interaction);
   } else if (interaction.commandName === 'add') {
-    snapshotCommandHandler(interaction, 'add');
+    await snapshotCommandHandler(interaction, 'add');
   } else if (interaction.commandName === 'remove') {
-    snapshotCommandHandler(interaction, 'remove');
+    await snapshotCommandHandler(interaction, 'remove');
   } else if (interaction.commandName === 'select-events') {
-    snapshotSelectEventsCommandHandler(interaction);
+    await snapshotSelectEventsCommandHandler(interaction);
   }
-});
+}
+
+client.on('interactionCreate', interaction =>
+  track(() => handleInteraction(interaction))
+);
 
 export const sendMessage = async (channel, message) => {
   const end = timeOutgoingRequest.startTimer({ provider: 'discord' });
@@ -503,16 +530,19 @@ export const sendMessage = async (channel, message) => {
   }
 };
 
-const sendToSubscribers = (event, proposal, embed, components) => {
+const sendToSubscribers = async (event, proposal, embed, components) => {
   if (subs[proposal.space.id] || subs['*']) {
-    [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
-      if (sub.events && !sub.events.includes(event)) return;
-      sendMessage(sub.channel, {
-        content: `${sub.mention}`,
-        embeds: [embed],
-        components
-      });
-    });
+    await Promise.allSettled(
+      [...(subs['*'] || []), ...(subs[proposal.space.id] || [])]
+        .filter(sub => !sub.events || sub.events.includes(event))
+        .map(sub =>
+          sendMessage(sub.channel, {
+            content: `${sub.mention}`,
+            embeds: [embed],
+            components
+          })
+        )
+    );
   }
 };
 
@@ -540,7 +570,7 @@ export async function send(eventObj, proposal, _subscribers) {
           { name: 'Status', value: status, inline: true }
         )
         .addFields();
-      sendToSubscribers(event, proposal, embed, []);
+      await sendToSubscribers(event, proposal, embed, []);
       return { success: true };
     }
 
@@ -585,7 +615,7 @@ export async function send(eventObj, proposal, _subscribers) {
       )
       .setDescription(preview || ' ');
 
-    sendToSubscribers(event, proposal, embed, components);
+    await sendToSubscribers(event, proposal, embed, components);
 
     return { success: true };
   } catch (err: any) {
