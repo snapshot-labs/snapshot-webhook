@@ -1,5 +1,4 @@
 import { capture } from '@snapshot-labs/snapshot-sentry';
-import snapshot from '@snapshot-labs/snapshot.js';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -484,32 +483,15 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-const CONNECT_RETRY_DELAYS = [5e3, 30e3];
-
-const deliver = async (channel, message, attempt = 0) => {
-  try {
-    let speaker = client.channels.cache.get(channel);
-    // Obtains a channel from Discord, or the channel cache if it's already available.
-    if (!speaker) speaker = await client.channels.fetch(channel);
-    await speaker.send(message);
-  } catch (err: any) {
-    // Only safe because nothing was sent; other errors could post duplicates
-    if (
-      err?.code !== 'UND_ERR_CONNECT_TIMEOUT' ||
-      attempt >= CONNECT_RETRY_DELAYS.length
-    )
-      throw err;
-    await snapshot.utils.sleep(CONNECT_RETRY_DELAYS[attempt]);
-    return deliver(channel, message, attempt + 1);
-  }
-};
-
 export const sendMessage = async (channel, message) => {
   const end = timeOutgoingRequest.startTimer({ provider: 'discord' });
   let success = false;
 
   try {
-    await deliver(channel, message);
+    let speaker = client.channels.cache.get(channel);
+    // Obtains a channel from Discord, or the channel cache if it's already available.
+    if (!speaker) speaker = await client.channels.fetch(channel);
+    await speaker.send(message);
     success = true;
     return true;
   } catch (err) {
