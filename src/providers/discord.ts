@@ -1,4 +1,5 @@
 import { capture } from '@snapshot-labs/snapshot-sentry';
+import snapshot from '@snapshot-labs/snapshot.js';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -22,6 +23,7 @@ import {
 } from 'discord.js';
 import { and, eq } from 'drizzle-orm';
 import removeMd from 'remove-markdown';
+import { Agent } from 'undici';
 import { db } from '../db';
 import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
 import { getSpace, shortenAddress } from '../helpers/utils';
@@ -45,6 +47,9 @@ const client: any = new Client({
     GuildMemberManager: 0,
     UserManager: 0
   }),
+  // One request per channel all start at once: without a cap each opens its
+  // own TCP+TLS connection to discord.com, and a slow connect drops them all
+  rest: { agent: new Agent({ connections: 5 }) },
   // Remove cache for every 5 minutes to prevent memory leaks https://discord.js.org/#/docs/discord.js/stable/class/Sweepers?scrollTo=options
   sweepers: {
     messages: sweeperOption,
@@ -481,15 +486,33 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-export const sendMessage = async (channel, message) => {
-  const end = timeOutgoingRequest.startTimer({ provider: 'discord' });
-  let success = false;
+const CONNECT_RETRY_DELAYS = [5e3, 30e3];
 
+const deliver = async (channel, message, attempt = 0) => {
   try {
     let speaker = client.channels.cache.get(channel);
     // Obtains a channel from Discord, or the channel cache if it's already available.
     if (!speaker) speaker = await client.channels.fetch(channel);
     await speaker.send(message);
+  } catch (err: any) {
+    // The connection was never established, so nothing was sent: safe to retry.
+    // @discordjs/rest does not retry this error itself
+    if (
+      err?.code !== 'UND_ERR_CONNECT_TIMEOUT' ||
+      attempt >= CONNECT_RETRY_DELAYS.length
+    )
+      throw err;
+    await snapshot.utils.sleep(CONNECT_RETRY_DELAYS[attempt]);
+    return deliver(channel, message, attempt + 1);
+  }
+};
+
+export const sendMessage = async (channel, message) => {
+  const end = timeOutgoingRequest.startTimer({ provider: 'discord' });
+  let success = false;
+
+  try {
+    await deliver(channel, message);
     success = true;
     return true;
   } catch (err) {
