@@ -47,8 +47,6 @@ const client: any = new Client({
     GuildMemberManager: 0,
     UserManager: 0
   }),
-  // One request per channel all start at once: without a cap each opens its
-  // own TCP+TLS connection to discord.com, and a slow connect drops them all
   rest: { agent: new Agent({ connections: 5 }) },
   // Remove cache for every 5 minutes to prevent memory leaks https://discord.js.org/#/docs/discord.js/stable/class/Sweepers?scrollTo=options
   sweepers: {
@@ -495,8 +493,7 @@ const deliver = async (channel, message, attempt = 0) => {
     if (!speaker) speaker = await client.channels.fetch(channel);
     await speaker.send(message);
   } catch (err: any) {
-    // The connection was never established, so nothing was sent: safe to retry.
-    // @discordjs/rest does not retry this error itself
+    // Only safe because nothing was sent; other errors could post duplicates
     if (
       err?.code !== 'UND_ERR_CONNECT_TIMEOUT' ||
       attempt >= CONNECT_RETRY_DELAYS.length
