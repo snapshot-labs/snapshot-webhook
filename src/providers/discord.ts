@@ -30,6 +30,7 @@ import { DEFAULT_EVENTS, subscriptions } from '../schema';
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const token = process.env.DISCORD_TOKEN || '';
 const sweeperOption = { interval: 300, filter: () => null };
+const SEND_CONCURRENCY = 5;
 // const invite = 'https://discord.com/oauth2/authorize?client_id=892847850780762122&permissions=534723951680&scope=bot';
 
 let subs = {};
@@ -504,16 +505,21 @@ export const sendMessage = async (channel, message) => {
 };
 
 const sendToSubscribers = (event, proposal, embed, components) => {
-  if (subs[proposal.space.id] || subs['*']) {
-    [...(subs['*'] || []), ...(subs[proposal.space.id] || [])].forEach(sub => {
-      if (sub.events && !sub.events.includes(event)) return;
-      sendMessage(sub.channel, {
+  const queue = [
+    ...(subs['*'] || []),
+    ...(subs[proposal.space.id] || [])
+  ].filter(sub => !sub.events || sub.events.includes(event));
+  const worker = async () => {
+    let sub;
+    while ((sub = queue.shift())) {
+      await sendMessage(sub.channel, {
         content: `${sub.mention}`,
         embeds: [embed],
         components
       });
-    });
-  }
+    }
+  };
+  return Promise.all(Array.from({ length: SEND_CONCURRENCY }, worker));
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
