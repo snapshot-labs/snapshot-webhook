@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { DiscordAPIError } from 'discord.js';
 import { like } from 'drizzle-orm';
 import { closeDatabase, db } from '../../src/db';
-import client, { sendMessage } from '../../src/providers/discord';
+import client, { send, sendMessage } from '../../src/providers/discord';
 import { subscriptions } from '../../src/schema';
 
 jest.mock('discord.js', () => {
@@ -36,21 +36,27 @@ const fakeClient = client as EventEmitter & {
   guilds: { cache: Map<string, any> };
 };
 
-const flush = () => new Promise(resolve => setTimeout(resolve, 50));
+const emit = (event: string, ...args: unknown[]) =>
+  Promise.all(fakeClient.listeners(event).map(listener => listener(...args)));
 const apiError = (code: number, status: number) =>
   new DiscordAPIError({ code, message: 'err' }, code, status, 'GET', '', {});
-const seed = (rows: { guild: string; channel: string; space?: string }[]) =>
-  db.insert(subscriptions).values(
+const seed = async (
+  rows: { guild: string; channel: string; space?: string }[]
+) => {
+  await db.insert(subscriptions).values(
     rows.map(row => ({
       guild: `${PREFIX}${row.guild}`,
       channel: `${PREFIX}${row.channel}`,
       space: row.space ?? 'foo.eth',
       mention: '',
+      events: ['proposal/deleted'],
       created: 0,
       updated: 0
     }))
   );
-const remainingChannels = async () =>
+  await emit('ready');
+};
+const storedChannels = async () =>
   (
     await db.query.subscriptions.findMany({
       where: like(subscriptions.guild, `${PREFIX}%`)
@@ -58,11 +64,27 @@ const remainingChannels = async () =>
   )
     .map(row => row.channel.slice(PREFIX.length))
     .sort();
+const notifiedChannels = async () => {
+  fakeClient.channels.fetch.mockClear();
+  await send(
+    { event: 'proposal/deleted' },
+    { id: '0x1', space: { id: 'foo.eth' } },
+    []
+  );
+  return fakeClient.channels.fetch.mock.calls
+    .map(([id]) => id.slice(PREFIX.length))
+    .sort();
+};
+const expectSubscribed = async (channels: string[]) => {
+  expect(await storedChannels()).toEqual(channels);
+  expect(await notifiedChannels()).toEqual(channels);
+};
 
 beforeEach(async () => {
   await db.delete(subscriptions).where(like(subscriptions.guild, `${PREFIX}%`));
   fakeClient.channels.cache.clear();
   fakeClient.guilds.cache.clear();
+  fakeClient.channels.fetch.mockResolvedValue({ send: jest.fn() });
   jest.spyOn(console, 'log').mockImplementation(() => undefined);
   jest.spyOn(console, 'error').mockImplementation(() => undefined);
 });
@@ -88,7 +110,7 @@ describe('sendMessage()', () => {
 
       await sendMessage(`${PREFIX}dead`, {});
 
-      expect(await remainingChannels()).toEqual(['alive']);
+      await expectSubscribed(['alive']);
     }
   );
 
@@ -101,7 +123,7 @@ describe('sendMessage()', () => {
 
     await sendMessage(`${PREFIX}locked`, {});
 
-    expect(await remainingChannels()).toEqual(['locked']);
+    await expectSubscribed(['locked']);
   });
 
   it('keeps the subscription on a network error', async () => {
@@ -112,7 +134,7 @@ describe('sendMessage()', () => {
 
     await sendMessage(`${PREFIX}flaky`, {});
 
-    expect(await remainingChannels()).toEqual(['flaky']);
+    await expectSubscribed(['flaky']);
   });
 });
 
@@ -124,10 +146,9 @@ describe('gateway events', () => {
       { guild: 'kept', channel: 'c' }
     ]);
 
-    fakeClient.emit('guildDelete', { id: `${PREFIX}gone` });
-    await flush();
+    await emit('guildDelete', { id: `${PREFIX}gone` });
 
-    expect(await remainingChannels()).toEqual(['c']);
+    await expectSubscribed(['c']);
   });
 
   it.each(['channelDelete', 'threadDelete'])(
@@ -138,10 +159,9 @@ describe('gateway events', () => {
         { guild: 'g1', channel: 'kept' }
       ]);
 
-      fakeClient.emit(event, { id: `${PREFIX}deleted` });
-      await flush();
+      await emit(event, { id: `${PREFIX}deleted` });
 
-      expect(await remainingChannels()).toEqual(['kept']);
+      await expectSubscribed(['kept']);
     }
   );
 
@@ -154,18 +174,16 @@ describe('gateway events', () => {
     fakeClient.guilds.cache.set(`${PREFIX}member`, { available: true });
     fakeClient.guilds.cache.set(`${PREFIX}unavailable`, { available: false });
 
-    fakeClient.emit('ready');
-    await flush();
+    await emit('ready');
 
-    expect(await remainingChannels()).toEqual(['a', 'b']);
+    await expectSubscribed(['a', 'b']);
   });
 
   it('removes nothing on ready when the guild cache is empty', async () => {
     await seed([{ guild: 'member', channel: 'a' }]);
 
-    fakeClient.emit('ready');
-    await flush();
+    await emit('ready');
 
-    expect(await remainingChannels()).toEqual(['a']);
+    await expectSubscribed(['a']);
   });
 });

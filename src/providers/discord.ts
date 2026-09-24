@@ -234,7 +234,6 @@ client.on('threadDelete', thread =>
 );
 
 async function pruneLeftGuilds() {
-  // An empty cache would match every row and wipe the table
   if (client.guilds.cache.size === 0) return;
   const result = await db
     .delete(subscriptions)
