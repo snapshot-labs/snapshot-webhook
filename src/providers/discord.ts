@@ -14,13 +14,14 @@ import {
   Options,
   PermissionsBitField,
   REST,
+  RESTJSONErrorCodes,
   Routes,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   underscore
 } from 'discord.js';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, notInArray, SQL } from 'drizzle-orm';
 import removeMd from 'remove-markdown';
 import { db } from '../db';
 import { outgoingMessages, timeOutgoingRequest } from '../helpers/metrics';
@@ -212,8 +213,36 @@ client.on('ready', async () => {
   console.log(`[discord] bot logged as "${client.user.tag}"`);
   setActivity('!');
 
+  await pruneLeftGuilds().catch(capture);
   await loadSubscriptions();
 });
+
+const removeSubscriptions = async (where: SQL) => {
+  await db.delete(subscriptions).where(where);
+  await loadSubscriptions();
+};
+
+client.on('guildDelete', guild =>
+  removeSubscriptions(eq(subscriptions.guild, guild.id)).catch(capture)
+);
+client.on('channelDelete', channel =>
+  removeSubscriptions(eq(subscriptions.channel, channel.id)).catch(capture)
+);
+client.on('threadDelete', thread =>
+  removeSubscriptions(eq(subscriptions.channel, thread.id)).catch(capture)
+);
+
+async function pruneLeftGuilds() {
+  // An empty cache would match every row and wipe the table
+  if (client.guilds.cache.size === 0) return;
+  const result = await db
+    .delete(subscriptions)
+    .where(notInArray(subscriptions.guild, [...client.guilds.cache.keys()]));
+  console.log(
+    '[discord] removed subscriptions of left guilds',
+    result.rowCount
+  );
+}
 
 async function getEventsConfigured(
   guildId: string
@@ -497,6 +526,19 @@ export const sendMessage = async (channel, message) => {
       capture(err);
     }
     console.error('[discord] Failed to send message', channel, err);
+    if (
+      err instanceof DiscordAPIError &&
+      (err.code === RESTJSONErrorCodes.UnknownChannel ||
+        err.code === RESTJSONErrorCodes.UnknownGuild)
+    ) {
+      console.log(
+        '[discord] removing subscriptions of unknown channel',
+        channel
+      );
+      await removeSubscriptions(eq(subscriptions.channel, channel)).catch(
+        capture
+      );
+    }
   } finally {
     outgoingMessages.inc({ provider: 'discord', status: success ? 1 : 0 });
     end({ status: success ? 200 : 500 });
