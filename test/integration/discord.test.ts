@@ -13,7 +13,6 @@ jest.mock('discord.js', () => {
     channels = { cache: new Map(), fetch: jest.fn() };
     guilds = { cache: new Map() };
     user = { tag: 'test', setActivity: jest.fn() };
-    ws = { ping: 0 };
     login = jest.fn();
   }
 
